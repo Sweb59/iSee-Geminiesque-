@@ -1185,7 +1185,7 @@ function syncModalWithMain() {
 
 // Validation de la Modale de Saisie -> Transfert vers le code -> Ouverture Modale Position
 window.confirmDataAndPosition = function() {
-    // 1. Transfert des valeurs de la modale vers les inputs principaux (cachés ou visibles en fond)
+    // 1. Transfert des valeurs de la modale vers les inputs principaux
     // RA
     document.getElementById('raOD_sph').value = document.getElementById('mod_raOD_sph').value;
     document.getElementById('raOD_cyl').value = document.getElementById('mod_raOD_cyl').value;
@@ -1204,6 +1204,23 @@ window.confirmDataAndPosition = function() {
     document.getElementById('frontoOG_cyl').value = document.getElementById('mod_frontoOG_cyl').value;
     document.getElementById('frontoOG_axe').value = document.getElementById('mod_frontoOG_axe').value;
 
+    // --- AJOUT : REMPLISSAGE AUTOMATIQUE DES VALEURS VIDES (0.00 et 0°) ---
+    var prefixes = ['raOD', 'raOG', 'frontoOD', 'frontoOG'];
+    prefixes.forEach(function(p) {
+        // Sphère
+        var s = document.getElementById(p + '_sph');
+        if (!s.value || s.value.trim() === '') s.value = "0.00";
+        
+        // Cylindre
+        var c = document.getElementById(p + '_cyl');
+        if (!c.value || c.value.trim() === '') c.value = "0.00";
+        
+        // Axe
+        var a = document.getElementById(p + '_axe');
+        if (!a.value || a.value.trim() === '') a.value = "0°";
+    });
+    // -----------------------------------------------------------------------
+
     // 2. Déclenche les calculs liés au changement de valeurs (pour le profil)
     window.onRaChanged();
 
@@ -1213,7 +1230,6 @@ window.confirmDataAndPosition = function() {
     // 4. Ouvre la modale suivante (Positionnement)
     window.openPositioningModal();
 };
-
 function toggleInputs(sectionId, enable) {
     var sec = document.getElementById(sectionId);
     if(sec) {
