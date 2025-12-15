@@ -1346,6 +1346,27 @@ window.confirmDataAndPosition = function() {
     // Déclenche les calculs internes (profil, etc.)
     if(window.onRaChanged) window.onRaChanged();
 
+    // --- MISE A JOUR AFFICHAGE GAUCHE (AJOUT) ---
+    var nom = document.getElementById('inName').value || "-";
+    var prenom = document.getElementById('inForename').value || "-";
+    var dob = document.getElementById('inDob').value;
+    var age = dob ? getAgeFromDob(dob) + " ans" : "-";
+
+    // Mise à jour Bloc 1 : Patient
+    var summaryHTML = `
+        <div class="summary-grid">
+            <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
+            <div class="summary-row"><span class="summary-lbl">Age</span><span class="summary-val">${age}</span></div>
+            <div class="summary-row"><span class="summary-lbl">Étape</span><span class="summary-val" style="color:var(--primary);">Test Schober</span></div>
+        </div>
+    `;
+    document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
+
+    // Mise à jour Bloc 2 : Données (On force l'affichage)
+    document.getElementById('dataSection').classList.remove('hidden');
+    toggleInputs('dataSection', false); // On grise les inputs pour ne pas modifier pendant le Schober
+    // --------------------------------------------
+
     // 2. Ferme la modale de saisie
     document.getElementById('modalInputData').classList.add('hidden');
 
