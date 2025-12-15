@@ -1320,6 +1320,7 @@ function syncModalWithMain() {
 
 // Validation de la Modale de Saisie -> Transfert vers le code -> Ouverture Modale Position
 // Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Schober
+// Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Schober + MISE A JOUR GAUCHE
 window.confirmDataAndPosition = function() {
     // 1. Transfert des valeurs
     document.getElementById('raOD_sph').value = document.getElementById('mod_raOD_sph').value;
@@ -1343,38 +1344,40 @@ window.confirmDataAndPosition = function() {
        var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0°";
     });
 
-    // Déclenche les calculs internes (profil, etc.)
+    // Déclenche les calculs internes
     if(window.onRaChanged) window.onRaChanged();
 
-    // --- MISE A JOUR AFFICHAGE GAUCHE (AJOUT) ---
+    // --- MISE A JOUR AFFICHAGE GAUCHE AVEC UID ---
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
     var age = dob ? getAgeFromDob(dob) + " ans" : "-";
+    
+    // Récupération de l'UID
+    var uid = document.getElementById('inUID').value || "--";
 
-    // Mise à jour Bloc 1 : Patient
+    // Mise à jour Bloc 1 : Patient (AVEC UID ICI)
     var summaryHTML = `
         <div class="summary-grid">
             <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
             <div class="summary-row"><span class="summary-lbl">Age</span><span class="summary-val">${age}</span></div>
-            <div class="summary-row"><span class="summary-lbl">Étape</span><span class="summary-val" style="color:var(--primary);">Test Schober</span></div>
+            <div class="summary-row"><span class="summary-lbl">UID</span><span class="summary-val" style="font-family:monospace; color:var(--text-muted);">${uid}</span></div>
         </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
 
-    // Mise à jour Bloc 2 : Données (On force l'affichage)
+    // Mise à jour Bloc 2 : Données
     document.getElementById('dataSection').classList.remove('hidden');
-    toggleInputs('dataSection', false); // On grise les inputs pour ne pas modifier pendant le Schober
+    toggleInputs('dataSection', false); // Désactivation des inputs pendant le Schober
     // --------------------------------------------
 
     // 2. Ferme la modale de saisie
     document.getElementById('modalInputData').classList.add('hidden');
 
-    // 3. AFFICHE L'ÉTAPE SCHOBER (STEP 4) DANS LE PANNEAU DROIT
+    // 3. AFFICHE L'ÉTAPE SCHOBER
     document.getElementById('waitingMsg').classList.add('hidden'); 
     document.getElementById('schoberStep').classList.remove('hidden'); 
-};
-function toggleInputs(sectionId, enable) {
+};function toggleInputs(sectionId, enable) {
     var sec = document.getElementById(sectionId);
     if(sec) {
         var inputs = sec.querySelectorAll('input:not([readonly]), select');
