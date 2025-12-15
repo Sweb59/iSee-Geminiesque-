@@ -412,16 +412,24 @@
       font-weight: 600; color: var(--primary-dark); margin-bottom: 5px; margin-top: 15px; display: block;
   }
 /* --- STYLE TEST DE SCHOBER (NOUVEAU) --- */
-  .schober-container { display: flex; flex-direction: column; gap: 20px; width: 100%; align-items: center; }
-  .schober-group-title { font-weight: bold; color: var(--primary-deep); text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid var(--primary-light); display: inline-block; padding-bottom: 5px; }
-  .schober-grid { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
-  .btn-schober { width: 100px; height: 100px; background-color: #000000; border: 3px solid #455A64; border-radius: 12px; cursor: pointer; position: relative; display: flex; justify-content: center; align-items: center; transition: transform 0.2s, border-color 0.2s; }
-  .btn-schober:hover { transform: scale(1.1); border-color: var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-  .sch-cross { stroke: #FF0000; stroke-width: 4; }
-  .sch-circle { stroke: #00FF00; stroke-width: 4; fill: none; }
-  .sch-faint { opacity: 0.3; stroke-dasharray: 4; }
-  .step-instruction { font-size: 1.2rem; color: var(--text-main); margin-bottom: 25px; text-align: center; background: #E1F5FE; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); }
-</style>
+.schober-container { display: flex; flex-direction: column; gap: 15px; width: 100%; align-items: center; border: 1px solid #ECEFF1; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+.schober-group-title { font-weight: bold; font-size: 1rem; color: var(--primary-deep); text-transform: uppercase; margin-bottom: 15px; border-bottom: 2px solid var(--primary-light); display: inline-block; padding-bottom: 5px; }
+
+/* Nouveaux styles pour les sous-catégories */
+.schober-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; }
+.schober-sub-group { display: flex; flex-direction: column; align-items: center; background: #FAFAFA; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+.schober-sub-title { font-size: 0.8rem; font-weight: 700; color: #00838F; margin-bottom: 10px; text-align: center; max-width: 140px; min-height: 30px; display:flex; align-items:center; justify-content:center; }
+
+.schober-grid { display: flex; justify-content: center; gap: 10px; }
+.btn-schober { width: 90px; height: 90px; background-color: #000000; border: 3px solid #455A64; border-radius: 12px; cursor: pointer; position: relative; display: flex; justify-content: center; align-items: center; transition: transform 0.2s, border-color 0.2s; }
+.btn-schober:hover { transform: scale(1.05); border-color: var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+/* SVG Styles */
+.sch-cross { stroke: #FF0000; stroke-width: 4; }
+.sch-circle { stroke: #00FF00; stroke-width: 4; fill: none; }
+.sch-faint { opacity: 0.3; stroke-dasharray: 4; }
+
+.step-instruction { font-size: 1.1rem; color: var(--text-main); margin-bottom: 20px; text-align: center; background: #E1F5FE; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); }
 </head>
 <body onload="window.startAppSequence()">
 
@@ -686,53 +694,114 @@
               <p>L'examen commencera ici.</p>
           </div>
 <div id="schoberStep" class="hidden" style="width:100%;">
-              <div class="step-instruction">
-                  <strong>Que voit le patient au test de Schober ?</strong><br>
-                  <span style="font-size:0.9rem; color:#546E7A;">Cliquez sur l'image correspondant à la réponse du patient pour déterminer l'œil de démarrage.</span>
-              </div>
+    <div class="step-instruction">
+        <strong>Que voit le patient au test de Schober ?</strong><br>
+        <span style="font-size:0.9rem; color:#546E7A;">Cliquez sur l'image correspondant pour déterminer le protocole.</span>
+    </div>
 
-              <div class="schober-container">
-                  <div class="schober-group-title">Vision Binoculaire Possible</div>
-                  <div class="schober-grid">
-                      <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
-                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
-                      </button>
-                      <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OG')">
-                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross sch-faint" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross sch-faint" /><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
-                      </button>
-                      <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
-                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /><circle cx="50" cy="50" r="35" class="sch-circle sch-faint" /></svg>
-                      </button>
-                  </div>
-              </div>
+    <div class="schober-container">
+        <div class="schober-group-title">Vision Binoculaire Possible</div>
+        
+        <div class="schober-row">
+            <div class="schober-sub-group">
+                <div class="schober-sub-title">Vision Simultanée</div>
+                <div class="schober-grid">
+                    <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
+                        <svg width="70" height="70" viewBox="0 0 100 100">
+                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
+                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
+                            <circle cx="50" cy="50" r="35" class="sch-circle" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
 
-              <div class="schober-container" style="margin-top:20px;">
-                  <div class="schober-group-title" style="color:#D32F2F; border-color:#FFCDD2;">Pas de Vision Binoculaire</div>
-                  <div class="schober-grid">
-                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
-                          <svg width="80" height="80" viewBox="0 0 100 100"><path d="M20 20 L40 20 L30 10 Z" fill="#fff"/><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /></svg>
-                      </button>
-                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
-                          <svg width="80" height="80" viewBox="0 0 100 100"><path d="M60 20 L80 20 L70 10 Z" fill="#fff"/><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
-                      </button>
-                  </div>
-                  <div class="schober-grid">
-                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
-                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /></svg>
-                      </button>
-                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
-                          <svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
-                      </button>
-                       <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OD')">
-                          <div style="position:absolute; top:5px; left:5px; color:white; font-size:0.7rem;">MONO</div>
-                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /></svg>
-                      </button>
-                      <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OG')">
-                          <div style="position:absolute; top:5px; left:5px; color:white; font-size:0.7rem;">MONO</div>
-                          <svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
-                      </button>
-                  </div>
-              </div>
+            <div class="schober-sub-group">
+                <div class="schober-sub-title">Neutralisation Intermittente</div>
+                <div class="schober-grid">
+                    <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
+                         <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OD+</div>
+                        <svg width="70" height="70" viewBox="0 0 100 100">
+                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
+                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
+                            <circle cx="50" cy="50" r="35" class="sch-circle sch-faint" />
+                        </svg>
+                    </button>
+                    <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OG')">
+                        <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OG+</div>
+                        <svg width="70" height="70" viewBox="0 0 100 100">
+                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross sch-faint" />
+                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross sch-faint" />
+                            <circle cx="50" cy="50" r="35" class="sch-circle" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="schober-container" style="border-color:#FFCDD2; background:#FFEBEE;">
+        <div class="schober-group-title" style="color:#D32F2F; border-color:#FFCDD2;">Pas de Vision Binoculaire</div>
+        
+        <div class="schober-row">
+            <div class="schober-sub-group">
+                <div class="schober-sub-title">Alternance Facile</div>
+                <div class="schober-grid">
+                    <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
+                         <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OD</div>
+                        <svg width="70" height="70" viewBox="0 0 100 100">
+                            <path d="M20 20 L40 20 L30 10 Z" fill="#fff"/>
+                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
+                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
+                        </svg>
+                    </button>
+                    <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
+                         <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OG</div>
+                        <svg width="70" height="70" viewBox="0 0 100 100">
+                            <path d="M60 20 L80 20 L70 10 Z" fill="#fff"/>
+                            <circle cx="50" cy="50" r="35" class="sch-circle" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="schober-sub-group">
+                <div class="schober-sub-title">Alternance difficile ou Neutra.</div>
+                <div class="schober-grid">
+                    <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
+                        <svg width="70" height="70" viewBox="0 0 100 100">
+                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
+                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
+                        </svg>
+                    </button>
+                    <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
+                        <svg width="70" height="70" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="35" class="sch-circle" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="schober-sub-group">
+                <div class="schober-sub-title">Monophtalme ou Amblyopie</div>
+                <div class="schober-grid">
+                     <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OD')">
+                        <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
+                        <svg width="70" height="70" viewBox="0 0 100 100">
+                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
+                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
+                        </svg>
+                    </button>
+                    <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OG')">
+                        <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
+                        <svg width="70" height="70" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="35" class="sch-circle" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
           <div id="examContent" class="hidden" style="width:100%;">
                 
