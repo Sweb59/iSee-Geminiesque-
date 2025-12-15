@@ -411,6 +411,16 @@
   .data-source-lbl {
       font-weight: 600; color: var(--primary-dark); margin-bottom: 5px; margin-top: 15px; display: block;
   }
+/* --- STYLE TEST DE SCHOBER (NOUVEAU) --- */
+  .schober-container { display: flex; flex-direction: column; gap: 20px; width: 100%; align-items: center; }
+  .schober-group-title { font-weight: bold; color: var(--primary-deep); text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid var(--primary-light); display: inline-block; padding-bottom: 5px; }
+  .schober-grid { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
+  .btn-schober { width: 100px; height: 100px; background-color: #000000; border: 3px solid #455A64; border-radius: 12px; cursor: pointer; position: relative; display: flex; justify-content: center; align-items: center; transition: transform 0.2s, border-color 0.2s; }
+  .btn-schober:hover { transform: scale(1.1); border-color: var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+  .sch-cross { stroke: #FF0000; stroke-width: 4; }
+  .sch-circle { stroke: #00FF00; stroke-width: 4; fill: none; }
+  .sch-faint { opacity: 0.3; stroke-dasharray: 4; }
+  .step-instruction { font-size: 1.2rem; color: var(--text-main); margin-bottom: 25px; text-align: center; background: #E1F5FE; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); }
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -675,7 +685,55 @@
               <svg style="width:60px; height:60px; margin-bottom:10px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
               <p>L'examen commencera ici.</p>
           </div>
+<div id="schoberStep" class="hidden" style="width:100%;">
+              <div class="step-instruction">
+                  <strong>Que voit le patient au test de Schober ?</strong><br>
+                  <span style="font-size:0.9rem; color:#546E7A;">Cliquez sur l'image correspondant à la réponse du patient pour déterminer l'œil de démarrage.</span>
+              </div>
 
+              <div class="schober-container">
+                  <div class="schober-group-title">Vision Binoculaire Possible</div>
+                  <div class="schober-grid">
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OG')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross sch-faint" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross sch-faint" /><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /><circle cx="50" cy="50" r="35" class="sch-circle sch-faint" /></svg>
+                      </button>
+                  </div>
+              </div>
+
+              <div class="schober-container" style="margin-top:20px;">
+                  <div class="schober-group-title" style="color:#D32F2F; border-color:#FFCDD2;">Pas de Vision Binoculaire</div>
+                  <div class="schober-grid">
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><path d="M20 20 L40 20 L30 10 Z" fill="#fff"/><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /></svg>
+                      </button>
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><path d="M60 20 L80 20 L70 10 Z" fill="#fff"/><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                  </div>
+                  <div class="schober-grid">
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /></svg>
+                      </button>
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                       <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OD')">
+                          <div style="position:absolute; top:5px; left:5px; color:white; font-size:0.7rem;">MONO</div>
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /></svg>
+                      </button>
+                      <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OG')">
+                          <div style="position:absolute; top:5px; left:5px; color:white; font-size:0.7rem;">MONO</div>
+                          <svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                  </div>
+              </div>
+</div>
           <div id="examContent" class="hidden" style="width:100%;">
 
               <div class="exam-controls">
@@ -802,10 +860,17 @@ window.validatePatientID = function() {
     var dob = document.getElementById('inDob').value;
     if(!dob) { alert("La date de naissance est obligatoire."); return; }
 
+    // Ferme Modal ID
     document.getElementById('modalPatientID').classList.add('hidden');
-    document.getElementById('modalProfileCalc').classList.remove('hidden');
-};
 
+    // Remplissage partiel du résumé (Nom/Prénom)
+    var nom = document.getElementById('inName').value || "-";
+    var summaryHTML = `<div class="summary-grid"><div class="summary-row"><span class="summary-lbl">Patient</span><span class="summary-val">${nom.toUpperCase()}</span></div></div>`;
+    document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
+
+    // Ouvre Modal Choix Méthode (STEP 2)
+    document.getElementById('modalEntryMethod').classList.remove('hidden');
+};
 // --- CLOCK & CHRONO ---
 window.initClock = function() {
     setInterval(function() {
@@ -1073,14 +1138,10 @@ window.calculateProfileAndShowData = function() {
     if(document.getElementById('chkMono').checked) score += 1;
 
     var p = (score <= 5) ? "1" : (score <= 8) ? "2" : (score <= 12) ? "3" : "3+";
-    appState.baseProfile = p;
-    var finalProfile = p;
-    var s1 = window.getVal('raOD_sph');
-    var s2 = window.getVal('raOG_sph');
-    if (p === "1" && (s1 < 0 || s2 < 0)) { finalProfile = "2"; }
-    revealDataSection(finalProfile, false);
-};
 
+    // Affiche la section Données (Gauche) et lance l'INSTALLATION (STEP 6)
+    revealDataSection(p, false); 
+};
 window.forceProfileAndShowData = function(forcedProfile) {
     appState.baseProfile = forcedProfile;
     var finalProfile = forcedProfile;
@@ -1096,32 +1157,31 @@ function revealDataSection(profile, inputsEnabled) {
     appState.initProfile = profile; 
     setHTML('displayProfileName', profile);
 
-    // Fermeture Fenêtre 2
+    // Fermeture Fenêtre Profil
     document.getElementById('modalProfileCalc').classList.add('hidden');
 
-    // Remplissage du Résumé Patient dans la colonne gauche
+    // Mise à jour résumé gauche complet
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
     var age = dob ? getAgeFromDob(dob) + " ans" : "-";
-    var uid = document.getElementById('inUID').value;
+    var eyeStart = appState.firstEye; 
 
     var summaryHTML = `
         <div class="summary-grid">
             <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
             <div class="summary-row"><span class="summary-lbl">Age</span><span class="summary-val">${age}</span></div>
-            <div class="summary-row"><span class="summary-lbl">UID</span><span class="summary-val" style="font-family:monospace;">${uid}</span></div>
+            <div class="summary-row"><span class="summary-lbl">Départ</span><span class="summary-val" style="color:var(--primary);">${eyeStart}</span></div>
             <div class="summary-row"><span class="summary-lbl">Profil</span><span class="summary-val" style="background:${getProfileColor(profile)}; color:white; padding:0 5px; border-radius:3px;">${profile}</span></div>
         </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
 
-    // Affichage des données (qui sont vides pour l'instant)
     document.getElementById('dataSection').classList.remove('hidden');
     toggleInputs('dataSection', inputsEnabled);
 
-    // Ouverture Fenêtre 3 (Choix Méthode)
-    document.getElementById('modalEntryMethod').classList.remove('hidden');
+    // --- CHANGEMENT ICI : ON VA DIRECTEMENT A L'INSTALLATION (STEP 6) ---
+    window.openPositioningModal();
 }
 
 function getProfileColor(p) {
@@ -1184,43 +1244,41 @@ function syncModalWithMain() {
 }
 
 // Validation de la Modale de Saisie -> Transfert vers le code -> Ouverture Modale Position
+// Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Schober
 window.confirmDataAndPosition = function() {
-    // 1. Transfert des valeurs de la modale vers les inputs principaux (cachés ou visibles en fond)
-    // 1. Transfert des valeurs de la modale vers les inputs principaux
-    // RA
+    // 1. Transfert des valeurs
     document.getElementById('raOD_sph').value = document.getElementById('mod_raOD_sph').value;
     document.getElementById('raOD_cyl').value = document.getElementById('mod_raOD_cyl').value;
     document.getElementById('raOD_axe').value = document.getElementById('mod_raOD_axe').value;
-
     document.getElementById('raOG_sph').value = document.getElementById('mod_raOG_sph').value;
     document.getElementById('raOG_cyl').value = document.getElementById('mod_raOG_cyl').value;
     document.getElementById('raOG_axe').value = document.getElementById('mod_raOG_axe').value;
-
-    // Fronto
     document.getElementById('frontoOD_sph').value = document.getElementById('mod_frontoOD_sph').value;
     document.getElementById('frontoOD_cyl').value = document.getElementById('mod_frontoOD_cyl').value;
     document.getElementById('frontoOD_axe').value = document.getElementById('mod_frontoOD_axe').value;
-
     document.getElementById('frontoOG_sph').value = document.getElementById('mod_frontoOG_sph').value;
     document.getElementById('frontoOG_cyl').value = document.getElementById('mod_frontoOG_cyl').value;
     document.getElementById('frontoOG_axe').value = document.getElementById('mod_frontoOG_axe').value;
 
-    // --- AJOUT : REMPLISSAGE AUTOMATIQUE DES VALEURS VIDES (0.00 et 0°) ---
+    // Remplissage auto des vides
     var prefixes = ['raOD', 'raOG', 'frontoOD', 'frontoOG'];
     prefixes.forEach(function(p) {
-        // Sphère
-        var s = document.getElementById(p + '_sph');
-        if (!s.value || s.value.trim() === '') s.value = "0.00";
-        
-        // Cylindre
-        var c = document.getElementById(p + '_cyl');
-        if (!c.value || c.value.trim() === '') c.value = "0.00";
-        
-        // Axe
-        var a = document.getElementById(p + '_axe');
-        if (!a.value || a.value.trim() === '') a.value = "0°";
+       var s = document.getElementById(p + '_sph'); if (!s.value) s.value = "0.00";
+       var c = document.getElementById(p + '_cyl'); if (!c.value) c.value = "0.00";
+       var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0°";
     });
-    // -----------------------------------------------------------------------
+
+    // Déclenche les calculs internes (profil, etc.)
+    if(window.onRaChanged) window.onRaChanged();
+
+    // 2. Ferme la modale de saisie
+    document.getElementById('modalInputData').classList.add('hidden');
+
+    // 3. AFFICHE L'ÉTAPE SCHOBER (STEP 4) DANS LE PANNEAU DROIT
+    document.getElementById('waitingMsg').classList.add('hidden'); 
+    document.getElementById('schoberStep').classList.remove('hidden'); 
+};
+  // -----------------------------------------------------------------------
 
     // 2. Déclenche les calculs liés au changement de valeurs (pour le profil)
     window.onRaChanged();
@@ -1231,7 +1289,6 @@ window.confirmDataAndPosition = function() {
     // 4. Ouvre la modale suivante (Positionnement)
     window.openPositioningModal();
 };
-
 function toggleInputs(sectionId, enable) {
     var sec = document.getElementById(sectionId);
     if(sec) {
@@ -1241,6 +1298,20 @@ function toggleInputs(sectionId, enable) {
 }
 
 // MISE A JOUR DYNAMIQUE DU PROFIL (Reversible)
+// Variable globale pour le mode
+appState.isMonocularExam = false; 
+
+window.handleSchoberChoice = function(mode, eye) {
+    appState.firstEye = eye; // Définit l'œil de démarrage
+    appState.isMonocularExam = (mode === 'mono');
+
+    // Cache le Schober
+    document.getElementById('schoberStep').classList.add('hidden');
+
+    // Ouvre la modale Profil pour confirmation (STEP 5)
+    document.getElementById('modalProfileCalc').classList.remove('hidden');
+};
+
 window.onRaChanged = function() { 
     window.checkMyopia();
     if (appState.baseProfile === "1") {
