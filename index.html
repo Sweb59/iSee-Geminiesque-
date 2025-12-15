@@ -862,9 +862,7 @@ window.validatePatientID = function() {
 
     // Ferme Modal ID
     document.getElementById('modalPatientID').classList.add('hidden');
-    document.getElementById('modalProfileCalc').classList.remove('hidden');
-};
-    
+
     // Remplissage partiel du résumé (Nom/Prénom)
     var nom = document.getElementById('inName').value || "-";
     var summaryHTML = `<div class="summary-grid"><div class="summary-row"><span class="summary-lbl">Patient</span><span class="summary-val">${nom.toUpperCase()}</span></div></div>`;
@@ -1140,17 +1138,10 @@ window.calculateProfileAndShowData = function() {
     if(document.getElementById('chkMono').checked) score += 1;
 
     var p = (score <= 5) ? "1" : (score <= 8) ? "2" : (score <= 12) ? "3" : "3+";
-    appState.baseProfile = p;
-    var finalProfile = p;
-    var s1 = window.getVal('raOD_sph');
-    var s2 = window.getVal('raOG_sph');
-    if (p === "1" && (s1 < 0 || s2 < 0)) { finalProfile = "2"; }
-    revealDataSection(finalProfile, false);
-    
+
     // Affiche la section Données (Gauche) et lance l'INSTALLATION (STEP 6)
     revealDataSection(p, false); 
 };
-
 window.forceProfileAndShowData = function(forcedProfile) {
     appState.baseProfile = forcedProfile;
     var finalProfile = forcedProfile;
@@ -1166,41 +1157,33 @@ function revealDataSection(profile, inputsEnabled) {
     appState.initProfile = profile; 
     setHTML('displayProfileName', profile);
 
-    // Fermeture Fenêtre 2
     // Fermeture Fenêtre Profil
     document.getElementById('modalProfileCalc').classList.add('hidden');
 
-    // Remplissage du Résumé Patient dans la colonne gauche
     // Mise à jour résumé gauche complet
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
     var age = dob ? getAgeFromDob(dob) + " ans" : "-";
-    var uid = document.getElementById('inUID').value;
     var eyeStart = appState.firstEye; 
 
     var summaryHTML = `
         <div class="summary-grid">
             <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
             <div class="summary-row"><span class="summary-lbl">Age</span><span class="summary-val">${age}</span></div>
-            <div class="summary-row"><span class="summary-lbl">UID</span><span class="summary-val" style="font-family:monospace;">${uid}</span></div>
             <div class="summary-row"><span class="summary-lbl">Départ</span><span class="summary-val" style="color:var(--primary);">${eyeStart}</span></div>
             <div class="summary-row"><span class="summary-lbl">Profil</span><span class="summary-val" style="background:${getProfileColor(profile)}; color:white; padding:0 5px; border-radius:3px;">${profile}</span></div>
         </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
 
-    // Affichage des données (qui sont vides pour l'instant)
     document.getElementById('dataSection').classList.remove('hidden');
     toggleInputs('dataSection', inputsEnabled);
 
-    // Ouverture Fenêtre 3 (Choix Méthode)
-    document.getElementById('modalEntryMethod').classList.remove('hidden');
     // --- CHANGEMENT ICI : ON VA DIRECTEMENT A L'INSTALLATION (STEP 6) ---
     window.openPositioningModal();
 }
 
-  
 function getProfileColor(p) {
     if(p==='1') return '#26A69A'; if(p==='2') return '#42A5F5'; if(p==='3') return '#FFA726'; return '#EF5350';
 }
@@ -1261,48 +1244,32 @@ function syncModalWithMain() {
 }
 
 // Validation de la Modale de Saisie -> Transfert vers le code -> Ouverture Modale Position
+// Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Schober
 window.confirmDataAndPosition = function() {
-    // 1. Transfert des valeurs de la modale vers les inputs principaux
-    // RA
     // 1. Transfert des valeurs
     document.getElementById('raOD_sph').value = document.getElementById('mod_raOD_sph').value;
     document.getElementById('raOD_cyl').value = document.getElementById('mod_raOD_cyl').value;
     document.getElementById('raOD_axe').value = document.getElementById('mod_raOD_axe').value;
-    
     document.getElementById('raOG_sph').value = document.getElementById('mod_raOG_sph').value;
     document.getElementById('raOG_cyl').value = document.getElementById('mod_raOG_cyl').value;
     document.getElementById('raOG_axe').value = document.getElementById('mod_raOG_axe').value;
-
-    // Fronto
     document.getElementById('frontoOD_sph').value = document.getElementById('mod_frontoOD_sph').value;
     document.getElementById('frontoOD_cyl').value = document.getElementById('mod_frontoOD_cyl').value;
     document.getElementById('frontoOD_axe').value = document.getElementById('mod_frontoOD_axe').value;
-    
     document.getElementById('frontoOG_sph').value = document.getElementById('mod_frontoOG_sph').value;
     document.getElementById('frontoOG_cyl').value = document.getElementById('mod_frontoOG_cyl').value;
     document.getElementById('frontoOG_axe').value = document.getElementById('mod_frontoOG_axe').value;
 
-    // --- AJOUT : REMPLISSAGE AUTOMATIQUE DES VALEURS VIDES (0.00 et 0°) ---
-    
     // Remplissage auto des vides
     var prefixes = ['raOD', 'raOG', 'frontoOD', 'frontoOG'];
     prefixes.forEach(function(p) {
-        // Sphère
-        var s = document.getElementById(p + '_sph');
-        if (!s.value || s.value.trim() === '') s.value = "0.00";
-        
-        // Cylindre
-        var c = document.getElementById(p + '_cyl');
-        if (!c.value || c.value.trim() === '') c.value = "0.00";
-        
-        // Axe
-        var a = document.getElementById(p + '_axe');
-        if (!a.value || a.value.trim() === '') a.value = "0°";
        var s = document.getElementById(p + '_sph'); if (!s.value) s.value = "0.00";
        var c = document.getElementById(p + '_cyl'); if (!c.value) c.value = "0.00";
        var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0°";
     });
-    // -----------------------------------------------------------------------
+
+    // Déclenche les calculs internes (profil, etc.)
+    if(window.onRaChanged) window.onRaChanged();
 
     // 2. Ferme la modale de saisie
     document.getElementById('modalInputData').classList.add('hidden');
@@ -1344,7 +1311,7 @@ window.handleSchoberChoice = function(mode, eye) {
     // Ouvre la modale Profil pour confirmation (STEP 5)
     document.getElementById('modalProfileCalc').classList.remove('hidden');
 };
-  
+
 window.onRaChanged = function() { 
     window.checkMyopia();
     if (appState.baseProfile === "1") {
