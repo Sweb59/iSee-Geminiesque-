@@ -95,7 +95,7 @@
       padding: 10px; 
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
   }
-    
+
   h2 { 
       margin-top: 0; margin-bottom: 8px; 
       color: var(--primary-dark); 
@@ -113,10 +113,10 @@
   .summary-val { color: var(--primary-dark); font-weight: bold; }
 
   .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-   
+
   /* Grille compacte pour la section 2 */
   .mini-data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; text-align: center; }
-    
+
   label { display: block; font-weight: 600; margin-bottom: 1px; font-size: 0.75rem; color: var(--text-muted); }
   input, select { 
       width: 100%; padding: 4px; 
@@ -143,7 +143,7 @@
   .check-lbl input { width: auto; margin: 0; cursor: pointer; }
 
   /* --- COULEURS PERSONNALISÉES DES DONNÉES --- */
-  
+
   /* 1. Autoréfractomètre (RA) */
   input[id^="ra"] {
       color: var(--primary);              /* Texte : Primary (Cyan) */
@@ -180,7 +180,7 @@
 
   /* ZONE EXAMEN */
   .exam-controls { display: flex; gap: 20px; margin-bottom: 20px; width: 100%; justify-content: center; }
-   
+
   .eye-btn { 
       padding: 12px 40px; 
       background: var(--primary-light); 
@@ -192,7 +192,7 @@
       opacity: 0.8;
       font-size: 1.2rem; 
   }
-   
+
   .eye-btn.active { 
       background: var(--bg-main); 
       color: var(--primary-dark); 
@@ -264,9 +264,9 @@
 
   .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
   .lbl-mini { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-   
+
   .info-bar { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 10px; margin-top: 10px; }
-    
+
   /* LETTRES */
   .letter-display { 
       font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -286,14 +286,14 @@
 
   /* BOUTONS REPONSE */
   .response-area { width: 100%; text-align: center; }
-   
+
   .btn-grid { 
       display: flex; 
       justify-content: center; 
       gap: 40px; 
       flex-wrap: wrap; 
   }
-   
+
   .btn-resp { 
       width: 80px; height: 80px;
       border-radius: 50%; border: none; 
@@ -304,7 +304,7 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
   }
   .btn-resp:hover { background: var(--primary); color: white; transform: scale(1.15); }
-   
+
   .btn-resp.locked, .btn-action.locked, .btn-timer.locked, .btn-decision.locked {
       opacity: 0.5; cursor: wait; pointer-events: none;
   }
@@ -317,12 +317,12 @@
       box-shadow: 0 3px 5px rgba(0,0,0,0.1);
       transition: background 0.2s;
   }
-    
+
   .btn-start, .btn-validate, .btn-manual, .btn-rules { background: var(--primary); }
   .btn-start:hover, .btn-validate:hover { background: var(--primary-dark); }
   .btn-import { background: var(--primary-dark); }
   .btn-import:hover { background: var(--primary-deep); }
-   
+
   .btn-tortue, .btn-lapin { 
       background: var(--primary-light); color: var(--primary-dark); border: 2px solid var(--primary-border); 
       font-size: 1.3rem; padding: 15px 40px; 
@@ -367,14 +367,14 @@
   }
   .modal-content { background: #fff; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; text-align: center; }
   .modal-text { font-size: 1.2rem; line-height: 1.5; margin-bottom: 25px; color: var(--text-main); }
-    
+
   /* Visual JCC */
   .jcc-container { display: flex; justify-content: center; gap: 50px; margin-bottom: 30px; }
   .jcc-visual { width: 100px; height: 100px; border-radius: 50%; border: 6px solid #CFD8DC; display: flex; align-items: center; justify-content: center; opacity: 0.3; }
   .jcc-visual.active { opacity: 1; border-color: var(--primary); transform: scale(1.1); box-shadow: 0 0 20px var(--primary-border); }
   .jcc-label { position: absolute; font-weight: bold; font-size: 1.8rem; color: var(--text-main); }
   .arrow-svg { width: 70px; height: 70px; }
-   
+
   /* INPUTS MODAL */
   .modal-input-grid {
       display: flex;
@@ -412,24 +412,16 @@
       font-weight: 600; color: var(--primary-dark); margin-bottom: 5px; margin-top: 15px; display: block;
   }
 /* --- STYLE TEST DE SCHOBER (NOUVEAU) --- */
-.schober-container { display: flex; flex-direction: column; gap: 15px; width: 100%; align-items: center; border: 1px solid #ECEFF1; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
-.schober-group-title { font-weight: bold; font-size: 1rem; color: var(--primary-deep); text-transform: uppercase; margin-bottom: 15px; border-bottom: 2px solid var(--primary-light); display: inline-block; padding-bottom: 5px; }
-
-/* Nouveaux styles pour les sous-catégories */
-.schober-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; }
-.schober-sub-group { display: flex; flex-direction: column; align-items: center; background: #FAFAFA; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
-.schober-sub-title { font-size: 0.8rem; font-weight: 700; color: #00838F; margin-bottom: 10px; text-align: center; max-width: 140px; min-height: 30px; display:flex; align-items:center; justify-content:center; }
-
-.schober-grid { display: flex; justify-content: center; gap: 10px; }
-.btn-schober { width: 90px; height: 90px; background-color: #000000; border: 3px solid #455A64; border-radius: 12px; cursor: pointer; position: relative; display: flex; justify-content: center; align-items: center; transition: transform 0.2s, border-color 0.2s; }
-.btn-schober:hover { transform: scale(1.05); border-color: var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-
-/* SVG Styles */
-.sch-cross { stroke: #FF0000; stroke-width: 4; }
-.sch-circle { stroke: #00FF00; stroke-width: 4; fill: none; }
-.sch-faint { opacity: 0.3; stroke-dasharray: 4; }
-
-.step-instruction { font-size: 1.1rem; color: var(--text-main); margin-bottom: 20px; text-align: center; background: #E1F5FE; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); }
+  .schober-container { display: flex; flex-direction: column; gap: 20px; width: 100%; align-items: center; }
+  .schober-group-title { font-weight: bold; color: var(--primary-deep); text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid var(--primary-light); display: inline-block; padding-bottom: 5px; }
+  .schober-grid { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
+  .btn-schober { width: 100px; height: 100px; background-color: #000000; border: 3px solid #455A64; border-radius: 12px; cursor: pointer; position: relative; display: flex; justify-content: center; align-items: center; transition: transform 0.2s, border-color 0.2s; }
+  .btn-schober:hover { transform: scale(1.1); border-color: var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+  .sch-cross { stroke: #FF0000; stroke-width: 4; }
+  .sch-circle { stroke: #00FF00; stroke-width: 4; fill: none; }
+  .sch-faint { opacity: 0.3; stroke-dasharray: 4; }
+  .step-instruction { font-size: 1.2rem; color: var(--text-main); margin-bottom: 25px; text-align: center; background: #E1F5FE; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); }
+</style>
 </head>
 <body onload="window.startAppSequence()">
 
@@ -449,7 +441,7 @@
 <div id="modalProfileCalc" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 700px;">
         <h2 style="color:var(--primary); border:none; font-size:1.6rem;">Profil Accommodatif</h2>
-         
+
         <div class="config-grid" style="text-align:left; margin-bottom:15px;">
             <div>
                 <label>Rythme des consultations par année</label>
@@ -470,7 +462,7 @@
         </div>
 
         <button class="btn-action btn-start" style="padding:15px; font-size:1.1rem;" onclick="window.calculateProfileAndShowData()">CALCUL DU PROFIL ACCOMMODATIF</button>
-         
+
         <div style="text-align:center; margin:15px 0 5px 0; color:var(--text-muted); font-size:0.9rem;">Ou forcer le profil :</div>
         <div class="force-profile-row">
             <button class="btn-profile p-green" onclick="window.forceProfileAndShowData('1')">Bon (1)</button>
@@ -497,9 +489,9 @@
 <div id="modalInputData" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 1100px;">
         <h2 style="color:var(--primary); border:none; font-size:1.4rem;">Saisie des Données</h2>
-         
+
         <div style="display:flex; gap:30px; justify-content: space-between;">
-             
+
             <div style="flex:1; border-right:2px solid #eee; padding-right:20px;">
                 <div class="device-header">FRONTOFOCOMÈTRE</div>
                 <div style="display:flex; gap:20px;">
@@ -630,9 +622,9 @@
   </header>
 
   <div class="dashboard-wrapper">
-        
+
       <div class="left-panel">
-            
+
           <div id="summarySection" class="section">
               <h2>1. Patient</h2>
               <div id="patientSummaryContent" style="color:#78909C; font-style:italic;">En attente d'identification...</div>
@@ -640,19 +632,19 @@
 
           <div id="dataSection" class="section hidden">
               <h2 style="display:flex; justify-content:space-between;">2. Données <span id="displayProfileName" style="color:var(--primary); background:var(--primary-light); padding:2px 8px; border-radius:4px;">--</span></h2>
-                
+
               <div style="display:flex; gap:10px; font-size:0.85rem;">
                   <div style="flex:1;">
                         <div class="data-block-title">FRONTO</div>
                         <div class="mini-data-grid">
                             <div class="col-head">OD</div> <div class="col-head">OG</div>
-                            
+
                             <input type="text" id="frontoOD_sph" class="col-input" placeholder="Sph" tabindex="7" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkSphere(this)">
                             <input type="text" id="frontoOG_sph" class="col-input" placeholder="Sph" tabindex="10" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkSphere(this)">
-                            
+
                             <input type="text" id="frontoOD_cyl" class="col-input" placeholder="Cyl" tabindex="9" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.forceNegativeCyl(this)">
                             <input type="text" id="frontoOG_cyl" class="col-input" placeholder="Cyl" tabindex="12" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.forceNegativeCyl(this)">
-                            
+
                             <input type="text" id="frontoOD_axe" class="col-input" placeholder="Axe" tabindex="8" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this)">
                             <input type="text" id="frontoOG_axe" class="col-input" placeholder="Axe" tabindex="11" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this)">
                         </div>
@@ -662,13 +654,13 @@
                         <div class="data-block-title">AUTOREF</div>
                         <div class="mini-data-grid">
                             <div class="col-head">OD</div> <div class="col-head">OG</div>
-                            
+
                             <input type="text" id="raOD_sph" class="col-input" placeholder="Sph" tabindex="1" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this); window.onRaChanged()" onchange="window.checkSphere(this); window.onRaChanged()">
                             <input type="text" id="raOG_sph" class="col-input" placeholder="Sph" tabindex="4" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this); window.onRaChanged()" onchange="window.checkSphere(this); window.onRaChanged()">
-                            
+
                             <input type="text" id="raOD_cyl" class="col-input" placeholder="Cyl" tabindex="3" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.forceNegativeCyl(this); window.onRaChanged();">
                             <input type="text" id="raOG_cyl" class="col-input" placeholder="Cyl" tabindex="6" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.forceNegativeCyl(this); window.onRaChanged();">
-                            
+
                             <input type="text" id="raOD_axe" class="col-input" placeholder="Axe" tabindex="2" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this); window.onRaChanged();">
                             <input type="text" id="raOG_axe" class="col-input" placeholder="Axe" tabindex="5" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this); window.onRaChanged();">
                         </div>
@@ -688,123 +680,62 @@
       </div>
 
       <div class="right-panel">
-            
+
           <div id="waitingMsg" style="text-align:center; color:#B0BEC5;">
               <svg style="width:60px; height:60px; margin-bottom:10px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
               <p>L'examen commencera ici.</p>
           </div>
 <div id="schoberStep" class="hidden" style="width:100%;">
-    <div class="step-instruction">
-        <strong>Que voit le patient au test de Schober ?</strong><br>
-        <span style="font-size:0.9rem; color:#546E7A;">Cliquez sur l'image correspondant pour déterminer le protocole.</span>
-    </div>
+              <div class="step-instruction">
+                  <strong>Que voit le patient au test de Schober ?</strong><br>
+                  <span style="font-size:0.9rem; color:#546E7A;">Cliquez sur l'image correspondant à la réponse du patient pour déterminer l'œil de démarrage.</span>
+              </div>
 
-    <div class="schober-container">
-        <div class="schober-group-title">Vision Binoculaire Possible</div>
-        
-        <div class="schober-row">
-            <div class="schober-sub-group">
-                <div class="schober-sub-title">Vision Simultanée</div>
-                <div class="schober-grid">
-                    <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
-                        <svg width="70" height="70" viewBox="0 0 100 100">
-                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
-                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
-                            <circle cx="50" cy="50" r="35" class="sch-circle" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+              <div class="schober-container">
+                  <div class="schober-group-title">Vision Binoculaire Possible</div>
+                  <div class="schober-grid">
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OG')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross sch-faint" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross sch-faint" /><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /><circle cx="50" cy="50" r="35" class="sch-circle sch-faint" /></svg>
+                      </button>
+                  </div>
+              </div>
 
-            <div class="schober-sub-group">
-                <div class="schober-sub-title">Neutralisation Intermittente</div>
-                <div class="schober-grid">
-                    <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
-                         <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OD+</div>
-                        <svg width="70" height="70" viewBox="0 0 100 100">
-                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
-                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
-                            <circle cx="50" cy="50" r="35" class="sch-circle sch-faint" />
-                        </svg>
-                    </button>
-                    <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OG')">
-                        <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OG+</div>
-                        <svg width="70" height="70" viewBox="0 0 100 100">
-                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross sch-faint" />
-                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross sch-faint" />
-                            <circle cx="50" cy="50" r="35" class="sch-circle" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="schober-container" style="border-color:#FFCDD2; background:#FFEBEE;">
-        <div class="schober-group-title" style="color:#D32F2F; border-color:#FFCDD2;">Pas de Vision Binoculaire</div>
-        
-        <div class="schober-row">
-            <div class="schober-sub-group">
-                <div class="schober-sub-title">Alternance Facile</div>
-                <div class="schober-grid">
-                    <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
-                         <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OD</div>
-                        <svg width="70" height="70" viewBox="0 0 100 100">
-                            <path d="M20 20 L40 20 L30 10 Z" fill="#fff"/>
-                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
-                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
-                        </svg>
-                    </button>
-                    <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
-                         <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OG</div>
-                        <svg width="70" height="70" viewBox="0 0 100 100">
-                            <path d="M60 20 L80 20 L70 10 Z" fill="#fff"/>
-                            <circle cx="50" cy="50" r="35" class="sch-circle" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <div class="schober-sub-group">
-                <div class="schober-sub-title">Alternance difficile ou Neutra.</div>
-                <div class="schober-grid">
-                    <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
-                        <svg width="70" height="70" viewBox="0 0 100 100">
-                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
-                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
-                        </svg>
-                    </button>
-                    <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
-                        <svg width="70" height="70" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="35" class="sch-circle" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <div class="schober-sub-group">
-                <div class="schober-sub-title">Monophtalme ou Amblyopie</div>
-                <div class="schober-grid">
-                     <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OD')">
-                        <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
-                        <svg width="70" height="70" viewBox="0 0 100 100">
-                            <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
-                            <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
-                        </svg>
-                    </button>
-                    <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OG')">
-                        <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
-                        <svg width="70" height="70" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="35" class="sch-circle" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+              <div class="schober-container" style="margin-top:20px;">
+                  <div class="schober-group-title" style="color:#D32F2F; border-color:#FFCDD2;">Pas de Vision Binoculaire</div>
+                  <div class="schober-grid">
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><path d="M20 20 L40 20 L30 10 Z" fill="#fff"/><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /></svg>
+                      </button>
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><path d="M60 20 L80 20 L70 10 Z" fill="#fff"/><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                  </div>
+                  <div class="schober-grid">
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /></svg>
+                      </button>
+                      <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
+                          <svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                       <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OD')">
+                          <div style="position:absolute; top:5px; left:5px; color:white; font-size:0.7rem;">MONO</div>
+                          <svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" class="sch-cross" /><line x1="20" y1="50" x2="80" y2="50" class="sch-cross" /></svg>
+                      </button>
+                      <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OG')">
+                          <div style="position:absolute; top:5px; left:5px; color:white; font-size:0.7rem;">MONO</div>
+                          <svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" class="sch-circle" /></svg>
+                      </button>
+                  </div>
+              </div>
 </div>
           <div id="examContent" class="hidden" style="width:100%;">
-                
+
               <div class="exam-controls">
                   <button id="btnOD" class="eye-btn active" onclick="window.setEye('OD')">ŒIL DROIT</button>
                   <button id="btnOG" class="eye-btn" onclick="window.setEye('OG')">ŒIL GAUCHE</button>
@@ -832,7 +763,7 @@
               </div>
 
               <div id="letterBox" class="letter-display">...</div>
-                
+
               <div id="systemMsg" class="message-box">En attente...</div>
 
               <div id="standardButtons" class="response-area">
@@ -851,7 +782,7 @@
               <div id="checkPlusZone" class="response-area hidden">
                   <div id="stepPlusWrapper">
                       <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
-                      
+
                       <div id="decisionsPlus" class="decision-row hidden">
                           <button class="btn-decision btn-blue" onclick="window.decidePlus('better')">Mieux avec le verre</button>
                           <button class="btn-decision btn-blue" onclick="window.decidePlus('same')">Pareil</button>
@@ -860,10 +791,10 @@
                           <button class="btn-decision btn-grey" onclick="window.relaunchPlus()">Relancer</button>
                       </div>
                   </div>
-                    
+
                   <div id="stepMinusWrapper" class="hidden">
                       <button id="btnMinus025" class="btn-timer hidden" onclick="window.triggerDefogCheck()">TESTER -0.25 (1.5s)</button>
-                      
+
                       <div id="decisionsMinus" class="decision-row hidden">
                           <button class="btn-decision btn-red" onclick="window.decideMinus('better')">Mieux avec le verre</button>
                           <button class="btn-decision btn-orange" onclick="window.decideMinus('same')">Pareil</button>
@@ -902,7 +833,7 @@
           </div>
       </div>
   </div>
-   
+
   <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
     <defs>
       <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#116dff" /></marker>
@@ -919,7 +850,7 @@ window.startAppSequence = function() {
     // Génération UID immédiate
     var uid = window.generateShortUID();
     document.getElementById('inUID').value = uid;
-    
+
     // Ouverture Fenêtre 1 (Identification)
     document.getElementById('modalPatientID').classList.remove('hidden');
 };
@@ -928,9 +859,11 @@ window.startAppSequence = function() {
 window.validatePatientID = function() {
     var dob = document.getElementById('inDob').value;
     if(!dob) { alert("La date de naissance est obligatoire."); return; }
-    
+
     // Ferme Modal ID
     document.getElementById('modalPatientID').classList.add('hidden');
+    document.getElementById('modalProfileCalc').classList.remove('hidden');
+};
     
     // Remplissage partiel du résumé (Nom/Prénom)
     var nom = document.getElementById('inName').value || "-";
@@ -948,7 +881,7 @@ window.initClock = function() {
         var options = { weekday: 'long', day: 'numeric', month: 'long' };
         var dateStr = now.toLocaleDateString('fr-FR', options);
         document.getElementById('displayDate').innerText = dateStr;
-        
+
         // Time format: "14:30"
         var timeStr = now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
         document.getElementById('displayTime').innerText = timeStr;
@@ -1033,7 +966,7 @@ window.forceNegativeCyl = function(el) {
     if(!el.value) return;
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
-    
+
     // Auto-conversion positif -> négatif (Logique Opto Standard)
     if(val > 0) val = -val;
 
@@ -1091,7 +1024,7 @@ window.initVoices = function() {
 }
 function say(textOrArray, callback) {
     if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-    
+
     // LOCK
     appState.isSpeaking = true;
     updateLockUI(true);
@@ -1103,7 +1036,7 @@ function say(textOrArray, callback) {
     var bestVoice = voices.find(function(v) { return v.lang.includes('fr') && (v.name.includes('Google') || v.name.includes('Thomas')); });
     if (!bestVoice) bestVoice = voices.find(function(v) { return v.lang.includes('fr'); });
     if (bestVoice) u.voice = bestVoice;
-    
+
     u.onend = function() {
         // UNLOCK
         appState.isSpeaking = false;
@@ -1179,7 +1112,7 @@ var appState = {
     sb02_OD_ok: false, sb02_OG_ok: false, seen025_OD: false, seen025_OG: false,
     sb05_OD_ok: false, sb05_OG_ok: false, sb10_OD_ok: false, sb10_OG_ok: false,
     tqs_attempted_06: false, count06_validations: 0, tqsFogCount: 0, checkStep: null, tempScore: 0, baseSphereValue: 0,
-    
+
     // --- NOUVEAUX ÉTATS DE SÉCURITÉ ---
     sb10_line_defog: 0, 
     safety_mode: false,
@@ -1207,10 +1140,17 @@ window.calculateProfileAndShowData = function() {
     if(document.getElementById('chkMono').checked) score += 1;
 
     var p = (score <= 5) ? "1" : (score <= 8) ? "2" : (score <= 12) ? "3" : "3+";
+    appState.baseProfile = p;
+    var finalProfile = p;
+    var s1 = window.getVal('raOD_sph');
+    var s2 = window.getVal('raOG_sph');
+    if (p === "1" && (s1 < 0 || s2 < 0)) { finalProfile = "2"; }
+    revealDataSection(finalProfile, false);
     
     // Affiche la section Données (Gauche) et lance l'INSTALLATION (STEP 6)
     revealDataSection(p, false); 
 };
+
 window.forceProfileAndShowData = function(forcedProfile) {
     appState.baseProfile = forcedProfile;
     var finalProfile = forcedProfile;
@@ -1225,33 +1165,41 @@ window.forceProfileAndShowData = function(forcedProfile) {
 function revealDataSection(profile, inputsEnabled) {
     appState.initProfile = profile; 
     setHTML('displayProfileName', profile);
-    
+
+    // Fermeture Fenêtre 2
     // Fermeture Fenêtre Profil
     document.getElementById('modalProfileCalc').classList.add('hidden');
-    
+
+    // Remplissage du Résumé Patient dans la colonne gauche
     // Mise à jour résumé gauche complet
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
     var age = dob ? getAgeFromDob(dob) + " ans" : "-";
+    var uid = document.getElementById('inUID').value;
     var eyeStart = appState.firstEye; 
-    
+
     var summaryHTML = `
         <div class="summary-grid">
             <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
             <div class="summary-row"><span class="summary-lbl">Age</span><span class="summary-val">${age}</span></div>
+            <div class="summary-row"><span class="summary-lbl">UID</span><span class="summary-val" style="font-family:monospace;">${uid}</span></div>
             <div class="summary-row"><span class="summary-lbl">Départ</span><span class="summary-val" style="color:var(--primary);">${eyeStart}</span></div>
             <div class="summary-row"><span class="summary-lbl">Profil</span><span class="summary-val" style="background:${getProfileColor(profile)}; color:white; padding:0 5px; border-radius:3px;">${profile}</span></div>
         </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
 
+    // Affichage des données (qui sont vides pour l'instant)
     document.getElementById('dataSection').classList.remove('hidden');
     toggleInputs('dataSection', inputsEnabled);
-    
+
+    // Ouverture Fenêtre 3 (Choix Méthode)
+    document.getElementById('modalEntryMethod').classList.remove('hidden');
     // --- CHANGEMENT ICI : ON VA DIRECTEMENT A L'INSTALLATION (STEP 6) ---
     window.openPositioningModal();
 }
+
   
 function getProfileColor(p) {
     if(p==='1') return '#26A69A'; if(p==='2') return '#42A5F5'; if(p==='3') return '#FFA726'; return '#EF5350';
@@ -1283,7 +1231,7 @@ window.simulateImport = function() {
     document.getElementById('mod_raOD_sph').value = "-1.50";
     document.getElementById('mod_raOD_cyl').value = "-0.50";
     document.getElementById('mod_raOD_axe').value = "180";
-    
+
     document.getElementById('mod_raOG_sph').value = "-1.75";
     document.getElementById('mod_raOG_cyl').value = "-0.25";
     document.getElementById('mod_raOG_axe').value = "170";
@@ -1297,7 +1245,7 @@ function syncModalWithMain() {
     document.getElementById('mod_raOD_sph').value = document.getElementById('raOD_sph').value;
     document.getElementById('mod_raOD_cyl').value = document.getElementById('raOD_cyl').value;
     document.getElementById('mod_raOD_axe').value = document.getElementById('raOD_axe').value;
-    
+
     document.getElementById('mod_raOG_sph').value = document.getElementById('raOG_sph').value;
     document.getElementById('mod_raOG_cyl').value = document.getElementById('raOG_cyl').value;
     document.getElementById('mod_raOG_axe').value = document.getElementById('raOG_axe').value;
@@ -1306,39 +1254,55 @@ function syncModalWithMain() {
     document.getElementById('mod_frontoOD_sph').value = document.getElementById('frontoOD_sph').value;
     document.getElementById('mod_frontoOD_cyl').value = document.getElementById('frontoOD_cyl').value;
     document.getElementById('mod_frontoOD_axe').value = document.getElementById('frontoOD_axe').value;
-    
+
     document.getElementById('mod_frontoOG_sph').value = document.getElementById('frontoOG_sph').value;
     document.getElementById('mod_frontoOG_cyl').value = document.getElementById('frontoOG_cyl').value;
     document.getElementById('mod_frontoOG_axe').value = document.getElementById('frontoOG_axe').value;
 }
 
 // Validation de la Modale de Saisie -> Transfert vers le code -> Ouverture Modale Position
-// Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Schober
 window.confirmDataAndPosition = function() {
+    // 1. Transfert des valeurs de la modale vers les inputs principaux
+    // RA
     // 1. Transfert des valeurs
     document.getElementById('raOD_sph').value = document.getElementById('mod_raOD_sph').value;
     document.getElementById('raOD_cyl').value = document.getElementById('mod_raOD_cyl').value;
     document.getElementById('raOD_axe').value = document.getElementById('mod_raOD_axe').value;
+    
     document.getElementById('raOG_sph').value = document.getElementById('mod_raOG_sph').value;
     document.getElementById('raOG_cyl').value = document.getElementById('mod_raOG_cyl').value;
     document.getElementById('raOG_axe').value = document.getElementById('mod_raOG_axe').value;
+
+    // Fronto
     document.getElementById('frontoOD_sph').value = document.getElementById('mod_frontoOD_sph').value;
     document.getElementById('frontoOD_cyl').value = document.getElementById('mod_frontoOD_cyl').value;
     document.getElementById('frontoOD_axe').value = document.getElementById('mod_frontoOD_axe').value;
+    
     document.getElementById('frontoOG_sph').value = document.getElementById('mod_frontoOG_sph').value;
     document.getElementById('frontoOG_cyl').value = document.getElementById('mod_frontoOG_cyl').value;
     document.getElementById('frontoOG_axe').value = document.getElementById('mod_frontoOG_axe').value;
+
+    // --- AJOUT : REMPLISSAGE AUTOMATIQUE DES VALEURS VIDES (0.00 et 0°) ---
     
     // Remplissage auto des vides
     var prefixes = ['raOD', 'raOG', 'frontoOD', 'frontoOG'];
     prefixes.forEach(function(p) {
+        // Sphère
+        var s = document.getElementById(p + '_sph');
+        if (!s.value || s.value.trim() === '') s.value = "0.00";
+        
+        // Cylindre
+        var c = document.getElementById(p + '_cyl');
+        if (!c.value || c.value.trim() === '') c.value = "0.00";
+        
+        // Axe
+        var a = document.getElementById(p + '_axe');
+        if (!a.value || a.value.trim() === '') a.value = "0°";
        var s = document.getElementById(p + '_sph'); if (!s.value) s.value = "0.00";
        var c = document.getElementById(p + '_cyl'); if (!c.value) c.value = "0.00";
        var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0°";
     });
-
-    // Déclenche les calculs internes (profil, etc.)
-    if(window.onRaChanged) window.onRaChanged();
+    // -----------------------------------------------------------------------
 
     // 2. Ferme la modale de saisie
     document.getElementById('modalInputData').classList.add('hidden');
@@ -1346,6 +1310,17 @@ window.confirmDataAndPosition = function() {
     // 3. AFFICHE L'ÉTAPE SCHOBER (STEP 4) DANS LE PANNEAU DROIT
     document.getElementById('waitingMsg').classList.add('hidden'); 
     document.getElementById('schoberStep').classList.remove('hidden'); 
+};
+  // -----------------------------------------------------------------------
+
+    // 2. Déclenche les calculs liés au changement de valeurs (pour le profil)
+    window.onRaChanged();
+
+    // 3. Ferme la modale de saisie
+    document.getElementById('modalInputData').classList.add('hidden');
+
+    // 4. Ouvre la modale suivante (Positionnement)
+    window.openPositioningModal();
 };
 function toggleInputs(sectionId, enable) {
     var sec = document.getElementById(sectionId);
@@ -1377,7 +1352,7 @@ window.onRaChanged = function() {
         var s2 = window.getVal('raOG_sph');
         if (s1 < 0 || s2 < 0) { appState.initProfile = "2"; setHTML('displayProfileName', "2"); } 
         else { appState.initProfile = "1"; setHTML('displayProfileName', "1"); }
-        
+
         // Mise à jour visuelle du résumé
         var p = appState.initProfile;
         // On ne met à jour que si le résumé est déjà affiché
@@ -1399,11 +1374,11 @@ window.openPositioningModal = function() {
 
 window.startRulesAndIntro = function() {
     document.getElementById('modalPosition').classList.add('hidden');
-    
+
     // Copie RA -> Subj (Affichage sans brouillage)
     var raOD = { s: getVal('raOD_sph'), c: getVal('raOD_cyl'), a: getVal('raOD_axe') };
     var raOG = { s: getVal('raOG_sph'), c: getVal('raOG_cyl'), a: getVal('raOG_axe') };
-      
+
     // MAJ: Utilisation des nouveaux IDs d'affichage
     setHTML('disp_subjOD_sph', raOD.s.toFixed(2)); setHTML('disp_subjOG_sph', raOG.s.toFixed(2));
     setHTML('disp_subjOD_cyl', raOD.c.toFixed(2)); setHTML('disp_subjOG_cyl', raOG.c.toFixed(2));
@@ -1411,7 +1386,7 @@ window.startRulesAndIntro = function() {
     setHTML('disp_subjOD_va', "--"); setHTML('disp_subjOG_va', "--");
 
     var introText = "Pour avoir une bonne mesure de votre vision de loin, il faut lire d’une manière naturelle, c’est à dire rapide et spontanée. Si vous ne pouvez pas lire vous le dites tout de suite, et si vous faites une erreur, comme vous avez lu naturellement, elle sera plus facile à corriger ! Mais si vous lisez d’une manière lente et réfléchie, le risque est de masquer vos erreurs et on ne peut pas améliorer une personne qui ne veut pas se tromper ! Donc il faut lire vite, si vous ne pouvez pas vous le dites tout de suite et si vous vous trompez aucune importance !";
-    
+
     say(introText, function() {
         document.getElementById('modalIntroConfirmation').classList.remove('hidden');
     });
@@ -1427,7 +1402,7 @@ window.triggerFinalStart = function() {
     // PRE-CALCUL DEBROUILLAGE Sb0.5 (Pour que le 2eme oeil soit pret)
     var raOD_sph = getVal('raOD_sph');
     var raOG_sph = getVal('raOG_sph');
-    
+
     // On calcule le delta potentiel dès maintenant (pour l'utiliser plus tard)
     appState.deltaSb05_OD = (raOD_sph < 0) ? -0.75 : -0.50;
     appState.deltaSb05_OG = (raOG_sph < 0) ? -0.75 : -0.50;
@@ -1440,7 +1415,7 @@ window.launchExamSequence = function() {
     try {
         var raOD = { s: getVal('raOD_sph'), c: getVal('raOD_cyl'), a: getVal('raOD_axe') };
         var raOG = { s: getVal('raOG_sph'), c: getVal('raOG_cyl'), a: getVal('raOG_axe') };
-        
+
         // Normalisation des axes RA
         raOD.a = normalizeAxis(raOD.a);
         raOG.a = normalizeAxis(raOG.a);
@@ -1457,7 +1432,7 @@ window.launchExamSequence = function() {
             appState.subj.OD = { sphere: raOD.s + fogOD, cyl: raOD.c, axe: raOD.a, va: "--" };
             appState.subj.OG = { sphere: raOG.s + fogOG, cyl: raOG.c, axe: raOG.a, va: "--" };
             appState.examPhase = "Sb0.2"; appState.targetVa = 0.06;
-            
+
             // LOGIQUE SPECIALE CYLINDRE -0.25 en Profil 3/3+
             if (appState.subj.OD.cyl === -0.25) {
                 appState.memCyl.OD = { cyl: -0.25, axe: appState.subj.OD.axe };
@@ -1499,7 +1474,7 @@ window.launchExamSequence = function() {
         document.getElementById('waitingMsg').classList.add('hidden');
         document.getElementById('examContent').classList.remove('hidden');
         updateDisplay("Profil " + appState.profile + ". Phase " + appState.examPhase + " (OD)");
-          
+
         say("Lisez moi s'il vous plait les lettres que vous voyez sur l'écran au fond de la pièce");
     } catch(e) { alert("Erreur Lancement: " + e); }
 };
@@ -1519,7 +1494,7 @@ function validateSb02() {
             var nextEye = (eye === 'OD') ? 'OG' : 'OD'; appState.activeEye = nextEye;
             appState.defoggedInZone = false; appState.vaIndex = appState.startVaIndex;
             appState.letterIndex = 0; updateDisplay("Recherche Sb0.2 (" + nextEye + ")");
-            
+
             // AJOUT: Relance vocale après changement d'œil
             say(window.getRandomPrompt());
         }
@@ -1535,7 +1510,7 @@ function initSb05() {
     appState.tqs_attempted_06 = false; 
     appState.count06_validations = 0; 
     appState.tqsFogCount = 0; 
-    
+
     // APPLICATION DU DEBROUILLAGE GLOBAL (OD + OG)
     applySb05GlobalDefog();
 
@@ -1569,7 +1544,7 @@ function applySb05GlobalDefog() {
         var deltaOG = (currentSphOG < 0) ? -0.75 : -0.50; // Basé sur sphère actuelle
         appState.subj.OG.sphere += deltaOG;
     }
-    
+
     setVaToIndexClosest(0.32); 
     updateDisplay("Sb0.5: Débrouillage Bilatéral effectué -> Départ 0.3");
 }
@@ -1577,7 +1552,7 @@ function applySb05GlobalDefog() {
 function validateSb05() {
     var eye = appState.activeEye;
     if (eye === 'OD') appState.sb05_OD_ok = true; else appState.sb05_OG_ok = true;
-    
+
     // Sauvegarde de la Sb0.5 trouvée
     if(eye === 'OD') appState.saved_sb05.OD = appState.subj.OD.sphere; 
     else appState.saved_sb05.OG = appState.subj.OG.sphere;
@@ -1593,10 +1568,10 @@ function validateSb05() {
             appState.count06_validations = 0; 
             appState.tqs_attempted_06 = false;
             appState.tqsFogCount = 0;
-            
+
             setVaToIndexClosest(0.32); 
             updateDisplay("Sb0.5 (" + nextEye + ") : Départ 0.3");
-            
+
             // AJOUT: Relance vocale après changement d'œil
             say(window.getRandomPrompt());
         }
@@ -1608,7 +1583,7 @@ function initSb10() {
     // alert("Passage à Sb1.0 (Bio-Monoculaire).");
     appState.examPhase = "Sb1.0"; appState.activeEye = appState.firstEye; appState.defoggedInZone = false;
     applySb10Logic();
-    
+
     // AJOUT : Annonce de relance après l'initialisation de la phase
     say(window.getRandomPrompt());
 }
@@ -1635,7 +1610,7 @@ function finishSb10ForEye() {
 
     if (eye === 'OD') appState.saved_sb10.OD = appState.subj.OD.sphere; else appState.saved_sb10.OG = appState.subj.OG.sphere;
     if (eye === 'OD') appState.sb10_OD_ok = true; else appState.sb10_OG_ok = true;
-      
+
     alert("Sphère Validée (" + eye + "). Début Recherche AXE.");
     document.getElementById('checkPlusZone').classList.add('hidden');
     document.getElementById('standardButtons').classList.add('hidden');
@@ -1646,19 +1621,19 @@ function finishSb10ForEye() {
 
 function initSphereCheckMinus() {
     appState.examPhase = "SphereCheckMinus"; appState.checkStep = "TEST_125_PRE";
-    
+
     // MODIFICATION: Check si safety mode actif
     if (appState.safety_mode) {
         // En mode sécurité, on reste sur la ligne actuelle
         // Mais on change les lettres pour éviter la mémorisation
         nextLetters();
         updateDisplay("Sécurité Myope: Test Quart Concave sur ligne actuelle.");
-        
+
         // --- LOGIQUE: ON AJOUTE LE -0.25 POUR LE TEST ---
         var target = getTargetEye(); 
         target.sphere -= 0.25; 
         // ------------------------------------------------
-        
+
         say("Lisez-moi cette ligne maintenant."); // Vocal spécifique demandé
     } else {
         // Mode standard (fin d'examen), on va à 1.25
@@ -1693,7 +1668,7 @@ async function triggerFogCheck() {
     // Verrouillage de l'interface
     updateLockUI(true);
     document.getElementById('btnPlus025').disabled = true; 
-    
+
     const target = getTargetEye();
     // On s'assure qu'on part de la base
     target.sphere = appState.baseSphereValue; 
@@ -1709,7 +1684,7 @@ async function triggerFogCheck() {
     await wait(400); // Petit délai naturel avant l'action
     target.sphere = appState.baseSphereValue + 0.25;
     updateDisplay("Check (+): +0.25 ajouté");
-    
+
     // TEMPS D'EXPOSITION LONG (Pour le verre positif)
     // La vidéo montre environ 3 secondes
     await wait(3000); 
@@ -1731,7 +1706,7 @@ async function triggerDefogCheck() {
     // Verrouillage
     updateLockUI(true);
     document.getElementById('btnMinus025').disabled = true; 
-    
+
     const target = getTargetEye();
     target.sphere = appState.baseSphereValue;
     updateDisplay("Check (-): Référence...");
@@ -1766,16 +1741,16 @@ async function triggerDefogCheck() {
 window.relaunchPlus = function() {
     if (appState.isSpeaking) return; // LOCK
     document.getElementById('decisionsPlus').classList.add('hidden');
-    
+
     // CHANGEMENT DE LETTRES UNIQUEMENT ICI (Relance explicite)
     nextLetters(); 
-    
+
     say("D'accord, je vous remontre", function() { window.triggerFogCheck(); });
 };
 
 window.decidePlus = function(choice) {
     if (appState.isSpeaking) return; // LOCK
-    
+
     // NOTE IMPORTANTE: Pas de nextLetters() ici car on enchaine sur le test suivant
     // ou on valide. Le changement de lettres se fait APRES la décision si on relance.
 
@@ -1793,7 +1768,7 @@ window.decidePlus = function(choice) {
         // Le patient aime le +0.25 -> On l'adopte et on recommence
         // C'est une NOUVELLE itération -> Changement de lettres
         nextLetters();
-        
+
         var target = getTargetEye(); target.sphere = appState.baseSphereValue + 0.25; 
         updateDisplay("Accepté (+0.25) -> On recommence le test"); 
         setTimeout(function() { initSphereCheckPlus(); }, 500);
@@ -1815,29 +1790,29 @@ window.startAutomaticMinusCheck = function() {
 
 window.relaunchFullCheck = function() { 
     if (appState.isSpeaking) return; // LOCK
-    
+
     // Relance explicite -> Changement de lettres
     nextLetters();
-    
+
     say("D'accord, mais on refait tout", function() { window.initSphereCheckPlus(true); }); 
 };
 
 window.decideMinus = function(choice) {
     if (appState.isSpeaking) return; // LOCK
-    
+
     // Fin du test -> Changement de lettres pour la suite (ou validation)
     nextLetters();
-    
+
     // --- MODIFICATION SÉCURITÉ SB1.0 ---
     if (choice === 'better') {
         // Le patient veut débrouiller
         var target = getTargetEye(); target.sphere = appState.baseSphereValue - 0.25; 
-        
+
         // Si on est en mode Sécurité (Safety Re-check)
         if (appState.safety_mode) {
             updateDisplay("Sécurité: Débrouillage accepté. Relire la ligne précédente.");
             appState.examPhase = "Sb1.0";
-            
+
             // ACTION IMMEDIATE : Changement de lettres + Vocal
             // nextLetters() déjà appelé au début de la fonction
             say("Très bien, essayez de me lire cette ligne maintenant."); 
@@ -1851,7 +1826,7 @@ window.decideMinus = function(choice) {
         initSphereCheckPlus(); 
     } else {
         // Le patient n'aime pas le débrouillage (Prefer Base)
-        
+
         // --- SÉCURITÉ : RETOUR ARRIÈRE ---
         if (appState.safety_mode) {
              var revertAmount = appState.sb10_line_defog * 0.25;
@@ -1875,7 +1850,7 @@ window.restartSb10 = function() {
     document.getElementById('modalIncoherent').classList.add('hidden');
     document.getElementById('checkPlusZone').classList.add('hidden');
     document.getElementById('standardButtons').classList.remove('hidden');
-    
+
     // --- CORRECTION MAJEURE : RETOUR +0.50 ---
     var target = getTargetEye();
     target.sphere += 0.50;
@@ -1900,7 +1875,7 @@ window.handleResponse = function(lettersRead) {
 
     // --- GESTION SPÉCIFIQUE Sb0.2 et Sb0.5 (Séquence Temporelle Stricte) ---
     if (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5") {
-        
+
         // 1. On parle d'abord (Feedback)
         say(feedback, function() {
             // CE CODE S'EXECUTE UNE FOIS QUE "TRES BIEN" EST FINI
@@ -1918,7 +1893,7 @@ window.handleResponse = function(lettersRead) {
 
             // 5. Détection du changement visuel
             var changed = (appState.vaIndex !== oldVa || appState.letterIndex !== oldLet);
-            
+
             // 6. Si changement visuel -> Relance vocale
             if (changed) {
                 say(window.getRandomPrompt());
@@ -1951,10 +1926,10 @@ window.handleCadence = function(type) {
 
     var n = appState.pendingLetters; 
     appState.pendingLetters = null;
-    
+
     document.getElementById('standardButtons').classList.remove('hidden'); 
     document.getElementById('cadenceButtons').classList.add('hidden');
-    
+
     // 2. Exécution Logique
     processLogic(n, type);
 
@@ -1972,7 +1947,7 @@ function processLogic(lettersRead, cadence) {
     var currentTxt = ACUITY_TABLE[appState.vaIndex].lines[appState.letterIndex % 8]; if(!currentTxt) currentTxt = ACUITY_TABLE[appState.vaIndex].lines[0];
     var totalLetters = currentTxt.split(' ').length; var isSmallLine = totalLetters < 5;
     var isPassed = false;
-      
+
     // RÈGLE SPÉCIFIQUE SB0.2
     if (appState.examPhase === "Sb0.2") {
         if (cadence === 'rabbit') {
@@ -1987,7 +1962,7 @@ function processLogic(lettersRead, cadence) {
                 if (lettersRead >= 4) isPassed = true;
             }
         }
-        
+
         if (isPassed) {
             // MISE A JOUR VA LUE
             appState.subj[appState.activeEye].va = currentVA;
@@ -2024,7 +1999,7 @@ function processLogic(lettersRead, cadence) {
             if (lettersRead >= 3 || (isSmallLine && lettersRead > 0)) {
                 nextLetters();
             } 
-            
+
             var msg = (cadence === 'turtle') ? "Tortue -> Sph -0.25" : "Non vu -> Sph -0.25";
             updateDisplay(msg);
             return;
@@ -2033,7 +2008,7 @@ function processLogic(lettersRead, cadence) {
 
     // RÈGLE SPÉCIFIQUE SB0.5 (T.Q.S)
     if (appState.examPhase === "Sb0.5") {
-        
+
         // --- 1. Gestion Validation Ligne (Lapin/Tortue identique) ---
         if (lettersRead >= 3) isPassed = true;
         else isPassed = false;
@@ -2108,7 +2083,7 @@ function processLogic(lettersRead, cadence) {
         if (isSmallLine && lettersRead === totalLetters) isPassed = true;
         if (!isSmallLine && lettersRead > 3) isPassed = true;
     }
-      
+
     // LOGIQUE SPHERE CHECK
     if (appState.examPhase === "SphereCheckMinus") {
         if (appState.checkStep === "TEST_125_PRE") {
@@ -2116,11 +2091,11 @@ function processLogic(lettersRead, cadence) {
             appState.checkStep = "TEST_125_POST"; nextLetters(); updateDisplay("Ajout -0.25 -> Relire 1.25");
         } else if (appState.checkStep === "TEST_125_POST") {
             var gain = lettersRead - appState.tempScore;
-            
+
             // --- SÉCURITÉ MYOPE : RÈGLE GAIN >= 2 ---
             if (appState.safety_mode) {
                  var gainSafety = lettersRead - appState.safety_mem_letters;
-                 
+
                  if (gainSafety >= 2) {
                       // SUCCÈS : On garde le -0.25
                       if (isPassed) {
@@ -2155,12 +2130,12 @@ function processLogic(lettersRead, cadence) {
 
     // LOGIQUE Sb1.0
     if (appState.examPhase === "Sb1.0") {
-        
+
         // --- SÉCURITÉ DE RETOUR (Après CheckPlus/CheckMinus) ---
         if (appState.safety_mode && getTargetEye().sphere >= 0) { // Uniquement Positif ici, Myope géré dans SphereCheckMinus block
             if (lettersRead > appState.safety_mem_letters) {
                 // Filtre A: Amélioration confirmée
-                
+
                 if (isPassed) {
                     // Filtre B: Validation Standard (Lapin) -> OK
                     appState.safety_mode = false; 
@@ -2178,11 +2153,11 @@ function processLogic(lettersRead, cadence) {
                 }
             } else {
                 // Filtre A Failed: Pas d'amélioration -> REVERT & STOP
-                
+
                 // 1. On annule le débrouillage (On remet +0.25 car le -0.25 était inutile)
                 var target = getTargetEye();
                 target.sphere += 0.25;
-                
+
                 // --- CORRECTION : ON MET A JOUR L'AFFICHAGE AVANT DE VALIDER ---
                 updateDisplay("Sécurité : Retour à la sphère précédente."); 
                 // ---------------------------------------------------------------
@@ -2201,7 +2176,7 @@ function processLogic(lettersRead, cadence) {
                 // === CAS SPHÈRE POSITIVE OU NULLE ===
                 // 1. Échec
                 if (lettersRead < 3 || (lettersRead === 3 && cadence === 'turtle')) {
-                    
+
                     // --- CORRECTION CHRONOLOGIQUE : CHECK AVANT DÉBROUILLAGE ---
                     if (appState.sb10_line_defog >= 2) {
                         // C'est le 3ème échec -> STOP AVANT DE TOUCHER LA SPHERE
@@ -2229,17 +2204,17 @@ function processLogic(lettersRead, cadence) {
                 // === CAS SPHÈRE NÉGATIVE (< 0) ===
                 // 1. Échec Franc
                 if (lettersRead < 3 || (lettersRead === 3 && cadence === 'turtle')) { 
-                    
+
                     // --- SÉCURITÉ MYOPE ---
                     if (appState.sb10_line_defog >= 2) {
                           appState.safety_mode = true;
                           appState.safety_mem_letters = lettersRead;
                           alert("Sécurité Myope : Débrouillage excessif. Test du Quart Concave.");
-                          
+
                           // --- AJOUT MAJEUR : ON AJOUTE LE -0.25 POUR LE TEST ICI ---
                           var target = getTargetEye(); target.sphere -= 0.25; 
                           // -----------------------------------------------------------
-                          
+
                           initSphereCheckMinus(); // Lance le test sans changer la ligne
                           return;
                     }
@@ -2265,13 +2240,13 @@ function processLogic(lettersRead, cadence) {
                 }
             }
         }
-        
+
         // Logique de montée standard avant 1.0
         if (isPassed) {
             appState.subj[appState.activeEye].va = currentVA;
             if (currentVA < 1.0) { if (goNextLine()) updateDisplay("Validé -> Suivant"); else updateDisplay("Max Atteint"); } return;
         } else { 
-            
+
             // --- CORRECTION CHRONOLOGIQUE : CHECK AVANT DÉBROUILLAGE (POUR SPH >= 0) ---
             if (sph >= 0) {
                 if (appState.sb10_line_defog >= 2) {
@@ -2294,11 +2269,11 @@ function processLogic(lettersRead, cadence) {
                       appState.safety_mode = true;
                       appState.safety_mem_letters = lettersRead;
                       alert("Sécurité Myope : Débrouillage excessif. Test du Quart Concave.");
-                      
+
                       // --- AJOUT MAJEUR : ON AJOUTE LE -0.25 POUR LE TEST ICI ---
                       var target = getTargetEye(); target.sphere -= 0.25; 
                       // -----------------------------------------------------------
-                      
+
                       initSphereCheckMinus();
                       return;
                 }
@@ -2311,7 +2286,7 @@ function processLogic(lettersRead, cadence) {
             return; 
         }
     }
-    
+
     // GENERAL - MESSAGES BAVARDS
     var msg = ""; var changeSphere = 0;
     if (isSmallLine) {
@@ -2343,7 +2318,7 @@ function handleSb10Safety(currentSphere, score) {
             appState.safety_mode = true;
             // On sauvegarde le vrai score de l'échec
             appState.safety_mem_letters = score; 
-            
+
             alert("Sécurité : Débrouillage excessif sur sphère positive. Vérification.");
             initSphereCheckPlus();
         }
@@ -2401,7 +2376,7 @@ function updateDisplay(message) {
 
     // Gestion des classes des boutons Yeux (Nouvelle logique Occlusion)
     var isMonocularPhase = (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5");
-    
+
     if(appState.activeEye === 'OD') {
         btnOD.className = 'eye-btn active';
         btnOG.className = isMonocularPhase ? 'eye-btn occluded-mode' : 'eye-btn';
@@ -2413,14 +2388,14 @@ function updateDisplay(message) {
     setHTML('valProfile', appState.profile);
     setHTML('systemMsg', message);
     if (message.indexOf("VALIDÉE") !== -1 || message.indexOf("Validé") !== -1) document.getElementById('systemMsg').classList.add('success-msg'); else document.getElementById('systemMsg').classList.remove('success-msg');
-      
+
     var currentData = ACUITY_TABLE[appState.vaIndex]; setHTML('valVA', currentData.va);
     var linesArr = currentData.lines; var txt = linesArr[appState.letterIndex % linesArr.length];
     setHTML('letterBox', txt);
     var count = txt.split(' ').length; var btnHTML = "";
     for(var i=0; i<=count; i++) { btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; }
     setHTML('btnContainer', btnHTML);
-      
+
     // Visuals Eye (Gauche) - Masquage des champs de saisie
     // (MODIFIÉ: Suppression de applyVisuals car plus d'éléments à masquer dans le panneau gauche)
 }
@@ -2477,10 +2452,10 @@ window.handleJccChoice = function(choice) {
             updateDisplay("Inversion -> Pas de " + appState.axisStep + "°");
         }
     }
-    
+
     // Modification ici pour utiliser la fonction de normalisation (0-175)
     target.axe = normalizeAxis(target.axe + rot);
-    
+
     updateDisplay("Nouvel Axe : " + target.axe + "°"); nextLetters(); setTimeout(function() { runJccSequence(); }, 1000);
 };
 
