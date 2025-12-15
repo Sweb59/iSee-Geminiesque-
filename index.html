@@ -554,6 +554,17 @@
     </div>
 </div>
 
+<div id="modalHandedness" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2 style="color:var(--primary); border:none; font-size:1.6rem;">Latéralité</h2>
+        <div class="modal-text">Le patient est-il droitier ou gaucher ?</div>
+        <div style="display:flex; gap:20px; justify-content:center;">
+            <button class="btn-action btn-validate" style="width:auto; padding:15px 30px;" onclick="window.setHandedness('OD')">DROITIER</button>
+            <button class="btn-action btn-validate" style="width:auto; padding:15px 30px;" onclick="window.setHandedness('OG')">GAUCHER</button>
+        </div>
+    </div>
+</div>
+
 <div id="modalPosition" class="modal-overlay hidden">
     <div class="modal-content">
         <h2 style="color:var(--primary); border:none; font-size:1.6rem;">Installation</h2>
@@ -711,7 +722,7 @@
                     <div class="schober-sub-group">
                         <div class="schober-sub-title">Vision Simultanée</div>
                         <div class="schober-grid">
-                            <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
+                            <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'AUTO')">
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <line x1="50" y1="20" x2="50" y2="80" class="sch-cross" />
                                     <line x1="20" y1="50" x2="80" y2="50" class="sch-cross" />
@@ -1192,6 +1203,7 @@ var appState = {
     safety_mem_letters: 0,
     hasRestartedSb10: false, // Flag anti-boucle
     // ----------------------------------
+    handednessEye: 'OD', // Valeur par défaut
 
     saved_sb05: { OD: 0, OG: 0 }, saved_sb10: { OD: 0, OG: 0 },
     axisStep: 20, axisDirectionHistory: [], cylHigh: false,
@@ -1318,9 +1330,7 @@ function syncModalWithMain() {
     document.getElementById('mod_frontoOG_axe').value = document.getElementById('frontoOG_axe').value;
 }
 
-// Validation de la Modale de Saisie -> Transfert vers le code -> Ouverture Modale Position
-// Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Schober
-// Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Schober + MISE A JOUR GAUCHE
+// Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Latéralité
 window.confirmDataAndPosition = function() {
     // 1. Transfert des valeurs
     document.getElementById('raOD_sph').value = document.getElementById('mod_raOD_sph').value;
@@ -1344,19 +1354,15 @@ window.confirmDataAndPosition = function() {
        var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0°";
     });
 
-    // Déclenche les calculs internes
     if(window.onRaChanged) window.onRaChanged();
 
-    // --- MISE A JOUR AFFICHAGE GAUCHE AVEC UID ---
+    // --- MISE A JOUR AFFICHAGE GAUCHE ---
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
     var age = dob ? getAgeFromDob(dob) + " ans" : "-";
-    
-    // Récupération de l'UID
     var uid = document.getElementById('inUID').value || "--";
 
-    // Mise à jour Bloc 1 : Patient (AVEC UID ICI)
     var summaryHTML = `
         <div class="summary-grid">
             <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
@@ -1365,19 +1371,29 @@ window.confirmDataAndPosition = function() {
         </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-
-    // Mise à jour Bloc 2 : Données
     document.getElementById('dataSection').classList.remove('hidden');
-    toggleInputs('dataSection', false); // Désactivation des inputs pendant le Schober
-    // --------------------------------------------
-
+    toggleInputs('dataSection', false);
+    
     // 2. Ferme la modale de saisie
     document.getElementById('modalInputData').classList.add('hidden');
 
-    // 3. AFFICHE L'ÉTAPE SCHOBER
+    // 3. OUVERTURE MODALE LATÉRALITÉ (Nouvelle Étape)
+    document.getElementById('modalHandedness').classList.remove('hidden');
+};
+
+window.setHandedness = function(handEye) {
+    // On stocke la préférence dans l'état global
+    appState.handednessEye = handEye; // 'OD' (Droitier) ou 'OG' (Gaucher)
+    
+    // On ferme la modale Latéralité
+    document.getElementById('modalHandedness').classList.add('hidden');
+    
+    // On affiche ENFIN le Schober
     document.getElementById('waitingMsg').classList.add('hidden'); 
-    document.getElementById('schoberStep').classList.remove('hidden'); 
-};function toggleInputs(sectionId, enable) {
+    document.getElementById('schoberStep').classList.remove('hidden');
+};
+
+function toggleInputs(sectionId, enable) {
     var sec = document.getElementById(sectionId);
     if(sec) {
         var inputs = sec.querySelectorAll('input:not([readonly]), select');
@@ -1390,6 +1406,14 @@ window.confirmDataAndPosition = function() {
 appState.isMonocularExam = false; 
 
 window.handleSchoberChoice = function(mode, eye) {
+    // --- GESTION DU CLIC 'VISION SIMULTANÉE' ---
+    if (eye === 'AUTO') {
+        // Si appState.handednessEye n'est pas défini (sécurité), on met OD par défaut
+        eye = appState.handednessEye || 'OD';
+        alert("Patient " + (eye==='OD'?'Droitier':'Gaucher') + " : Démarrage sur l'œil " + eye);
+    }
+    // -------------------------------------------
+
     appState.firstEye = eye; // Définit l'œil de démarrage
     appState.isMonocularExam = (mode === 'mono');
 
