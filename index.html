@@ -1247,19 +1247,26 @@ function revealDataSection(profile, inputsEnabled) {
     // Fermeture Fenêtre Profil
     document.getElementById('modalProfileCalc').classList.add('hidden');
 
-    // Mise à jour résumé gauche complet
+    // --- MISE A JOUR DEFINITIVE AVEC LE BADGE PROFIL ---
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
     var age = dob ? getAgeFromDob(dob) + " ans" : "-";
-    var eyeStart = appState.firstEye; 
+    var uid = document.getElementById('inUID').value || "--";
+    var pColor = getProfileColor(profile);
 
     var summaryHTML = `
         <div class="summary-grid">
             <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
             <div class="summary-row"><span class="summary-lbl">Age</span><span class="summary-val">${age}</span></div>
-            <div class="summary-row"><span class="summary-lbl">Départ</span><span class="summary-val" style="color:var(--primary);">${eyeStart}</span></div>
-            <div class="summary-row"><span class="summary-lbl">Profil</span><span class="summary-val" style="background:${getProfileColor(profile)}; color:white; padding:0 5px; border-radius:3px;">${profile}</span></div>
+            
+            <div class="summary-row" style="align-items:center;">
+                <span class="summary-lbl">UID</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="summary-val" style="font-family:monospace; color:var(--text-muted); font-size:0.9rem;">${uid}</span>
+                    <span style="background:${pColor}; color:white; padding:1px 6px; border-radius:4px; font-size:0.75rem; font-weight:bold;" title="Profil">${profile}</span>
+                </div>
+            </div>
         </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
@@ -1331,7 +1338,6 @@ function syncModalWithMain() {
 }
 
 // Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Latéralité
-// Validation de la Modale de Saisie -> Transfert vers le code -> Affichage Latéralité
 window.confirmDataAndPosition = function() {
     // 1. Transfert des valeurs
     document.getElementById('raOD_sph').value = document.getElementById('mod_raOD_sph').value;
@@ -1357,28 +1363,20 @@ window.confirmDataAndPosition = function() {
 
     if(window.onRaChanged) window.onRaChanged();
 
-    // --- MISE A JOUR AFFICHAGE GAUCHE (MODIFIÉ) ---
+    // --- MISE A JOUR AFFICHAGE GAUCHE (JUSTE L'UID, PAS DE PROFIL ENCORE) ---
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
     var age = dob ? getAgeFromDob(dob) + " ans" : "-";
     var uid = document.getElementById('inUID').value || "--";
     
-    // Récupération Profil et Couleur pour affichage discret
-    var p = appState.initProfile || "?";
-    var pColor = getProfileColor(p);
-
     var summaryHTML = `
         <div class="summary-grid">
             <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
             <div class="summary-row"><span class="summary-lbl">Age</span><span class="summary-val">${age}</span></div>
-            
             <div class="summary-row" style="align-items:center;">
                 <span class="summary-lbl">UID</span>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="summary-val" style="font-family:monospace; color:var(--text-muted); font-size:0.9rem;">${uid}</span>
-                    <span style="background:${pColor}; color:white; padding:1px 6px; border-radius:4px; font-size:0.75rem; font-weight:bold;" title="Profil">${p}</span>
-                </div>
+                <span class="summary-val" style="font-family:monospace; color:var(--text-muted); font-size:0.9rem;">${uid}</span>
             </div>
         </div>
     `;
@@ -1392,6 +1390,7 @@ window.confirmDataAndPosition = function() {
     // 3. OUVERTURE MODALE LATÉRALITÉ (Nouvelle Étape)
     document.getElementById('modalHandedness').classList.remove('hidden');
 };
+
 window.setHandedness = function(handEye) {
     // On stocke la préférence dans l'état global
     appState.handednessEye = handEye; // 'OD' (Droitier) ou 'OG' (Gaucher)
