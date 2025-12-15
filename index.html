@@ -142,7 +142,25 @@
   .check-lbl:hover { background: #f9f9f9; }
   .check-lbl input { width: auto; margin: 0; cursor: pointer; }
 
-  /* GRILLE VALEURS */
+  /* --- COULEURS PERSONNALISÉES DES DONNÉES --- */
+  
+  /* 1. Autoréfractomètre (RA) */
+  input[id^="ra"] {
+      color: var(--primary);              /* Texte : Primary (Cyan) */
+      background-color: var(--primary-light); /* Fond : Primary Light (Cyan très pâle) */
+      font-family: 'Montserrat', sans-serif;  /* Police moderne */
+      font-weight: 700;
+      border: 1px solid var(--primary-border);
+  }
+
+  /* 2. Frontofocomètre */
+  input[id^="fronto"] {
+      color: var(--primary-border);       /* Texte : Plus clair que primary */
+      background-color: #ffffff;          /* Fond : Blanc (Plus clair que primary-light) */
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+  }
+    /* GRILLE VALEURS */
   .col-head { background: #ECEFF1; font-weight: bold; font-size: 0.7rem; padding: 4px 0; border-radius: 3px; }
   .col-input { padding: 3px; text-align: center; font-weight: 600; }
   .val-box { 
