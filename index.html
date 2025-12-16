@@ -36,58 +36,57 @@
       font-size: 13px;
   }
 
-  /* LAYOUT PRINCIPAL */
+  /* LAYOUT PRINCIPAL MODIFIÉ POUR PLEIN ÉCRAN */
   .app-container { 
       display: flex; 
       flex-direction: column; 
       height: 100%; 
-      max-width: 1400px; 
-      margin: 0 auto; 
-      padding: 10px;
+      max-width: 100%; /* Prend tout l'écran */
+      margin: 0; 
+      padding: 0; /* Suppression du padding extérieur */
   }
 
   header { 
       flex: 0 0 auto; 
-      margin-bottom: 5px; 
+      margin-bottom: 0; 
       border-bottom: 2px solid var(--primary);
-      padding-bottom: 5px;
+      padding: 10px 20px; /* Un peu d'air pour le titre */
+      background: var(--bg-main);
   }
   h1 { margin: 0; color: var(--primary-dark); font-size: 1.2rem; }
 
   .dashboard-wrapper {
       display: flex;
       flex: 1; 
-      gap: 15px;
+      gap: 0; /* Suppression de l'espace entre les colonnes */
       overflow: hidden; 
   }
 
-  /* --- COLONNE GAUCHE --- */
+  /* --- COLONNE GAUCHE (MASQUÉE) --- */
+  /* On cache visuellement mais on garde le DOM pour le JS */
   .left-panel {
-      flex: 0 0 380px; 
-      display: flex; 
-      flex-direction: column;
-      gap: 10px;
-      overflow-y: auto; 
-      padding-right: 5px;
+      display: none !important; 
   }
 
-  /* --- COLONNE DROITE --- */
+  /* --- COLONNE DROITE (PLEIN ÉCRAN) --- */
   .right-panel {
       flex: 1; 
+      width: 100%;
       background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      /* Suppression du style "carte" pour un style "appli plein écran" */
+      border: none; 
+      border-radius: 0;
       padding: 10px 15px; 
       display: flex;
       flex-direction: column;
       justify-content: center; 
       align-items: center;
       position: relative;
-      box-shadow: 0 4px 15px rgba(0, 4, 198, 0.05);
+      box-shadow: none;
       font-size: 1.1rem; 
   }
 
-  /* STYLE DES PANNEAUX */
+  /* STYLE DES PANNEAUX INTERNES */
   .section { 
       background: var(--panel); 
       border: 1px solid var(--border); 
