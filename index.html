@@ -565,6 +565,17 @@
     </div>
 </div>
 
+<div id="modalSchoberConfirm" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2 style="color:var(--primary); border:none; font-size:1.6rem;">Confirmation Schober</h2>
+        <div id="schoberConfirmText" class="modal-text" style="font-weight:500; color:#37474F; margin-bottom:25px;"></div>
+        <div style="display:flex; gap:20px; justify-content:center;">
+            <button class="btn-action btn-grey" style="width:auto; padding:15px 30px;" onclick="window.cancelSchober()">ANNULER</button>
+            <button class="btn-action btn-validate" style="width:auto; padding:15px 30px;" onclick="window.validateSchober()">VALIDER</button>
+        </div>
+    </div>
+</div>
+
 <div id="modalPosition" class="modal-overlay hidden">
     <div class="modal-content">
         <h2 style="color:var(--primary); border:none; font-size:1.6rem;">Installation</h2>
@@ -654,7 +665,7 @@
           </div>
 
           <div id="dataSection" class="section hidden">
-              <h2 style="display:flex; justify-content:space-between;">2. Données <span id="displayProfileName" style="color:var(--primary); background:var(--primary-light); padding:2px 8px; border-radius:4px;">--</span></h2>
+              <h2>2. Données</h2>
 
               <div style="display:flex; gap:10px; font-size:0.85rem;">
                   <div style="flex:1;">
@@ -722,7 +733,7 @@
                     <div class="schober-sub-group">
                         <div class="schober-sub-title">Vision Simultanée</div>
                         <div class="schober-grid">
-                            <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'AUTO')">
+                            <button class="btn-schober" onclick="window.confirmSchoberSelection(1, 'bino', 'AUTO')">
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
                                     <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
@@ -735,7 +746,7 @@
                     <div class="schober-sub-group">
                         <div class="schober-sub-title">Neutralisation Intermittente</div>
                         <div class="schober-grid">
-                            <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OD')">
+                            <button class="btn-schober" onclick="window.confirmSchoberSelection(2, 'bino', 'OD')">
                                  <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OD+</div>
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
@@ -743,7 +754,7 @@
                                     <circle cx="50" cy="50" r="35" class="sch-circle sch-faint" />
                                 </svg>
                             </button>
-                            <button class="btn-schober" onclick="window.handleSchoberChoice('bino', 'OG')">
+                            <button class="btn-schober" onclick="window.confirmSchoberSelection(3, 'bino', 'OG')">
                                 <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OG+</div>
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross sch-faint" />
@@ -763,7 +774,7 @@
                     <div class="schober-sub-group">
                         <div class="schober-sub-title">Alternance Facile</div>
                         <div class="schober-grid">
-                            <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
+                            <button class="btn-schober" onclick="window.confirmSchoberSelection(4, 'mono', 'OD')">
                                  <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OD</div>
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <path d="M20 20 L40 20 L30 10 Z" fill="#fff"/>
@@ -771,7 +782,7 @@
                                     <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
                                 </svg>
                             </button>
-                            <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
+                            <button class="btn-schober" onclick="window.confirmSchoberSelection(5, 'mono', 'OG')">
                                  <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OG</div>
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <path d="M60 20 L80 20 L70 10 Z" fill="#fff"/>
@@ -784,13 +795,13 @@
                     <div class="schober-sub-group">
                         <div class="schober-sub-title">Alternance difficile ou Neutra.</div>
                         <div class="schober-grid">
-                            <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OD')">
+                            <button class="btn-schober" onclick="window.confirmSchoberSelection(6, 'mono', 'OD')">
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
                                     <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
                                 </svg>
                             </button>
-                            <button class="btn-schober" onclick="window.handleSchoberChoice('mono', 'OG')">
+                            <button class="btn-schober" onclick="window.confirmSchoberSelection(7, 'mono', 'OG')">
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <circle cx="50" cy="50" r="35" class="sch-circle" />
                                 </svg>
@@ -801,14 +812,14 @@
                     <div class="schober-sub-group">
                         <div class="schober-sub-title">Monophtalme ou Amblyopie</div>
                         <div class="schober-grid">
-                              <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OD')">
+                              <button class="btn-schober" style="border-style:dashed;" onclick="window.confirmSchoberSelection(8, 'mono', 'OD')">
                                  <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
                                     <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
                                 </svg>
                             </button>
-                            <button class="btn-schober" style="border-style:dashed;" onclick="window.handleSchoberChoice('mono', 'OG')">
+                            <button class="btn-schober" style="border-style:dashed;" onclick="window.confirmSchoberSelection(9, 'mono', 'OG')">
                                 <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
                                 <svg width="70" height="70" viewBox="0 0 100 100">
                                     <circle cx="50" cy="50" r="35" class="sch-circle" />
@@ -1204,6 +1215,7 @@ var appState = {
     hasRestartedSb10: false, // Flag anti-boucle
     // ----------------------------------
     handednessEye: 'OD', // Valeur par défaut
+    pendingSchober: null, // Stockage temporaire du choix Schober
 
     saved_sb05: { OD: 0, OG: 0 }, saved_sb10: { OD: 0, OG: 0 },
     axisStep: 20, axisDirectionHistory: [], cylHigh: false,
@@ -1415,12 +1427,53 @@ function toggleInputs(sectionId, enable) {
 // Variable globale pour le mode
 appState.isMonocularExam = false; 
 
+// --- Dictionnaire des phrases Schober ---
+const SCHOBER_PHRASES = {
+    1: "Le patient voit la croix et le cercle, en même temps (Vision simultanée).",
+    2: "Le patient voit la croix en permanence, mais le cercle s'efface par intermittence (Neutralisation intermittente).",
+    3: "Le patient voit le cercle en permanence, mais la croix s'efface par intermittence (Neutralisation intermittente).",
+    4: "Le patient ne voit d'emblée que la croix, mais il peut facilement passer de la croix au cercle et inversement (Neutralisation alternante).",
+    5: "Le patient ne voit d'emblée que le cercle, mais il peut facilement passer du cercle à la croix et inversement (Neutralisation alternante).",
+    6: "Le patient ne voit que la croix, mais s'il ferme l'oeil droit, il voit le cercle (Neutralisation gauche).",
+    7: "Le patient ne voit que le cercle, mais s'il ferme l'oeil gauche, il voit la croix (Neutralisation droite).",
+    8: "Le patient ne voit que la croix, et s'il ferme l'oeil droit il ne voit plus rien (Monophtalme oeil droit ou amblyopie gauche profonde).",
+    9: "Le patient ne voit que le cercle, et s'il ferme l'oeil gauche, il ne voit plus rien (Monophtalme oeil gauche ou amblyopie droite profonde)."
+};
+
+// 1. Fonction appelée par le clic bouton (Ouvre Modale)
+window.confirmSchoberSelection = function(id, mode, eye) {
+    // Stockage temporaire
+    appState.pendingSchober = { mode: mode, eye: eye };
+    
+    // Injection du texte
+    var text = SCHOBER_PHRASES[id] || "Confirmation du choix...";
+    document.getElementById('schoberConfirmText').innerText = text;
+    
+    // Affichage Modale
+    document.getElementById('modalSchoberConfirm').classList.remove('hidden');
+};
+
+// 2. Fonction Annuler (Ferme Modale, reste sur Schober)
+window.cancelSchober = function() {
+    appState.pendingSchober = null;
+    document.getElementById('modalSchoberConfirm').classList.add('hidden');
+};
+
+// 3. Fonction Valider (Ferme Modale, lance la suite)
+window.validateSchober = function() {
+    document.getElementById('modalSchoberConfirm').classList.add('hidden');
+    var p = appState.pendingSchober;
+    if(p) {
+        window.handleSchoberChoice(p.mode, p.eye);
+    }
+};
+
 window.handleSchoberChoice = function(mode, eye) {
     // --- GESTION DU CLIC 'VISION SIMULTANÉE' ---
     if (eye === 'AUTO') {
         // Si appState.handednessEye n'est pas défini (sécurité), on met OD par défaut
         eye = appState.handednessEye || 'OD';
-        alert("Patient " + (eye==='OD'?'Droitier':'Gaucher') + " : Démarrage sur l'œil " + eye);
+        // Note: L'alerte a été supprimée pour fluidité, car le message est déjà dans la modale de confirmation
     }
     // -------------------------------------------
 
