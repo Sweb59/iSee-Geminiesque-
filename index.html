@@ -1597,7 +1597,9 @@ window.launchExamSequence = function() {
         }
 
         // Init Exam
-        appState.isRunning = true; appState.activeEye = 'OD'; appState.firstEye = 'OD';
+        appState.isRunning = true;
+        // On ne touche pas à appState.firstEye ici, il a été défini par le Schober !
+        appState.activeEye = appState.firstEye; // On démarre sur l'œil défini
         appState.defoggedInZone = false;
         setVaToIndexClosest(appState.targetVa); appState.startVaIndex = appState.vaIndex;
 
