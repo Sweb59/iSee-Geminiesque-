@@ -72,52 +72,116 @@
   .pat-profile-badge { padding: 3px 10px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
   /* 2. Zone Examen */
+  /* --- NOUVEAU LAYOUT SPLIT (GAUCHE / DROITE) --- */
+
+  /* 1. Conteneur Principal de droite */
   .right-panel {
       flex: 1; 
       width: 100%;
       background: var(--bg-main);
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-      overflow-y: auto; 
+      flex-direction: column; 
+      overflow: hidden; 
       padding: 0;
-      border: none;
-      box-shadow: none;
   }
 
-  /* 3. Barre de données technique (Cachée au début) */
-  .exam-data-strip {
-      width: 100%;
-      background: #FFFFFF;
-      border-bottom: 1px solid #E0E0E0;
-      padding: 10px 0;
+  /* 2. En-tête Divisé (Double Header) */
+  .exam-header-wrapper {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 40px;
-      flex: 0 0 auto; 
-      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-      margin-bottom: 20px;
-      z-index: 10;
+      width: 100%;
+      height: 70px; /* Hauteur fixe */
+      background: #fff;
+      border-bottom: 1px solid #E0E0E0;
+      flex: 0 0 auto;
   }
-  
-  /* Inputs compacts pour la barre */
-  .mini-data-block { display: flex; align-items: center; gap: 10px; border-right: 1px solid #EEE; padding-right: 20px; }
-  .mini-data-block:last-child { border-right: none; }
-  .mini-block-title { font-weight: bold; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; letter-spacing: 1px;}
-  .mini-inputs-col { display: flex; flex-direction: column; gap: 5px; }
-  .mini-inputs-row { display: flex; gap: 5px; align-items: center; }
-  .mini-eye-lbl { font-size:0.75rem; font-weight:bold; width: 20px; text-align:right; margin-right:5px; }
-  
-  .mini-input { 
-      width: 55px; text-align: center; padding: 4px; font-size: 0.95rem; 
-      border: 1px solid #CFD8DC; border-radius: 4px; background: #FAFAFA; font-weight: 600; font-family: 'Montserrat', sans-serif;
-  }
-  .mini-input:focus { border-color: var(--primary); background: #fff; outline:none; border-width: 2px; }
 
-  /* Suppression ancienne colonne */
-  .left-panel { display: none !important; }
+  /* Partie GAUCHE de l'en-tête (Pilotage) */
+  .header-left-control {
+      flex: 0 0 660px; /* Largeur fixe pour couvrir les données */
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 0 15px; border-right: 1px solid #eee; background: #F9FAFB;
+  }
+  .phase-badge { font-size: 0.7rem; font-weight: 800; color: #546E7A; text-transform: uppercase; text-align: center; margin-bottom: 4px; }
+  .control-row { display: flex; justify-content: center; gap: 10px; align-items: center; }
+
+  /* Partie DROITE de l'en-tête (Visuel) */
+  .header-right-visual {
+      flex: 1; /* Prend le reste */
+      display: flex; align-items: center; justify-content: center; gap: 40px;
+      background: #fff;
+  }
+
+  /* 3. Zone de Travail Divisée (Split) */
+  .work-split {
+      display: flex;
+      flex: 1; /* Prend toute la hauteur restante */
+      overflow: hidden;
+      width: 100%;
+  }
+
+  /* Colonne GAUCHE (Données) */
+  .side-data {
+      flex: 0 0 660px; /* Largeur fixe alignée avec l'en-tête */
+      background: #F5F7F8;
+      border-right: 1px solid #CFD8DC;
+      padding: 10px;
+      overflow-x: auto;
+      display: flex; align-items: flex-start; justify-content: center; /* Données en haut */
+  }
+
+  /* Colonne DROITE (Lettres) */
+  .side-letters {
+      flex: 1; 
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      background: #FFFFFF; position: relative;
+  }
+
+  /* 4. Barre du Bas (Boutons Réponses) */
+  .bottom-interaction-zone {
+      flex: 0 0 auto; width: 100%; min-height: 110px;
+      background: #fff; border-top: 1px solid #eee;
+      display: flex; justify-content: center; align-items: center;
+      padding: 10px; z-index: 20;
+  }
+
+  /* --- STYLES ÉLÉMENTS SPÉCIFIQUES --- */
+  
+  /* Boutons Pilotage (Gauche) */
+  .btn-pilot {
+      width: 50px; height: 34px; border-radius: 6px; font-weight: bold; cursor: pointer; border: 2px solid transparent; font-size: 0.9rem;
+  }
+  .btn-pilot.open { background: #fff; border-color: #B0BEC5; color: #78909C; }
+  .btn-pilot.closed { background: #455A64; border-color: #455A64; color: #90A4AE; opacity: 0.5; }
+  .btn-pilot.active { background: var(--primary); color: white; border-color: var(--primary-dark); opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+  .btn-mode-display {
+      padding: 4px 12px; background: #ECEFF1; color: #455A64; font-size: 0.75rem; font-weight: 700; border-radius: 12px; border: 1px solid #CFD8DC; text-transform: uppercase; min-width: 120px; text-align: center;
+  }
+
+  /* Indicateurs Visuels (Droite) */
+  .va-box-display {
+      width: 90px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; font-weight: bold; font-family: 'Montserrat', sans-serif;
+      background: #FAFAFA; color: #CFD8DC; border: 2px solid #F0F0F0;
+  }
+  .va-box-display.active-eye {
+      background: #E0F7FA; color: var(--primary-dark); border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  /* Colonnes de Données */
+  .exam-data-strip { display: flex; gap: 8px; width: 100%; justify-content: center; }
+  .data-col { display: flex; flex-direction: column; width: 100px; background: #fff; border: 1px solid #CFD8DC; border-radius: 6px; padding: 6px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .col-active { width: 120px; border: 2px solid var(--primary); z-index: 5; transform: scale(1.02); }
+  .col-title { font-size: 0.65rem; font-weight: 800; color: #90A4AE; text-transform: uppercase; margin-bottom: 5px; border-bottom: 1px solid #eee; }
+  .title-ra { color: var(--primary); } .title-subj { color: var(--primary-dark); font-size: 0.8rem; }
+  .data-line { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.8rem; }
+  .lbl { font-weight: bold; color: #B0BEC5; font-size: 0.65rem; }
+  .val-input { width: 100%; text-align: center; background: transparent; border: none; font-weight: 600; color: #546E7A; font-family: 'Montserrat', sans-serif; }
+  .val-big { font-size: 1.1rem; font-weight: 700; color: #37474F; }
+
+  /* Lettres */
+  .letter-display { font-family: 'Segoe UI', sans-serif; font-size: 5.5rem; font-weight: bold; color: #263238; letter-spacing: 12px; }
+  .info-bar { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 15px; }
 
   /* STYLE DES PANNEAUX */
   .section { 
@@ -210,107 +274,8 @@
       margin-bottom:3px; text-transform:uppercase; border-bottom:1px solid var(--primary-light);
   }
 
-  /* ZONE EXAMEN */
-  .exam-controls { display: flex; gap: 20px; margin-bottom: 20px; width: 100%; justify-content: center; }
-
-  .eye-btn { 
-      padding: 12px 40px; 
-      background: var(--primary-light); 
-      color: var(--primary-dark); 
-      border: 1px solid transparent; 
-      font-weight: bold; cursor: pointer; flex: 1; max-width: 200px; 
-      border-radius: 10px; 
-      transition: all 0.3s ease;
-      opacity: 0.8;
-      font-size: 1.2rem; 
-  }
-
-  .eye-btn.active { 
-      background: var(--bg-main); 
-      color: var(--primary-dark); 
-      border: 3px solid var(--primary); 
-      opacity: 1;
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  }
-
-  .eye-btn.occluded-mode {
-      background-color: var(--primary-deep) !important;
-      color: var(--primary-deep) !important;
-      border-color: var(--primary-deep) !important;
-      cursor: not-allowed;
-      opacity: 0.5;
-  }
-
-  /* STYLE COLONNES SUBJECTIF */
-  .subj-display-container {
-      display: flex; 
-      gap: 40px; 
-      width: 100%; 
-      margin-bottom: 20px; 
-      justify-content: center;
-  }
-
-  .subj-col {
-      display: flex; 
-      flex-direction: column; 
-      width: 220px;
-      border-radius: 12px;
-      padding: 15px;
-      transition: all 0.3s ease;
-      background: var(--primary-light); 
-      border: 2px solid transparent; 
-      opacity: 0.9;
-  }
-
-  .subj-col .eye-header {
-      text-align: center;
-      font-weight: bold;
-      margin-bottom: 10px;
-      padding-bottom: 5px;
-      font-size: 1.6rem;
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-      color: var(--primary-dark); 
-  }
-
-  /* --- MODIFICATION POLICE ICI --- */
-  .subj-col .val-data { 
-      font-family: 'Montserrat', sans-serif; /* Police Moderne */
-      font-weight: 700; 
-      font-size: 2.4rem;
-      color: #90A4AE; 
-      font-variant-numeric: tabular-nums; /* Alignement des chiffres */
-      letter-spacing: -1px;
-  }
-
-  .subj-col.active {
-      background: var(--bg-main); 
-      border: 3px solid var(--primary);
-      box-shadow: 0 6px 15px rgba(4, 171, 198, 0.2);
-      transform: scale(1.05);
-      opacity: 1;
-  }
-
-  .subj-col.active .eye-header { color: var(--primary-dark); }
-  .subj-col.active .val-data { color: var(--primary); }
-
-  .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-  .lbl-mini { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-
-  .info-bar { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 10px; margin-top: 10px; }
-
-  /* LETTRES */
-  .letter-display { 
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      font-size: 3.5rem;
-      font-weight: bold; 
-      text-align: center; 
-      margin: 15px 0 25px 0; 
-      min-height: 80px; 
-      color: #263238; 
-      line-height: 1;
-      letter-spacing: 5px;
-  }
+  
+ 
 
   /* MESSAGE BOX (CACHÉE) */
   .message-box { display: none !important; }
