@@ -1027,9 +1027,10 @@
       <marker id="arrowhead2" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#fd7e14" /></marker>
     </defs>
   </svg>
-</div><script>
+</div>
+  <script>
 // =============================================================================
-// 1. CONFIGURATION & VARIABLES
+// 1. CONFIGURATION & DONNÉES
 // =============================================================================
 
 var ACUITY_TABLE = [
@@ -1062,42 +1063,37 @@ var appState = {
     memCyl: { OD: null, OG: null }, 
     vaIndex: 0, startVaIndex: 0, letterIndex: 0, pendingLetters: null, defoggedInZone: false,
     examPhase: "Sb0.2", patientInfo: { name: "", forename: "", dob: "", age: 0, uid: "" },
-    
-    // Flags Logiques
     sb02_OD_ok: false, sb02_OG_ok: false, seen025_OD: false, seen025_OG: false,
     sb05_OD_ok: false, sb05_OG_ok: false, sb10_OD_ok: false, sb10_OG_ok: false,
     tqs_attempted_06: false, count06_validations: 0, tqsFogCount: 0, checkStep: null, tempScore: 0, baseSphereValue: 0,
-
-    // Sécurités
     sb10_line_defog: 0, safety_mode: false, safety_mem_letters: 0, hasRestartedSb10: false, 
-    
     handednessEye: 'OD', pendingSchober: null, 
-
     saved_sb05: { OD: 0, OG: 0 }, saved_sb10: { OD: 0, OG: 0 },
     axisStep: 20, axisDirectionHistory: [], cylHigh: false, lastInvalidInputId: null 
 };
 
 // =============================================================================
-// 2. FONCTIONS DE VALIDATION & HELPERS (Manquantes précédemment)
+// 2. FONCTIONS UTILITAIRES (DÉFINIES EN PREMIER)
 // =============================================================================
 
 window.generateShortUID = function() { return "TP" + Math.floor(Math.random()*10000); };
 window.getVal = function(id) { var el=document.getElementById(id); return (el && el.value) ? parseFloat(el.value.replace(',','.')) || 0 : 0; };
 window.setHTML = function(id, val) { var el=document.getElementById(id); if(el) el.innerHTML=val; };
+window.getAgeFromDob = function(dob) { if(!dob) return 0; var d = new Date(dob); var n = new Date(); var a = n.getFullYear() - d.getFullYear(); if(n.getMonth() < d.getMonth() || (n.getMonth()===d.getMonth() && n.getDate() < d.getDate())) a--; return a; };
+window.getAgeScore = function(a) { if(a<=10) return 6; if(a<=20) return 5; if(a<=30) return 4; if(a<=50) return 2; if(a<=70) return 1; return 0; };
+window.getProfileColor = function(p) { if(p==='1') return '#26A69A'; if(p==='2') return '#42A5F5'; if(p==='3') return '#FFA726'; return '#EF5350'; };
 window.startChrono = function() { }; 
 window.initClock = function() { };
 
-// Vérifie si Myope pour afficher/masquer le bouton Profil 1
+// Vérifie si Myope (pour le bouton profil)
 window.checkMyopia = function() {
     var s1 = window.getVal('raOD_sph'); var s2 = window.getVal('raOG_sph');
     var btn = document.getElementById('btnProfile1');
     if (btn) { if (s1 < 0 || s2 < 0) { btn.style.display = 'none'; } else { btn.style.display = 'inline-block'; } }
 };
 
-// Appelé quand RA change
 window.onRaChanged = function() { 
     window.checkMyopia();
-    // Auto-adaptation profil si déjà défini
     if (appState.baseProfile === "1") {
         var s1 = window.getVal('raOD_sph'); var s2 = window.getVal('raOG_sph');
         if (s1 < 0 || s2 < 0) { appState.initProfile = "2"; setHTML('displayProfileName', "2"); } 
@@ -1107,8 +1103,8 @@ window.onRaChanged = function() {
     }
 };
 
+// Validation Inputs
 window.validateNumberInput = function(el) { el.value = el.value.replace(/[^0-9.,-]/g, ''); };
-
 window.closeWarningModal = function() {
     document.getElementById('modalWarning').classList.add('hidden');
     if(appState.lastInvalidInputId) {
@@ -1117,55 +1113,33 @@ window.closeWarningModal = function() {
         appState.lastInvalidInputId = null;
     }
 };
-
 window.checkSphere = function(el) {
     if(!el.value) return;
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
-    if (val < -29.00 || val > 26.75) {
-        appState.lastInvalidInputId = el.id;
-        document.getElementById('modalWarning').classList.remove('hidden');
-        return;
-    }
+    if (val < -29.00 || val > 26.75) { appState.lastInvalidInputId = el.id; document.getElementById('modalWarning').classList.remove('hidden'); return; }
     val = Math.round(val * 4) / 4; el.value = val.toFixed(2);
 };
-
 window.forceNegativeCyl = function(el) {
     if(!el.value) return;
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
     if(val > 0) val = -val; 
-    if (val < -10.00 || val > 0) {
-        appState.lastInvalidInputId = el.id;
-        document.getElementById('modalWarning').classList.remove('hidden');
-        return;
-    }
+    if (val < -10.00 || val > 0) { appState.lastInvalidInputId = el.id; document.getElementById('modalWarning').classList.remove('hidden'); return; }
     val = Math.round(val * 4) / 4; el.value = val.toFixed(2);
 };
-
-function normalizeAxis(val) {
-    val = Math.round(val / 5) * 5;
-    val = (val % 180 + 180) % 180;
-    return val;
-}
-
+function normalizeAxis(val) { val = Math.round(val / 5) * 5; val = (val % 180 + 180) % 180; return val; }
 window.checkAxis = function(el) {
-    if(!el.value) return;
-    var val = parseFloat(el.value);
-    if(isNaN(val)) return;
-    if (val < 0 || val > 180) {
-        appState.lastInvalidInputId = el.id;
-        document.getElementById('modalWarning').classList.remove('hidden');
-        return;
-    }
+    if(!el.value) return; var val = parseFloat(el.value); if(isNaN(val)) return;
+    if (val < 0 || val > 180) { appState.lastInvalidInputId = el.id; document.getElementById('modalWarning').classList.remove('hidden'); return; }
     el.value = normalizeAxis(val);
 };
 
 // =============================================================================
-// 3. WORKFLOW (MODALES & NAVIGATION)
+// 3. WORKFLOW (C'est ici que ça bloquait)
 // =============================================================================
 
-// Etape 1 : Validation ID
+// Etape 1
 window.validatePatientID = function() {
     var dob = document.getElementById('inDob').value;
     if(!dob) { alert("La date de naissance est obligatoire."); return; }
@@ -1173,86 +1147,96 @@ window.validatePatientID = function() {
     document.getElementById('modalEntryMethod').classList.remove('hidden');
 };
 
-// Etape 2 : Choix Méthode
+// Etape 2
 window.handleMethodChoice = function(method) {
     document.getElementById('modalEntryMethod').classList.add('hidden');
-    if (method === 'manual') window.openDataEntryModal();
-    else window.simulateImport();
+    if (method === 'manual') window.openDataEntryModal(); else window.simulateImport();
 };
-
 window.openDataEntryModal = function() { document.getElementById('modalInputData').classList.remove('hidden'); };
-
 window.simulateImport = function() {
     document.getElementById('mod_raOD_sph').value = "-1.50"; document.getElementById('mod_raOD_cyl').value = "-0.50"; document.getElementById('mod_raOD_axe').value = "180";
     document.getElementById('mod_raOG_sph').value = "-1.75"; document.getElementById('mod_raOG_cyl').value = "-0.25"; document.getElementById('mod_raOG_axe').value = "170";
     document.getElementById('modalInputData').classList.remove('hidden');
 };
 
-// Etape 3 : Validation Données (Le bouton Valider de la modale Saisie)
+// Etape 3 : LE FIX EST ICI (TRY CATCH POUR VOIR L'ERREUR)
 window.confirmDataAndPosition = function() {
-    document.getElementById('modalInputData').classList.add('hidden'); 
+    try {
+        // 1. Fermeture modale
+        document.getElementById('modalInputData').classList.add('hidden'); 
 
-    // Transfert Inputs
-    var fields = ['raOD_sph','raOD_cyl','raOD_axe','raOG_sph','raOG_cyl','raOG_axe','frontoOD_sph','frontoOD_cyl','frontoOD_axe','frontoOG_sph','frontoOG_cyl','frontoOG_axe'];
-    fields.forEach(function(f) {
-        var mod = document.getElementById('mod_'+f);
-        var dest = document.getElementById(f);
-        if(mod && dest) dest.value = mod.value || (f.includes('axe') ? "0" : "0.00");
-    });
+        // 2. Transfert
+        var fields = ['raOD_sph','raOD_cyl','raOD_axe','raOG_sph','raOG_cyl','raOG_axe','frontoOD_sph','frontoOD_cyl','frontoOD_axe','frontoOG_sph','frontoOG_cyl','frontoOG_axe'];
+        fields.forEach(function(f) {
+            var mod = document.getElementById('mod_'+f);
+            var dest = document.getElementById(f);
+            // Sécurité : si dest n'existe pas, on log l'erreur mais on ne plante pas tout
+            if(mod && dest) dest.value = mod.value || (f.includes('axe') ? "0" : "0.00");
+        });
 
-    if(window.onRaChanged) window.onRaChanged(); // IMPORTANT
+        // 3. Check Myopie (Safe Call)
+        if(window.onRaChanged) window.onRaChanged();
 
-    // Update Header
-    var nom = document.getElementById('inName').value || "-";
-    var prenom = document.getElementById('inForename').value || "-";
-    var dob = document.getElementById('inDob').value;
-    var age = getAgeFromDob(dob) + " ans";
-    var uid = document.getElementById('inUID').value || "--";
+        // 4. Update Header
+        var nom = document.getElementById('inName').value || "-";
+        var prenom = document.getElementById('inForename').value || "-";
+        var dob = document.getElementById('inDob').value;
+        var age = dob ? getAgeFromDob(dob) + " ans" : "-";
+        var uid = document.getElementById('inUID').value || "--";
 
-    var summaryHTML = `
-        <div class="patient-line">
-            <div><span class="pat-name">${nom.toUpperCase()}</span> <span class="pat-forename">${prenom}</span></div>
-            <div style="color:#78909C;">${age}</div>
-            <div><span class="pat-uid" title="UID">${uid}</span></div>
-            <div id="badgeProfilePlace"></div> 
-        </div>
-    `;
-    document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-    document.getElementById('examDataStrip').classList.remove('hidden');
-    
-    // Suite -> Latéralité
-    document.getElementById('modalHandedness').classList.remove('hidden');
+        var summaryHTML = `
+            <div class="patient-line">
+                <div><span class="pat-name">${nom.toUpperCase()}</span> <span class="pat-forename">${prenom}</span></div>
+                <div style="color:#78909C;">${age}</div>
+                <div><span class="pat-uid" title="UID">${uid}</span></div>
+                <div id="badgeProfilePlace"></div> 
+            </div>
+        `;
+        
+        var summaryEl = document.getElementById('patientSummaryContent');
+        if(summaryEl) summaryEl.innerHTML = summaryHTML;
+
+        // 5. Affichage Suite
+        var strip = document.getElementById('examDataStrip');
+        if(strip) strip.classList.remove('hidden');
+        
+        var handModal = document.getElementById('modalHandedness');
+        if(handModal) handModal.classList.remove('hidden');
+        else alert("Erreur: Modale Latéralité introuvable dans le HTML");
+
+    } catch (e) {
+        alert("ERREUR CRITIQUE validation : " + e.message);
+        console.error(e);
+    }
 };
 
-// Etape 4 : Latéralité
+// Etape 4
 window.setHandedness = function(handEye) {
     appState.handednessEye = handEye;
     document.getElementById('modalHandedness').classList.add('hidden');
-    document.getElementById('waitingMsg').classList.add('hidden'); 
+    // On cache le message d'attente s'il existe
+    var wait = document.getElementById('waitingMsg'); if(wait) wait.classList.add('hidden'); 
     document.getElementById('schoberStep').classList.remove('hidden');
 };
 
-// Etape 5 : Schober
+// Etape 5
 window.confirmSchoberSelection = function(id, mode, eye) {
     appState.pendingSchober = { mode: mode, eye: eye };
     document.getElementById('modalSchoberConfirm').classList.remove('hidden');
 };
-
 window.validateSchober = function() {
     document.getElementById('modalSchoberConfirm').classList.add('hidden');
     var p = appState.pendingSchober;
     if(p) window.handleSchoberChoice(p.mode, p.eye);
 };
-
 window.handleSchoberChoice = function(mode, eye) {
     if (eye === 'AUTO') { eye = appState.handednessEye || 'OD'; }
-    appState.firstEye = eye; 
-    appState.isMonocularExam = (mode === 'mono');
+    appState.firstEye = eye; appState.isMonocularExam = (mode === 'mono');
     document.getElementById('schoberStep').classList.add('hidden');
     document.getElementById('modalProfileCalc').classList.remove('hidden');
 };
 
-// Etape 6 : Profil
+// Etape 6
 window.calculateProfileAndShowData = function() {
     var age = getAgeFromDob(document.getElementById('inDob').value);
     var score = getAgeScore(age);
@@ -1263,11 +1247,9 @@ window.calculateProfileAndShowData = function() {
     if(document.getElementById('chkNear').checked) score += 1;
     if(document.getElementById('chkNoSpecs').checked) score += 1;
     if(document.getElementById('chkMono').checked) score += 1;
-
     var p = (score <= 5) ? "1" : (score <= 8) ? "2" : (score <= 12) ? "3" : "3+";
     revealDataSection(p, false); 
 };
-
 window.forceProfileAndShowData = function(forcedProfile) {
     var finalProfile = forcedProfile;
     if (forcedProfile === '1') {
@@ -1276,47 +1258,35 @@ window.forceProfileAndShowData = function(forcedProfile) {
     }
     revealDataSection(finalProfile, false);
 };
-
 function revealDataSection(profile, inputsEnabled) {
     appState.initProfile = profile; 
     var pColor = getProfileColor(profile);
     var el = document.getElementById('badgeProfilePlace');
-    if(el) {
-        el.style.display = 'block';
-        el.innerHTML = `<span class="pat-profile-badge" style="background:${pColor}">PROFIL ${profile}</span>`;
-    }
+    if(el) { el.style.display = 'block'; el.innerHTML = `<span class="pat-profile-badge" style="background:${pColor}">PROFIL ${profile}</span>`; }
     document.getElementById('modalProfileCalc').classList.add('hidden');
     window.openPositioningModal();
 }
 
-// Etape 7 : Start
+// Etape 7
 window.openPositioningModal = function() { document.getElementById('modalPosition').classList.remove('hidden'); };
-
 window.startRulesAndIntro = function() {
     document.getElementById('modalPosition').classList.add('hidden');
-    
-    // Init Subjectif (Copie RA)
     var raOD = { s: getVal('raOD_sph'), c: getVal('raOD_cyl'), a: getVal('raOD_axe') };
     var raOG = { s: getVal('raOG_sph'), c: getVal('raOG_cyl'), a: getVal('raOG_axe') };
     appState.subj.OD = { sphere: raOD.s, cyl: raOD.c, axe: raOD.a, va: "--" };
     appState.subj.OG = { sphere: raOG.s, cyl: raOG.c, axe: raOG.a, va: "--" };
     window.updateDisplay("Lecture des consignes...");
-
-    var introText = "Pour avoir une bonne mesure de votre vision de loin, il faut lire naturellement.";
-    say(introText, function() {
-        document.getElementById('modalIntroConfirmation').classList.remove('hidden');
-    });
+    var introText = "Pour avoir une bonne mesure de votre vision de loin, il faut lire d’une manière naturelle.";
+    say(introText, function() { document.getElementById('modalIntroConfirmation').classList.remove('hidden'); });
 };
-
 window.confirmAndLaunch = function() {
     document.getElementById('modalIntroConfirmation').classList.add('hidden');
     window.triggerFinalStart();
 };
-
 window.triggerFinalStart = function() { window.launchExamSequence(); };
 
 // =============================================================================
-// 8. LOGIQUE AFFICHAGE & UTILITAIRES
+// 4. AFFICHAGE (UPDATE DISPLAY)
 // =============================================================================
 
 window.updateDisplay = function(message) {
@@ -1368,7 +1338,6 @@ window.updateDisplay = function(message) {
         var linesArr = currentData.lines; 
         var txt = linesArr[appState.letterIndex % linesArr.length];
         setHTML('letterBox', txt);
-        
         var count = txt.split(' ').length; 
         var btnHTML = "";
         for(var i=0; i<=count; i++) { btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; }
@@ -1395,7 +1364,7 @@ window.setEye = function(eye) {
 };
 
 // =============================================================================
-// 9. LOGIQUE ALGORITHMIQUE EXAMEN
+// 5. MOTEUR EXAMEN (LOGIQUE)
 // =============================================================================
 
 window.launchExamSequence = function() {
@@ -1440,7 +1409,7 @@ window.launchExamSequence = function() {
 
         document.getElementById('examContent').classList.remove('hidden');
         window.updateDisplay("Profil " + appState.profile + ". Phase " + appState.examPhase);
-        say("Lisez moi s'il vous plait les lettres que vous voyez sur l'écran au fond de la pièce");
+        say("C'est parti !");
 
     } catch(e) { alert("Erreur Lancement: " + e); }
 };
@@ -1627,7 +1596,7 @@ function processLogic(lettersRead, cadence) {
     }
 }
 
-// UTILS
+// UTILS EXAMEN
 function getTargetEye() { return (appState.activeEye === 'OD') ? appState.subj.OD : appState.subj.OG; }
 function changeSphereAndRetest(delta) { var target = getTargetEye(); target.sphere += delta; nextLetters(); }
 function nextLetters() { appState.letterIndex++; }
@@ -1832,11 +1801,7 @@ window.handleJccChoice = function(choice) {
     setTimeout(function() { runJccSequence(); }, 1000);
 };
 
-// --- DÉMARRAGE ET HELPERS ---
-window.getAgeFromDob = function(dob) { if(!dob) return 0; var d = new Date(dob); var n = new Date(); var a = n.getFullYear() - d.getFullYear(); if(n.getMonth() < d.getMonth() || (n.getMonth()===d.getMonth() && n.getDate() < d.getDate())) a--; return a; };
-window.getAgeScore = function(a) { if(a<=10) return 6; if(a<=20) return 5; if(a<=30) return 4; if(a<=50) return 2; if(a<=70) return 1; return 0; };
-window.getProfileColor = function(p) { if(p==='1') return '#26A69A'; if(p==='2') return '#42A5F5'; if(p==='3') return '#FFA726'; return '#EF5350'; };
-
+// --- DÉMARRAGE ET HELPERS VOIX ---
 window.initVoices = function() { if('speechSynthesis' in window) window.speechSynthesis.getVoices(); };
 function say(text, callback) {
     if(window.speechSynthesis.speaking) window.speechSynthesis.cancel();
@@ -1858,22 +1823,12 @@ try {
     var uid = window.generateShortUID();
     var uidEl = document.getElementById('inUID');
     if(uidEl) uidEl.value = uid;
-    
-    // Forçage de l'ouverture de la première modale (Patient ID)
     var mod = document.getElementById('modalPatientID');
     if(mod) mod.classList.remove('hidden');
-    else console.error("Modal modalPatientID not found in HTML");
 } catch(e) {
     alert("Erreur de démarrage JS : " + e.message);
 }
-
-// Sécurité supplémentaire : Démarrage si onload a échoué
-document.addEventListener('DOMContentLoaded', function() {
-    if(document.getElementById('modalPatientID').classList.contains('hidden')) {
-        document.getElementById('modalPatientID').classList.remove('hidden');
-    }
-});
-
 </script>
+  
 </body>
 </html>
