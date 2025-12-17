@@ -1554,7 +1554,8 @@ window.finishDataEntry = function() {
             <div><span class="pat-name">${nom}</span> <span class="pat-forename">${prenom}</span></div>
             <div style="color:#78909C;">${age}</div>
             <div><span class="pat-uid" title="UID">${uid}</span></div>
-            <div id="badgeProfilePlace"></div> </div>
+            <div id="badgeProfilePlace"></div> 
+        </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
 
@@ -1577,34 +1578,6 @@ window.updateProfileBadge = function(p) {
     var el = document.getElementById('badgeProfilePlace');
     if(el) el.innerHTML = html;
 };
-    // Mise à jour Résumé Patient (Affichage final)
-    var nom = document.getElementById('inName').value || "-";
-    var prenom = document.getElementById('inForename').value || "-";
-    var dob = document.getElementById('inDob').value;
-    var age = dob ? getAgeFromDob(dob) + " ans" : "-";
-    var uid = document.getElementById('inUID').value || "--";
-
-    var summaryHTML = `
-        <div class="summary-grid">
-            <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
-            <div class="summary-row"><span class="summary-lbl">Age</span><span class="summary-val">${age}</span></div>
-            <div class="summary-row" style="align-items:center;">
-                <span class="summary-lbl">UID</span>
-                <span class="summary-val" style="font-family:monospace; color:var(--text-muted); font-size:0.9rem;">${uid}</span>
-            </div>
-        </div>
-    `;
-    document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-
-    // Affichage section Données
-    document.getElementById('dataSection').classList.remove('hidden');
-    // On verrouille les inputs du dashboard pour éviter les modifs accidentelles
-    toggleInputs('dataSection', false); 
-    
-    // --- SUITE DU FLUX : Latéralité ---
-    document.getElementById('modalHandedness').classList.remove('hidden');
-};
-
 // UTILITAIRES DE SYNCHRO (MODALE <-> DASHBOARD)
 function syncDashboardToModal(type) {
     var prefix = (type === 'AutoRef') ? 'ra' : 'fronto';
