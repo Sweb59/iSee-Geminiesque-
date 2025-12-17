@@ -631,7 +631,28 @@
         </div>
     </div>
 </div>
-<div id="modalDefogLimit" class="modal-overlay hidden">
+<div id="modalAskAxis" class="modal-overlay hidden">
+    <div class="modal-content" style="border-top: 5px solid #FFA726; max-width: 450px;">
+        <h2 style="color:#EF6C00; border:none; font-size:1.4rem;">Axe Manquant</h2>
+        
+        <div class="modal-text" style="text-align:left;">
+            Pour transposer mathématiquement le cylindre positif, il faut connaître son axe d'origine.<br><br>
+            <span style="color:#D84315; font-weight:bold;">👉 Entrez l'axe du cylindre POSITIF :</span>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <input type="number" id="inputTranspAxis" placeholder="Ex: 90" 
+                   style="font-size:1.5rem; padding:10px; width:150px; text-align:center; border:2px solid #FFA726; border-radius:8px; font-weight:bold;">
+            <div style="font-size:0.8rem; color:#888; margin-top:5px;">(Entre 0 et 180°)</div>
+        </div>
+
+        <div style="display:flex; gap:15px; justify-content:center;">
+            <button class="btn-action btn-grey" style="width:auto;" onclick="window.closeAskAxisModal()">Annuler</button>
+            <button class="btn-action btn-validate" style="width:auto; background:#EF6C00;" onclick="window.validateTranspositionAxis()">VALIDER</button>
+        </div>
+    </div>
+</div>
+  <div id="modalDefogLimit" class="modal-overlay hidden">
     <div class="modal-content" style="max-width:700px;">
         <h2 style="color:#D32F2F; border:none; font-size:1.6rem;">⚠️ Votre attention, s'il vous plaît !</h2>
         <div class="modal-text" style="text-align:left; font-size:1rem;">
@@ -1105,9 +1126,55 @@ window.checkCylInput = function(el) {
     val = Math.round(val * 4) / 4; 
     el.value = val.toFixed(2);
 };
+// --- LOGIQUE TRANSPOSITION & AXE ---
+
+// 1. Déclenchement de la transposition (Ouvre la modale ou calcule direct)
 window.applyTransposition = function() {
     if(!tempCylInputId) return;
 
+    // Récupération des éléments
+    var parts = tempCylInputId.split('_'); 
+    var prefix = (parts.length === 3) ? parts[0] + "_" + parts[1] : parts[0];
+    var elAxe = document.getElementById(prefix + '_axe');
+
+    // Vérification si l'axe est déjà rempli
+    var axeVal = elAxe.value;
+    var axe = (axeVal && axeVal !== "") ? parseFloat(axeVal) : 0;
+
+    // CAS 1 : L'axe est vide ou 0 -> On ouvre la modale de demande
+    if (axe === 0) {
+        // On vide le champ de la modale pour une nouvelle saisie
+        document.getElementById('inputTranspAxis').value = ""; 
+        // On ouvre la modale
+        document.getElementById('modalAskAxis').classList.remove('hidden');
+        // On met le focus dans le champ (meilleure UX)
+        setTimeout(function() { document.getElementById('inputTranspAxis').focus(); }, 100);
+        return; 
+    }
+
+    // CAS 2 : L'axe est déjà là -> On lance le calcul directement
+    performTranspositionMath(axe);
+};
+
+// 2. Validation depuis la modale "Demande Axe" (Bouton VALIDER)
+window.validateTranspositionAxis = function() {
+    var input = document.getElementById('inputTranspAxis');
+    var val = parseFloat(input.value);
+
+    if (isNaN(val) || val < 0 || val > 180) {
+        alert("Merci d'entrer un axe valide entre 0 et 180.");
+        return;
+    }
+
+    // On ferme la modale d'axe
+    document.getElementById('modalAskAxis').classList.add('hidden');
+    
+    // On lance le calcul avec la valeur saisie
+    performTranspositionMath(val);
+};
+
+// 3. Fonction technique commune (Le calcul mathématique)
+function performTranspositionMath(axeInitial) {
     var parts = tempCylInputId.split('_'); 
     var prefix = (parts.length === 3) ? parts[0] + "_" + parts[1] : parts[0];
 
@@ -1115,42 +1182,13 @@ window.applyTransposition = function() {
     var elSph = document.getElementById(prefix + '_sph');
     var elAxe = document.getElementById(prefix + '_axe');
 
-    if(!elSph || !elAxe) {
-        window.closeTransposeModal();
-        return;
-    }
-
     var cyl = parseFloat(elCyl.value.replace(',', '.'));
     var sph = elSph.value ? parseFloat(elSph.value.replace(',', '.')) : 0;
-    
-    // Vérification de l'axe
-    var axeVal = elAxe.value;
-    var axe = (axeVal && axeVal !== "") ? parseFloat(axeVal) : 0;
 
-    // Si l'axe est vide ou 0, on demande à l'utilisateur
-    if (axe === 0) {
-        // --- MESSAGE CLARIFIÉ ---
-        var msg = "⚠️ Transposition requise\n\n";
-        msg += "Pour transposer correctement le cylindre de " + elCyl.value + ", indiquez son axe d'origine.\n\n";
-        msg += "👉 Entrez l'axe du cylindre POSITIF (celui que vous venez d'écrire) :";
-        
-        var userRep = prompt(msg);
-        
-        if (userRep === null || userRep.trim() === "") {
-            return; // Annulation
-        }
-        
-        axe = parseFloat(userRep.replace(',', '.'));
-        if (isNaN(axe)) {
-            alert("Valeur d'axe invalide.");
-            return;
-        }
-    }
-
-    // --- CALCUL ---
+    // CALCUL
     var newSph = sph + cyl;
     var newCyl = -cyl;
-    var newAxe = (axe + 90) % 180;
+    var newAxe = (axeInitial + 90) % 180;
     if (newAxe === 0) newAxe = 180; 
 
     // APPLICATION
@@ -1158,11 +1196,15 @@ window.applyTransposition = function() {
     elCyl.value = (Math.round(newCyl * 4) / 4).toFixed(2);
     elAxe.value = Math.round(newAxe);
 
-    window.closeTransposeModal();
-    
+    // FERMETURE GENERALE
+    window.closeTransposeModal(); // Ferme la modale orange principale
     if(window.onRaChanged) window.onRaChanged();
-};
+}
 
+// 4. Fermeture simple de la modale d'axe (Annuler)
+window.closeAskAxisModal = function() {
+    document.getElementById('modalAskAxis').classList.add('hidden');
+};
 window.invertCylSign = function() {
     if(!tempCylInputId) return;
     var el = document.getElementById(tempCylInputId);
