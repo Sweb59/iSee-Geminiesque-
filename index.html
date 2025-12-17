@@ -511,7 +511,7 @@
                         <div class="modal-eye-title">ŒIL DROIT</div>
                         <div class="modal-input-grid">
                             <div class="modal-input-group"><label>Sphère</label><input type="text" id="mod_frontoOD_sph" placeholder="Sph" inputmode="decimal" onchange="window.checkSphere(this)"></div>
-                            <div class="modal-input-group"><label>Cylindre</label><input type="text" id="mod_frontoOD_cyl" placeholder="Cyl" inputmode="decimal" onchange="window.forceNegativeCyl(this)"></div>
+                            <div class="modal-input-group"><label>Cylindre</label><input type="text" id="mod_frontoOD_cyl" placeholder="Cyl" inputmode="decimal" onchange="window.checkCylInput(this)"></div>
                             <div class="modal-input-group"><label>Axe</label><input type="text" id="mod_frontoOD_axe" placeholder="Axe" inputmode="decimal" onchange="window.checkAxis(this)"></div>
                         </div>
                     </div>
@@ -519,7 +519,7 @@
                         <div class="modal-eye-title">ŒIL GAUCHE</div>
                         <div class="modal-input-grid">
                             <div class="modal-input-group"><label>Sphère</label><input type="text" id="mod_frontoOG_sph" placeholder="Sph" inputmode="decimal" onchange="window.checkSphere(this)"></div>
-                            <div class="modal-input-group"><label>Cylindre</label><input type="text" id="mod_frontoOG_cyl" placeholder="Cyl" inputmode="decimal" onchange="window.forceNegativeCyl(this)"></div>
+                            <div class="modal-input-group"><label>Cylindre</label><input type="text" id="mod_frontoOG_cyl" placeholder="Cyl" inputmode="decimal" onchange="window.checkCylInput(this)"></div>
                             <div class="modal-input-group"><label>Axe</label><input type="text" id="mod_frontoOG_axe" placeholder="Axe" inputmode="decimal" onchange="window.checkAxis(this)"></div>
                         </div>
                     </div>
@@ -533,7 +533,7 @@
                         <div class="modal-eye-title">ŒIL DROIT</div>
                         <div class="modal-input-grid">
                             <div class="modal-input-group"><label>Sphère</label><input type="text" id="mod_raOD_sph" placeholder="Sph" inputmode="decimal" onchange="window.checkSphere(this)"></div>
-                            <div class="modal-input-group"><label>Cylindre</label><input type="text" id="mod_raOD_cyl" placeholder="Cyl" inputmode="decimal" onchange="window.forceNegativeCyl(this)"></div>
+                            <div class="modal-input-group"><label>Cylindre</label><input type="text" id="mod_raOD_cyl" placeholder="Cyl" inputmode="decimal" onchange="window.checkCylInput(this)"></div>
                             <div class="modal-input-group"><label>Axe</label><input type="text" id="mod_raOD_axe" placeholder="Axe" inputmode="decimal" onchange="window.checkAxis(this)"></div>
                         </div>
                     </div>
@@ -541,7 +541,7 @@
                         <div class="modal-eye-title">ŒIL GAUCHE</div>
                         <div class="modal-input-grid">
                             <div class="modal-input-group"><label>Sphère</label><input type="text" id="mod_raOG_sph" placeholder="Sph" inputmode="decimal" onchange="window.checkSphere(this)"></div>
-                            <div class="modal-input-group"><label>Cylindre</label><input type="text" id="mod_raOG_cyl" placeholder="Cyl" inputmode="decimal" onchange="window.forceNegativeCyl(this)"></div>
+                            <div class="modal-input-group"><label>Cylindre</label><input type="text" id="mod_raOG_cyl" placeholder="Cyl" inputmode="decimal" onchange="window.checkCylInput(this)"></div>
                             <div class="modal-input-group"><label>Axe</label><input type="text" id="mod_raOG_axe" placeholder="Axe" inputmode="decimal" onchange="window.checkAxis(this)"></div>
                         </div>
                     </div>
@@ -608,6 +608,29 @@
     </div>
 </div>
 
+  <div id="modalCylTranspose" class="modal-overlay hidden">
+    <div class="modal-content" style="border-top: 5px solid #FFA726; max-width: 500px;">
+        <h2 style="color:#EF6C00; border:none; font-size:1.4rem; margin-top:0;">Cylindre Positif Détecté</h2>
+        <div class="modal-text" style="text-align:left; font-size:1rem; color:#333;">
+            Vous avez saisi une valeur positive : <strong><span id="txtPosCylVal" style="color:#D84315;"></span></strong>.<br><br>
+            Ce logiciel fonctionne exclusivement en <strong>cylindre négatif</strong>.<br>
+            Que souhaitez-vous faire ?
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+            <button class="btn-action btn-validate" style="background:#0277BD; border-radius:6px; padding:12px;" onclick="window.applyTransposition()">
+                <strong>TRANSPOSER LA FORMULE</strong><br>
+                <span style="font-size:0.8rem; opacity:0.9;">(Recalcule Sphère et Axe mathématiquement)</span>
+            </button>
+            <button class="btn-action btn-grey" style="border-radius:6px; padding:12px;" onclick="window.invertCylSign()">
+                <strong>JUSTE INVERSER LE SIGNE (+ vers -)</strong><br>
+                <span style="font-size:0.8rem; color:#666;">(Si c'est une erreur de frappe)</span>
+            </button>
+            <button class="btn-action btn-grey" style="background:#fff; border:1px solid #ccc; color:#555; border-radius:6px; padding:10px;" onclick="window.closeTransposeModal()">
+                Annuler / Corriger manuellement
+            </button>
+        </div>
+    </div>
+</div>
 <div id="modalDefogLimit" class="modal-overlay hidden">
     <div class="modal-content" style="max-width:700px;">
         <h2 style="color:#D32F2F; border:none; font-size:1.6rem;">⚠️ Votre attention, s'il vous plaît !</h2>
@@ -676,8 +699,8 @@
                             <input type="text" id="frontoOD_sph" class="col-input" placeholder="Sph" tabindex="7" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkSphere(this)">
                             <input type="text" id="frontoOG_sph" class="col-input" placeholder="Sph" tabindex="10" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkSphere(this)">
 
-                            <input type="text" id="frontoOD_cyl" class="col-input" placeholder="Cyl" tabindex="9" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.forceNegativeCyl(this)">
-                            <input type="text" id="frontoOG_cyl" class="col-input" placeholder="Cyl" tabindex="12" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.forceNegativeCyl(this)">
+                            <input type="text" id="frontoOD_cyl" class="col-input" placeholder="Cyl" tabindex="9" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkCylInput(this)">
+                            <input type="text" id="frontoOG_cyl" class="col-input" placeholder="Cyl" tabindex="12" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkCylInput(this)">
 
                             <input type="text" id="frontoOD_axe" class="col-input" placeholder="Axe" tabindex="8" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this)">
                             <input type="text" id="frontoOG_axe" class="col-input" placeholder="Axe" tabindex="11" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this)">
@@ -692,8 +715,8 @@
                             <input type="text" id="raOD_sph" class="col-input" placeholder="Sph" tabindex="1" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this); window.onRaChanged()" onchange="window.checkSphere(this); window.onRaChanged()">
                             <input type="text" id="raOG_sph" class="col-input" placeholder="Sph" tabindex="4" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this); window.onRaChanged()" onchange="window.checkSphere(this); window.onRaChanged()">
 
-                            <input type="text" id="raOD_cyl" class="col-input" placeholder="Cyl" tabindex="3" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.forceNegativeCyl(this); window.onRaChanged();">
-                            <input type="text" id="raOG_cyl" class="col-input" placeholder="Cyl" tabindex="6" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.forceNegativeCyl(this); window.onRaChanged();">
+                            <input type="text" id="raOD_cyl" class="col-input" placeholder="Cyl" tabindex="3" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkCylInput(this); window.onRaChanged();">
+                            <input type="text" id="raOG_cyl" class="col-input" placeholder="Cyl" tabindex="6" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkCylInput(this); window.onRaChanged();">
 
                             <input type="text" id="raOD_axe" class="col-input" placeholder="Axe" tabindex="2" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this); window.onRaChanged();">
                             <input type="text" id="raOG_axe" class="col-input" placeholder="Axe" tabindex="5" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this); window.onRaChanged();">
@@ -1056,7 +1079,99 @@ window.checkSphere = function(el) {
     val = Math.round(val * 4) / 4; // Step 0.25
     el.value = val.toFixed(2);
 };
+// --- DEBUT LOGIQUE TRANSPOSITION ---
+var tempCylInputId = null; // Mémorise quel champ a déclenché l'alerte
 
+window.checkCylInput = function(el) {
+    if(!el.value) return;
+    var val = parseFloat(el.value.replace(',', '.'));
+    if(isNaN(val)) return;
+
+    // DETECTION CYLINDRE POSITIF
+    if(val > 0) {
+        tempCylInputId = el.id; // On garde l'ID (ex: 'raOD_cyl')
+        document.getElementById('txtPosCylVal').innerText = "+" + val.toFixed(2);
+        document.getElementById('modalCylTranspose').classList.remove('hidden');
+        el.blur(); // Enlève le focus
+        return;
+    }
+
+    // Si négatif mais hors limites (-10.00)
+    if (val < -10.00) {
+        appState.lastInvalidInputId = el.id;
+        document.getElementById('modalWarning').classList.remove('hidden');
+        return;
+    }
+
+    // Formatage normal (arrondi 0.25)
+    val = Math.round(val * 4) / 4; 
+    el.value = val.toFixed(2);
+};
+
+window.applyTransposition = function() {
+    if(!tempCylInputId) return;
+
+    // On déduit les IDs des champs Sphère et Axe associés
+    var parts = tempCylInputId.split('_'); // ex: ["raOD", "cyl"] ou ["mod", "raOD", "cyl"]
+    
+    // Astuce pour gérer les ID complexes comme "mod_raOD_cyl" vs "raOD_cyl"
+    var prefix = "";
+    if(parts.length === 3) prefix = parts[0] + "_" + parts[1]; // ex: "mod_raOD"
+    else prefix = parts[0]; // ex: "raOD" ou "frontoOD"
+
+    var elCyl = document.getElementById(tempCylInputId);
+    var elSph = document.getElementById(prefix + '_sph');
+    var elAxe = document.getElementById(prefix + '_axe');
+
+    if(!elSph || !elAxe) {
+        console.error("Impossible de trouver les champs Sphère/Axe pour " + prefix);
+        window.closeTransposeModal();
+        return;
+    }
+
+    var cyl = parseFloat(elCyl.value.replace(',', '.'));
+    var sph = elSph.value ? parseFloat(elSph.value.replace(',', '.')) : 0;
+    var axe = elAxe.value ? parseFloat(elAxe.value) : 0;
+
+    // --- CALCUL MATHEMATIQUE ---
+    var newSph = sph + cyl;
+    var newCyl = -cyl;
+    var newAxe = (axe + 90) % 180;
+    if (newAxe === 0) newAxe = 180; 
+
+    // Application
+    elSph.value = (Math.round(newSph * 4) / 4).toFixed(2);
+    elCyl.value = (Math.round(newCyl * 4) / 4).toFixed(2);
+    elAxe.value = Math.round(newAxe);
+
+    // Validation visuelle
+    if(window.checkSphere) window.checkSphere(elSph);
+
+    window.closeTransposeModal();
+    // Si c'est l'autorefractomètre, on met à jour le profil myopie
+    if(window.onRaChanged) window.onRaChanged();
+};
+
+window.invertCylSign = function() {
+    if(!tempCylInputId) return;
+    var el = document.getElementById(tempCylInputId);
+    var val = parseFloat(el.value.replace(',', '.'));
+    el.value = (-val).toFixed(2);
+    window.closeTransposeModal();
+    if(window.onRaChanged) window.onRaChanged();
+};
+
+window.closeTransposeModal = function() {
+    document.getElementById('modalCylTranspose').classList.add('hidden');
+    // On vide la variable temporaire mais on peut remettre le focus si besoin
+    var el = document.getElementById(tempCylInputId);
+    if(el) { 
+        el.value = ""; // On vide le champ fautif pour forcer la resaisie
+        el.focus(); 
+    }
+    tempCylInputId = null;
+};
+// --- FIN LOGIQUE TRANSPOSITION ---
 window.forceNegativeCyl = function(el) {
     if(!el.value) return;
     var val = parseFloat(el.value.replace(',', '.'));
