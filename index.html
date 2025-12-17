@@ -37,55 +37,87 @@
   }
 
   /* LAYOUT PRINCIPAL */
-  .app-container { 
-      display: flex; 
-      flex-direction: column; 
-      height: 100%; 
-      max-width: 1400px; 
-      margin: 0 auto; 
-      padding: 10px;
-  }
-
-  header { 
-      flex: 0 0 auto; 
-      margin-bottom: 5px; 
-      border-bottom: 2px solid var(--primary);
-      padding-bottom: 5px;
-  }
-  h1 { margin: 0; color: var(--primary-dark); font-size: 1.2rem; }
+  /* --- LAYOUT 1-C (BANDEAU + EXAMEN) --- */
+  .app-container { display: flex; flex-direction: column; height: 100vh; max-width: 100%; margin: 0; padding: 0; }
+  header { display: none; } /* On cache l'ancien titre bleu */
 
   .dashboard-wrapper {
       display: flex;
-      flex: 1; 
-      gap: 15px;
-      overflow: hidden; 
-  }
-
-  /* --- COLONNE GAUCHE --- */
-  .left-panel {
-      flex: 0 0 380px; 
-      display: flex; 
       flex-direction: column;
-      gap: 10px;
-      overflow-y: auto; 
-      padding-right: 5px;
+      flex: 1; 
+      gap: 0;
+      overflow: hidden; 
+      height: 100%;
+      background: #FAFAFA;
   }
 
-  /* --- COLONNE DROITE --- */
+  /* 1. Bandeau Supérieur : Patient + Chrono */
+  .top-banner {
+      flex: 0 0 50px; /* Hauteur fine fixe */
+      background: #FFFFFF;
+      border-bottom: 1px solid #CFD8DC;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      z-index: 20;
+  }
+
+  /* Style ligne patient */
+  .patient-line { display: flex; align-items: center; gap: 30px; font-size: 1rem; color: var(--text-main); width: 100%; }
+  .pat-name { font-weight: 700; color: var(--primary-deep); text-transform: uppercase; font-size: 1.1rem; }
+  .pat-forename { font-weight: 500; font-size: 1.1rem; }
+  .pat-uid { font-family: monospace; background: #ECEFF1; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #546E7A; }
+  .pat-profile-badge { padding: 3px 10px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+  /* 2. Zone Examen */
   .right-panel {
       flex: 1; 
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 15px; 
+      width: 100%;
+      background: var(--bg-main);
       display: flex;
       flex-direction: column;
-      justify-content: center; 
       align-items: center;
       position: relative;
-      box-shadow: 0 4px 15px rgba(0, 4, 198, 0.05);
-      font-size: 1.1rem; 
+      overflow-y: auto; 
+      padding: 0;
+      border: none;
+      box-shadow: none;
   }
+
+  /* 3. Barre de données technique (Cachée au début) */
+  .exam-data-strip {
+      width: 100%;
+      background: #FFFFFF;
+      border-bottom: 1px solid #E0E0E0;
+      padding: 10px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      flex: 0 0 auto; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+      margin-bottom: 20px;
+      z-index: 10;
+  }
+  
+  /* Inputs compacts pour la barre */
+  .mini-data-block { display: flex; align-items: center; gap: 10px; border-right: 1px solid #EEE; padding-right: 20px; }
+  .mini-data-block:last-child { border-right: none; }
+  .mini-block-title { font-weight: bold; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; letter-spacing: 1px;}
+  .mini-inputs-col { display: flex; flex-direction: column; gap: 5px; }
+  .mini-inputs-row { display: flex; gap: 5px; align-items: center; }
+  .mini-eye-lbl { font-size:0.75rem; font-weight:bold; width: 20px; text-align:right; margin-right:5px; }
+  
+  .mini-input { 
+      width: 55px; text-align: center; padding: 4px; font-size: 0.95rem; 
+      border: 1px solid #CFD8DC; border-radius: 4px; background: #FAFAFA; font-weight: 600; font-family: 'Montserrat', sans-serif;
+  }
+  .mini-input:focus { border-color: var(--primary); background: #fff; outline:none; border-width: 2px; }
+
+  /* Suppression ancienne colonne */
+  .left-panel { display: none !important; }
 
   /* STYLE DES PANNEAUX */
   .section { 
@@ -712,282 +744,255 @@
       <h1>Assistant Réfraction</h1>
   </header>
 
-  <div class="dashboard-wrapper">
+  <div class="top-banner">
+        <div id="patientSummaryContent" style="flex:1;">
+            <span style="color:#B0BEC5; font-style:italic;">En attente d'identification...</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:15px;">
+            <div style="text-align:right; line-height:1.1;">
+                <div id="displayDate" style="font-size:0.7rem; color:var(--text-muted); text-transform:capitalize;">--</div>
+                <div id="displayTime" style="font-size:0.85rem; font-weight:bold; color:var(--text-main);">--:--</div>
+            </div>
+            <div style="background:#ECEFF1; padding:4px 12px; border-radius:20px; display:flex; align-items:center; gap:6px; border:1px solid #CFD8DC;">
+                <svg style="width:16px; height:16px; color:var(--primary-deep);" fill="currentColor" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                <div id="displayChrono" style="font-size:1.1rem; font-weight:bold; font-family:monospace; color:var(--primary-deep);">00:00</div>
+            </div>
+        </div>
+    </div>
 
-      <div class="left-panel">
+    <div class="right-panel">
 
-          <div id="summarySection" class="section">
-              <h2>1. Patient</h2>
-              <div id="patientSummaryContent" style="color:#78909C; font-style:italic;">En attente d'identification...</div>
-          </div>
+        <div id="examDataStrip" class="exam-data-strip hidden">
+             <div id="dataSection" style="display:none;"></div> 
 
-          <div id="dataSection" class="section hidden">
-              <h2>2. Données</h2>
+             <div class="mini-data-block">
+                <div class="mini-block-title">FRONTO</div>
+                <div class="mini-inputs-col">
+                    <div class="mini-inputs-row">
+                        <span class="mini-eye-lbl" style="color:#90A4AE;">OD</span>
+                        <input type="text" id="frontoOD_sph" class="mini-input" placeholder="S" onchange="window.checkSphere(this)">
+                        <input type="text" id="frontoOD_cyl" class="mini-input" placeholder="C" onchange="window.checkCylInput(this)">
+                        <input type="text" id="frontoOD_axe" class="mini-input" placeholder="A" onchange="window.checkAxis(this)">
+                    </div>
+                    <div class="mini-inputs-row">
+                        <span class="mini-eye-lbl" style="color:#90A4AE;">OG</span>
+                        <input type="text" id="frontoOG_sph" class="mini-input" placeholder="S" onchange="window.checkSphere(this)">
+                        <input type="text" id="frontoOG_cyl" class="mini-input" placeholder="C" onchange="window.checkCylInput(this)">
+                        <input type="text" id="frontoOG_axe" class="mini-input" placeholder="A" onchange="window.checkAxis(this)">
+                    </div>
+                </div>
+             </div>
 
-              <div style="display:flex; gap:10px; font-size:0.85rem;">
-                  <div style="flex:1;">
-                        <div class="data-block-title">FRONTO</div>
-                        <div class="mini-data-grid">
-                            <div class="col-head">OD</div> <div class="col-head">OG</div>
+             <div class="mini-data-block" style="border:none;">
+                <div class="mini-block-title" style="color:var(--primary);">AUTO-REF</div>
+                <div class="mini-inputs-col">
+                    <div class="mini-inputs-row">
+                        <span class="mini-eye-lbl" style="color:var(--primary);">OD</span>
+                        <input type="text" id="raOD_sph" class="mini-input" style="color:var(--primary-dark); background:#E0F7FA; border-color:#80DEEA;" placeholder="S" onchange="window.checkSphere(this); window.onRaChanged()">
+                        <input type="text" id="raOD_cyl" class="mini-input" style="color:var(--primary-dark); background:#E0F7FA; border-color:#80DEEA;" placeholder="C" onchange="window.checkCylInput(this); window.onRaChanged()">
+                        <input type="text" id="raOD_axe" class="mini-input" style="color:var(--primary-dark); background:#E0F7FA; border-color:#80DEEA;" placeholder="A" onchange="window.checkAxis(this); window.onRaChanged()">
+                    </div>
+                    <div class="mini-inputs-row">
+                        <span class="mini-eye-lbl" style="color:var(--primary);">OG</span>
+                        <input type="text" id="raOG_sph" class="mini-input" style="color:var(--primary-dark); background:#E0F7FA; border-color:#80DEEA;" placeholder="S" onchange="window.checkSphere(this); window.onRaChanged()">
+                        <input type="text" id="raOG_cyl" class="mini-input" style="color:var(--primary-dark); background:#E0F7FA; border-color:#80DEEA;" placeholder="C" onchange="window.checkCylInput(this); window.onRaChanged()">
+                        <input type="text" id="raOG_axe" class="mini-input" style="color:var(--primary-dark); background:#E0F7FA; border-color:#80DEEA;" placeholder="A" onchange="window.checkAxis(this); window.onRaChanged()">
+                    </div>
+                </div>
+             </div>
+        </div>
 
-                            <input type="text" id="frontoOD_sph" class="col-input" placeholder="Sph" tabindex="7" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkSphere(this)">
-                            <input type="text" id="frontoOG_sph" class="col-input" placeholder="Sph" tabindex="10" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkSphere(this)">
-
-                            <input type="text" id="frontoOD_cyl" class="col-input" placeholder="Cyl" tabindex="9" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkCylInput(this)">
-                            <input type="text" id="frontoOG_cyl" class="col-input" placeholder="Cyl" tabindex="12" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkCylInput(this)">
-
-                            <input type="text" id="frontoOD_axe" class="col-input" placeholder="Axe" tabindex="8" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this)">
-                            <input type="text" id="frontoOG_axe" class="col-input" placeholder="Axe" tabindex="11" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this)">
-                        </div>
-                  </div>
-
-                  <div style="flex:1;">
-                        <div class="data-block-title">AUTOREF</div>
-                        <div class="mini-data-grid">
-                            <div class="col-head">OD</div> <div class="col-head">OG</div>
-
-                            <input type="text" id="raOD_sph" class="col-input" placeholder="Sph" tabindex="1" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this); window.onRaChanged()" onchange="window.checkSphere(this); window.onRaChanged()">
-                            <input type="text" id="raOG_sph" class="col-input" placeholder="Sph" tabindex="4" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this); window.onRaChanged()" onchange="window.checkSphere(this); window.onRaChanged()">
-
-                            <input type="text" id="raOD_cyl" class="col-input" placeholder="Cyl" tabindex="3" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkCylInput(this); window.onRaChanged();">
-                            <input type="text" id="raOG_cyl" class="col-input" placeholder="Cyl" tabindex="6" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkCylInput(this); window.onRaChanged();">
-
-                            <input type="text" id="raOD_axe" class="col-input" placeholder="Axe" tabindex="2" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this); window.onRaChanged();">
-                            <input type="text" id="raOG_axe" class="col-input" placeholder="Axe" tabindex="5" autocomplete="off" inputmode="decimal" oninput="window.validateNumberInput(this)" onchange="window.checkAxis(this); window.onRaChanged();">
-                        </div>
-                  </div>
-              </div>
-          </div>
-
-          <div id="timeSection" class="section" style="text-align:center; margin-top:0;">
-              <div id="displayDate" style="font-size:1.1rem; font-weight:bold; color:var(--primary-dark); text-transform:capitalize;">--</div>
-              <div id="displayTime" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:10px;">--:--</div>
-              <div style="border-top:1px solid #eee; padding-top:10px;">
-                  <div style="font-size:0.8rem; text-transform:uppercase; color:var(--text-muted);">Durée Examen</div>
-                  <div id="displayChrono" style="font-size:2rem; font-weight:bold; font-family:monospace; color:var(--primary);">00:00</div>
-              </div>
-          </div>
-
-      </div>
-
-      <div class="right-panel">
-
-          <div id="waitingMsg" style="text-align:center; color:#B0BEC5;">
-              <svg style="width:60px; height:60px; margin-bottom:10px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-              <p>L'examen commencera ici.</p>
-          </div>
-
-          <div id="schoberStep" class="hidden" style="width:100%;">
-            <div class="step-instruction">
-                <strong>Que voit le patient au test de Schober ?</strong><br>
-                <span style="font-size:0.9rem; color:#546E7A;">Cliquez sur l'image correspondant pour déterminer le protocole.</span>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; width:100%; max-width:1000px; padding-bottom:20px;">
+            
+            <div id="waitingMsg" style="text-align:center; color:#B0BEC5;">
+                <svg style="width:80px; height:80px; margin-bottom:15px; opacity:0.5;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                <p style="font-size:1.5rem;">L'examen commencera ici.</p>
             </div>
 
-            <div class="schober-container">
-                <div class="schober-group-title">Vision Binoculaire Possible</div>
+            <div id="schoberStep" class="hidden" style="width:100%;">
+               <div class="step-instruction">
+                  <strong>Que voit le patient au test de Schober ?</strong><br>
+                  <span style="font-size:0.9rem; color:#546E7A;">Cliquez sur l'image correspondant pour déterminer le protocole.</span>
+               </div>
+               <div class="schober-container">
+                  <div class="schober-group-title">Vision Binoculaire Possible</div>
+                  <div class="schober-row">
+                      <div class="schober-sub-group">
+                          <div class="schober-sub-title">Vision Simultanée</div>
+                          <div class="schober-grid">
+                              <button class="btn-schober" onclick="window.confirmSchoberSelection(1, 'bino', 'AUTO')">
+                                  <svg width="70" height="70" viewBox="0 0 100 100">
+                                      <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
+                                      <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
+                                      <circle cx="50" cy="50" r="35" class="sch-circle" />
+                                  </svg>
+                              </button>
+                          </div>
+                      </div>
+                      <div class="schober-sub-group">
+                          <div class="schober-sub-title">Neutralisation Intermittente</div>
+                          <div class="schober-grid">
+                              <button class="btn-schober" onclick="window.confirmSchoberSelection(2, 'bino', 'OD')">
+                                   <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OD+</div>
+                                  <svg width="70" height="70" viewBox="0 0 100 100">
+                                      <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
+                                      <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
+                                      <circle cx="50" cy="50" r="35" class="sch-circle sch-faint" />
+                                  </svg>
+                              </button>
+                              <button class="btn-schober" onclick="window.confirmSchoberSelection(3, 'bino', 'OG')">
+                                  <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OG+</div>
+                                  <svg width="70" height="70" viewBox="0 0 100 100">
+                                      <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross sch-faint" />
+                                      <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross sch-faint" />
+                                      <circle cx="50" cy="50" r="35" class="sch-circle" />
+                                  </svg>
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+               </div>
+               <div class="schober-container" style="border-color:#FFCDD2; background:#FFEBEE;">
+                  <div class="schober-group-title" style="color:#D32F2F; border-color:#FFCDD2;">Pas de Vision Binoculaire</div>
+                  <div class="schober-row">
+                      <div class="schober-sub-group">
+                          <div class="schober-sub-title">Alternance Facile</div>
+                          <div class="schober-grid">
+                              <button class="btn-schober" onclick="window.confirmSchoberSelection(4, 'mono', 'OD')">
+                                   <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OD</div>
+                                  <svg width="70" height="70" viewBox="0 0 100 100">
+                                      <path d="M20 20 L40 20 L30 10 Z" fill="#fff"/>
+                                      <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
+                                      <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
+                                  </svg>
+                              </button>
+                              <button class="btn-schober" onclick="window.confirmSchoberSelection(5, 'mono', 'OG')">
+                                   <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OG</div>
+                                  <svg width="70" height="70" viewBox="0 0 100 100">
+                                      <path d="M60 20 L80 20 L70 10 Z" fill="#fff"/>
+                                      <circle cx="50" cy="50" r="35" class="sch-circle" />
+                                  </svg>
+                              </button>
+                          </div>
+                      </div>
+                      <div class="schober-sub-group">
+                          <div class="schober-sub-title">Alternance difficile ou Neutra.</div>
+                          <div class="schober-grid">
+                              <button class="btn-schober" onclick="window.confirmSchoberSelection(6, 'mono', 'OD')">
+                                  <svg width="70" height="70" viewBox="0 0 100 100">
+                                      <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
+                                      <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
+                                  </svg>
+                              </button>
+                              <button class="btn-schober" onclick="window.confirmSchoberSelection(7, 'mono', 'OG')">
+                                  <svg width="70" height="70" viewBox="0 0 100 100">
+                                      <circle cx="50" cy="50" r="35" class="sch-circle" />
+                                  </svg>
+                              </button>
+                          </div>
+                      </div>
+                      <div class="schober-sub-group">
+                          <div class="schober-sub-title">Monophtalme ou Amblyopie</div>
+                          <div class="schober-grid">
+                                <button class="btn-schober" style="border-style:dashed;" onclick="window.confirmSchoberSelection(8, 'mono', 'OD')">
+                                   <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
+                                  <svg width="70" height="70" viewBox="0 0 100 100">
+                                      <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
+                                      <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
+                                  </svg>
+                              </button>
+                              <button class="btn-schober" style="border-style:dashed;" onclick="window.confirmSchoberSelection(9, 'mono', 'OG')">
+                                  <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
+                                  <svg width="70" height="70" viewBox="0 0 100 100">
+                                      <circle cx="50" cy="50" r="35" class="sch-circle" />
+                                  </svg>
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+               </div>
+            </div>
 
-                <div class="schober-row">
-                    <div class="schober-sub-group">
-                        <div class="schober-sub-title">Vision Simultanée</div>
-                        <div class="schober-grid">
-                            <button class="btn-schober" onclick="window.confirmSchoberSelection(1, 'bino', 'AUTO')">
-                                <svg width="70" height="70" viewBox="0 0 100 100">
-                                    <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
-                                    <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
-                                    <circle cx="50" cy="50" r="35" class="sch-circle" />
-                                </svg>
-                            </button>
+            <div id="examContent" class="hidden" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+                <div class="exam-controls">
+                    <button id="btnOD" class="eye-btn active" onclick="window.setEye('OD')">ŒIL DROIT</button>
+                    <button id="btnOG" class="eye-btn" onclick="window.setEye('OG')">ŒIL GAUCHE</button>
+                </div>
+                <div class="subj-display-container">
+                    <div id="subjDispOD" class="subj-col">
+                        <div class="eye-header">OD</div>
+                        <div class="data-row"><span class="lbl-mini">SPH</span><span id="disp_subjOD_sph" class="val-data">--</span></div>
+                        <div class="data-row"><span class="lbl-mini">CYL</span><span id="disp_subjOD_cyl" class="val-data">--</span></div>
+                        <div class="data-row"><span class="lbl-mini">AXE</span><span id="disp_subjOD_axe" class="val-data">--°</span></div>
+                        <div class="data-row"><span class="lbl-mini">VA</span><span id="disp_subjOD_va" class="val-data">--</span></div>
+                    </div>
+                    <div id="subjDispOG" class="subj-col">
+                        <div class="eye-header">OG</div>
+                        <div class="data-row"><span class="lbl-mini">SPH</span><span id="disp_subjOG_sph" class="val-data">--</span></div>
+                        <div class="data-row"><span class="lbl-mini">CYL</span><span id="disp_subjOG_cyl" class="val-data">--</span></div>
+                        <div class="data-row"><span class="lbl-mini">AXE</span><span id="disp_subjOG_axe" class="val-data">--°</span></div>
+                        <div class="data-row"><span class="lbl-mini">VA</span><span id="disp_subjOG_va" class="val-data">--</span></div>
+                    </div>
+                </div>
+                <div class="info-bar">ACUITÉ VISUELLE : <strong id="valVA" style="font-size:1.8rem !important; color:var(--primary-dark);">--</strong></div>
+                <div id="letterBox" class="letter-display">...</div>
+                <div id="systemMsg" class="message-box">En attente...</div>
+                <div id="standardButtons" class="response-area">
+                    <p style="margin-bottom:10px; font-weight:600; color:var(--text-muted);">Combien de lettres lues ?</p>
+                    <div id="btnContainer" class="btn-grid"></div>
+                </div>
+                <div id="cadenceButtons" class="response-area hidden">
+                    <p style="margin-bottom:10px; font-weight:600;">Vitesse de lecture ?</p>
+                    <div style="display:flex; justify-content:center; gap:15px;">
+                        <button class="btn-action btn-tortue" onclick="window.handleCadence('turtle')">🐢 Hésitant</button>
+                        <button class="btn-action btn-lapin" onclick="window.handleCadence('rabbit')">🐇 Fluide</button>
+                    </div>
+                </div>
+                <div id="checkPlusZone" class="response-area hidden">
+                    <div id="stepPlusWrapper">
+                        <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
+                        <div id="decisionsPlus" class="decision-row hidden">
+                            <button class="btn-decision btn-blue" onclick="window.decidePlus('better')">Mieux avec le verre</button>
+                            <button class="btn-decision btn-blue" onclick="window.decidePlus('same')">Pareil</button>
+                            <button class="btn-decision btn-orange" onclick="window.decidePlus('worse')">Mieux sans le verre</button>
+                            <div class="spacer-btn"></div>
+                            <button class="btn-decision btn-grey" onclick="window.relaunchPlus()">Relancer</button>
                         </div>
                     </div>
-
-                    <div class="schober-sub-group">
-                        <div class="schober-sub-title">Neutralisation Intermittente</div>
-                        <div class="schober-grid">
-                            <button class="btn-schober" onclick="window.confirmSchoberSelection(2, 'bino', 'OD')">
-                                 <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OD+</div>
-                                <svg width="70" height="70" viewBox="0 0 100 100">
-                                    <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
-                                    <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
-                                    <circle cx="50" cy="50" r="35" class="sch-circle sch-faint" />
-                                </svg>
-                            </button>
-                            <button class="btn-schober" onclick="window.confirmSchoberSelection(3, 'bino', 'OG')">
-                                <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">OG+</div>
-                                <svg width="70" height="70" viewBox="0 0 100 100">
-                                    <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross sch-faint" />
-                                    <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross sch-faint" />
-                                    <circle cx="50" cy="50" r="35" class="sch-circle" />
-                                </svg>
-                            </button>
+                    <div id="stepMinusWrapper" class="hidden">
+                        <button id="btnMinus025" class="btn-timer hidden" onclick="window.triggerDefogCheck()">TESTER -0.25 (1.5s)</button>
+                        <div id="decisionsMinus" class="decision-row hidden">
+                            <button class="btn-decision btn-red" onclick="window.decideMinus('better')">Mieux avec le verre</button>
+                            <button class="btn-decision btn-orange" onclick="window.decideMinus('same')">Pareil</button>
+                            <button class="btn-decision btn-orange" onclick="window.decideMinus('worse')">Mieux sans le verre</button>
+                            <div class="spacer-btn"></div>
+                            <button class="btn-decision btn-grey" onclick="window.relaunchFullCheck()">Relancer</button>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="schober-container" style="border-color:#FFCDD2; background:#FFEBEE;">
-                <div class="schober-group-title" style="color:#D32F2F; border-color:#FFCDD2;">Pas de Vision Binoculaire</div>
-
-                <div class="schober-row">
-                    <div class="schober-sub-group">
-                        <div class="schober-sub-title">Alternance Facile</div>
-                        <div class="schober-grid">
-                            <button class="btn-schober" onclick="window.confirmSchoberSelection(4, 'mono', 'OD')">
-                                 <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OD</div>
-                                <svg width="70" height="70" viewBox="0 0 100 100">
-                                    <path d="M20 20 L40 20 L30 10 Z" fill="#fff"/>
-                                    <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
-                                    <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
-                                </svg>
-                            </button>
-                            <button class="btn-schober" onclick="window.confirmSchoberSelection(5, 'mono', 'OG')">
-                                 <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">DÉPART OG</div>
-                                <svg width="70" height="70" viewBox="0 0 100 100">
-                                    <path d="M60 20 L80 20 L70 10 Z" fill="#fff"/>
-                                    <circle cx="50" cy="50" r="35" class="sch-circle" />
-                                </svg>
-                            </button>
+                <div id="axisZone" class="response-area hidden">
+                    <div id="jccVisuals" class="jcc-container hidden">
+                        <div id="visPos1" class="jcc-visual">
+                            <span class="jcc-label">1</span>
+                            <svg class="arrow-svg" viewBox="0 0 100 100"><path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#116dff" stroke-width="6" marker-end="url(#arrowhead)" /></svg>
+                        </div>
+                        <div id="visPos2" class="jcc-visual">
+                            <span class="jcc-label">2</span>
+                            <svg class="arrow-svg" viewBox="0 0 100 100"><path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#fd7e14" stroke-width="6" marker-end="url(#arrowhead2)" /></svg>
                         </div>
                     </div>
-
-                    <div class="schober-sub-group">
-                        <div class="schober-sub-title">Alternance difficile ou Neutra.</div>
-                        <div class="schober-grid">
-                            <button class="btn-schober" onclick="window.confirmSchoberSelection(6, 'mono', 'OD')">
-                                <svg width="70" height="70" viewBox="0 0 100 100">
-                                    <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
-                                    <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
-                                </svg>
-                            </button>
-                            <button class="btn-schober" onclick="window.confirmSchoberSelection(7, 'mono', 'OG')">
-                                <svg width="70" height="70" viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="35" class="sch-circle" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="schober-sub-group">
-                        <div class="schober-sub-title">Monophtalme ou Amblyopie</div>
-                        <div class="schober-grid">
-                              <button class="btn-schober" style="border-style:dashed;" onclick="window.confirmSchoberSelection(8, 'mono', 'OD')">
-                                 <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
-                                <svg width="70" height="70" viewBox="0 0 100 100">
-                                    <line x1="50" y1="32.5" x2="50" y2="67.5" class="sch-cross" />
-                                    <line x1="32.5" y1="50" x2="67.5" y2="50" class="sch-cross" />
-                                </svg>
-                            </button>
-                            <button class="btn-schober" style="border-style:dashed;" onclick="window.confirmSchoberSelection(9, 'mono', 'OG')">
-                                <div style="position:absolute; top:2px; left:2px; color:#fff; font-size:0.6rem;">MONO</div>
-                                <svg width="70" height="70" viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="35" class="sch-circle" />
-                                </svg>
-                            </button>
+                    <div id="axisControls">
+                        <button id="btnReplayAxis" class="btn-timer hidden" onclick="window.runJccSequence()">RÉPÉTER LA COMPARAISON</button>
+                        <div id="axisDecisions" class="decision-row hidden">
+                            <button class="btn-decision btn-blue" onclick="window.handleJccChoice('pos1')">Mieux 1</button>
+                            <button class="btn-decision btn-orange" onclick="window.handleJccChoice('pos2')">Mieux 2</button>
+                            <button class="btn-decision btn-green" onclick="window.handleJccChoice('same')">Pareil</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-          <div id="examContent" class="hidden" style="width:100%;">
-
-              <div class="exam-controls">
-                  <button id="btnOD" class="eye-btn active" onclick="window.setEye('OD')">ŒIL DROIT</button>
-                  <button id="btnOG" class="eye-btn" onclick="window.setEye('OG')">ŒIL GAUCHE</button>
-              </div>
-
-              <div class="subj-display-container">
-                  <div id="subjDispOD" class="subj-col">
-                      <div class="eye-header">OD</div>
-                      <div class="data-row"><span class="lbl-mini">SPH</span><span id="disp_subjOD_sph" class="val-data">--</span></div>
-                      <div class="data-row"><span class="lbl-mini">CYL</span><span id="disp_subjOD_cyl" class="val-data">--</span></div>
-                      <div class="data-row"><span class="lbl-mini">AXE</span><span id="disp_subjOD_axe" class="val-data">--°</span></div>
-                      <div class="data-row"><span class="lbl-mini">VA</span><span id="disp_subjOD_va" class="val-data">--</span></div>
-                  </div>
-                  <div id="subjDispOG" class="subj-col">
-                      <div class="eye-header">OG</div>
-                      <div class="data-row"><span class="lbl-mini">SPH</span><span id="disp_subjOG_sph" class="val-data">--</span></div>
-                      <div class="data-row"><span class="lbl-mini">CYL</span><span id="disp_subjOG_cyl" class="val-data">--</span></div>
-                      <div class="data-row"><span class="lbl-mini">AXE</span><span id="disp_subjOG_axe" class="val-data">--°</span></div>
-                      <div class="data-row"><span class="lbl-mini">VA</span><span id="disp_subjOG_va" class="val-data">--</span></div>
-                  </div>
-              </div>
-
-              <div class="info-bar">
-                  ACUITÉ VISUELLE : <strong id="valVA" style="font-size:1.8rem !important; color:var(--primary-dark);">--</strong>
-              </div>
-
-              <div id="letterBox" class="letter-display">...</div>
-
-              <div id="systemMsg" class="message-box">En attente...</div>
-
-              <div id="standardButtons" class="response-area">
-                  <p style="margin-bottom:10px; font-weight:600; color:var(--text-muted);">Combien de lettres lues ?</p>
-                  <div id="btnContainer" class="btn-grid"></div>
-              </div>
-
-              <div id="cadenceButtons" class="response-area hidden">
-                  <p style="margin-bottom:10px; font-weight:600;">Vitesse de lecture ?</p>
-                  <div style="display:flex; justify-content:center; gap:15px;">
-                      <button class="btn-action btn-tortue" onclick="window.handleCadence('turtle')">🐢 Hésitant</button>
-                      <button class="btn-action btn-lapin" onclick="window.handleCadence('rabbit')">🐇 Fluide</button>
-                  </div>
-              </div>
-
-              <div id="checkPlusZone" class="response-area hidden">
-                  <div id="stepPlusWrapper">
-                      <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
-
-                      <div id="decisionsPlus" class="decision-row hidden">
-                          <button class="btn-decision btn-blue" onclick="window.decidePlus('better')">Mieux avec le verre</button>
-                          <button class="btn-decision btn-blue" onclick="window.decidePlus('same')">Pareil</button>
-                          <button class="btn-decision btn-orange" onclick="window.decidePlus('worse')">Mieux sans le verre</button>
-                          <div class="spacer-btn"></div>
-                          <button class="btn-decision btn-grey" onclick="window.relaunchPlus()">Relancer</button>
-                      </div>
-                  </div>
-
-                  <div id="stepMinusWrapper" class="hidden">
-                      <button id="btnMinus025" class="btn-timer hidden" onclick="window.triggerDefogCheck()">TESTER -0.25 (1.5s)</button>
-
-                      <div id="decisionsMinus" class="decision-row hidden">
-                          <button class="btn-decision btn-red" onclick="window.decideMinus('better')">Mieux avec le verre</button>
-                          <button class="btn-decision btn-orange" onclick="window.decideMinus('same')">Pareil</button>
-                          <button class="btn-decision btn-orange" onclick="window.decideMinus('worse')">Mieux sans le verre</button>
-                          <div class="spacer-btn"></div>
-                          <button class="btn-decision btn-grey" onclick="window.relaunchFullCheck()">Relancer</button>
-                      </div>
-                  </div>
-              </div>
-
-              <div id="axisZone" class="response-area hidden">
-                  <div id="jccVisuals" class="jcc-container hidden">
-                      <div id="visPos1" class="jcc-visual">
-                          <span class="jcc-label">1</span>
-                          <svg class="arrow-svg" viewBox="0 0 100 100">
-                              <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#116dff" stroke-width="6" marker-end="url(#arrowhead)" />
-                          </svg>
-                      </div>
-                      <div id="visPos2" class="jcc-visual">
-                          <span class="jcc-label">2</span>
-                          <svg class="arrow-svg" viewBox="0 0 100 100">
-                              <path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#fd7e14" stroke-width="6" marker-end="url(#arrowhead2)" />
-                          </svg>
-                      </div>
-                  </div>
-                  <div id="axisControls">
-                      <button id="btnReplayAxis" class="btn-timer hidden" onclick="window.runJccSequence()">RÉPÉTER LA COMPARAISON</button>
-                      <div id="axisDecisions" class="decision-row hidden">
-                          <button class="btn-decision btn-blue" onclick="window.handleJccChoice('pos1')">Mieux 1</button>
-                          <button class="btn-decision btn-orange" onclick="window.handleJccChoice('pos2')">Mieux 2</button>
-                          <button class="btn-decision btn-green" onclick="window.handleJccChoice('same')">Pareil</button>
-                      </div>
-                  </div>
-              </div>
-
-          </div>
-      </div>
-  </div>
-
+    </div>
   <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
     <defs>
       <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#116dff" /></marker>
@@ -1529,7 +1534,7 @@ window.saveAndCloseModal = function(type) {
 window.finishDataEntry = function() {
     document.getElementById('modalEntryMethod').classList.add('hidden');
 
-    // Sécurité : Remplissage des champs vides par 0.00
+    // Remplissage sécurité
     var prefixes = ['raOD', 'raOG', 'frontoOD', 'frontoOG'];
     prefixes.forEach(function(p) {
        var s = document.getElementById(p + '_sph'); if (!s.value) s.value = "0.00";
@@ -1537,6 +1542,41 @@ window.finishDataEntry = function() {
        var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0";
     });
 
+    // --- NOUVEL AFFICHAGE PATIENT (LIGNE HAUTE) ---
+    var nom = document.getElementById('inName').value || "-";
+    var prenom = document.getElementById('inForename').value || "-";
+    var dob = document.getElementById('inDob').value;
+    var age = dob ? getAgeFromDob(dob) + " ans" : "-";
+    var uid = document.getElementById('inUID').value || "--";
+
+    var summaryHTML = `
+        <div class="patient-line">
+            <div><span class="pat-name">${nom}</span> <span class="pat-forename">${prenom}</span></div>
+            <div style="color:#78909C;">${age}</div>
+            <div><span class="pat-uid" title="UID">${uid}</span></div>
+            <div id="badgeProfilePlace"></div> </div>
+    `;
+    document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
+
+    // Mise à jour badge si déjà connu
+    if(appState.initProfile) updateProfileBadge(appState.initProfile);
+
+    // --- ICI : ON CACHE LA BARRE DE DONNÉES (FLUX DEMANDÉ) ---
+    // On verrouille les inputs mais on garde la classe 'hidden'
+    toggleInputs('examDataStrip', false); 
+    document.getElementById('examDataStrip').classList.add('hidden');
+    
+    // Suite du flux
+    document.getElementById('modalHandedness').classList.remove('hidden');
+};
+
+// Fonction utilitaire pour le badge couleur (A AJOUTER JUSTE APRES)
+window.updateProfileBadge = function(p) {
+    var color = getProfileColor(p);
+    var html = `<span class="pat-profile-badge" style="background:${color}">PROFIL ${p}</span>`;
+    var el = document.getElementById('badgeProfilePlace');
+    if(el) el.innerHTML = html;
+};
     // Mise à jour Résumé Patient (Affichage final)
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
@@ -1694,14 +1734,7 @@ window.onRaChanged = function() {
         if (s1 < 0 || s2 < 0) { appState.initProfile = "2"; setHTML('displayProfileName', "2"); } 
         else { appState.initProfile = "1"; setHTML('displayProfileName', "1"); }
 
-        // Mise à jour visuelle du résumé
-        var p = appState.initProfile;
-        // On ne met à jour que si le résumé est déjà affiché
-        var el = document.querySelector('.summary-val[style*="background"]');
-        if(el) {
-            el.innerText = p;
-            el.style.background = getProfileColor(p);
-        }
+        window.updateProfileBadge(appState.initProfile);
     }
 };
 
@@ -1818,6 +1851,8 @@ window.launchExamSequence = function() {
         // Affichage Zone
         document.getElementById('waitingMsg').classList.add('hidden');
         document.getElementById('examContent').classList.remove('hidden');
+      // AFFICHER LA BARRE DE DONNÉES MAINTENANT (Début Examen)
+        document.getElementById('examDataStrip').classList.remove('hidden');
         updateDisplay("Profil " + appState.profile + ". Phase " + appState.examPhase + " (OD)");
 
         say("Lisez moi s'il vous plait les lettres que vous voyez sur l'écran au fond de la pièce");
