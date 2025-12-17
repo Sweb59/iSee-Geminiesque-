@@ -2870,13 +2870,9 @@ window.updateDisplay = function(message) {
     var btnPilotOD = document.getElementById('btnPilotOD'); 
     var btnPilotOG = document.getElementById('btnPilotOG');
     
-    // SÉCURITÉ : On ne continue que si les boutons existent (ce qui évite le bug)
     if (btnPilotOD && btnPilotOG) {
         var isMono = (appState.examPhase === "Sb0.2");
-        
-        // Reset des classes de base
-        btnPilotOD.className = 'btn-pilot'; 
-        btnPilotOG.className = 'btn-pilot';
+        btnPilotOD.className = 'btn-pilot'; btnPilotOG.className = 'btn-pilot'; // Reset
 
         if (appState.activeEye === 'OD') {
             btnPilotOD.classList.add('active'); // Bleu (Actif)
@@ -2892,24 +2888,22 @@ window.updateDisplay = function(message) {
     // C. Mise à jour EN-TÊTE DROIT (Visuel VA)
     setHTML('visBoxOD', appState.subj.OD.va); 
     setHTML('visBoxOG', appState.subj.OG.va);
-    
-    var visOD = document.getElementById('visBoxOD'); 
-    var visOG = document.getElementById('visBoxOG');
+    var visOD = document.getElementById('visBoxOD'); var visOG = document.getElementById('visBoxOG');
     if(visOD && visOG) {
         if (appState.activeEye === 'OD') { visOD.classList.add('active-eye'); visOG.classList.remove('active-eye'); } 
         else { visOD.classList.remove('active-eye'); visOG.classList.add('active-eye'); }
     }
 
-    // D. Messages et Boutons
+    // D. Messages
     setHTML('valProfile', appState.profile); 
     setHTML('systemMsg', message);
-    
     var sysMsgEl = document.getElementById('systemMsg');
     if(sysMsgEl) {
         if (message.indexOf("VALIDÉE") !== -1 || message.indexOf("Validé") !== -1) sysMsgEl.classList.add('success-msg'); 
         else sysMsgEl.classList.remove('success-msg');
     }
 
+    // E. Génération des boutons de réponse ET FORCE AFFICHAGE
     if(window.ACUITY_TABLE && appState.vaIndex < ACUITY_TABLE.length) {
         var currentData = ACUITY_TABLE[appState.vaIndex]; 
         setHTML('valVA', currentData.va);
@@ -2923,6 +2917,25 @@ window.updateDisplay = function(message) {
             btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; 
         }
         setHTML('btnContainer', btnHTML);
+
+        // --- CORRECTION VISIBILITÉ (Le Fix Important) ---
+        var isSpecialMode = false;
+        var cadBtns = document.getElementById('cadenceButtons');
+        var chkPlus = document.getElementById('checkPlusZone');
+        var axisCtr = document.getElementById('axisControls');
+
+        if (cadBtns && !cadBtns.classList.contains('hidden')) isSpecialMode = true;
+        if (chkPlus && !chkPlus.classList.contains('hidden')) isSpecialMode = true;
+        if (axisCtr && !axisCtr.classList.contains('hidden')) isSpecialMode = true;
+
+        var stdBtns = document.getElementById('standardButtons');
+        if (stdBtns) {
+            if (!isSpecialMode) {
+                stdBtns.classList.remove('hidden');
+            } else {
+                stdBtns.classList.add('hidden');
+            }
+        }
     }
 };
 </script>
