@@ -2833,6 +2833,98 @@ window.savePatientData = function() {
     alert("Données sauvegardées pour l'examen sous cycloplégique.");
     location.reload(); 
 };
+  // --- CORRECTION DU PILOTAGE (A COLLER A LA FIN DU SCRIPT) ---
+
+// 1. Fonction de choix de l'œil (Mise à jour pour le nouveau design)
+window.setEye = function(eye) {
+    appState.activeEye = eye;
+    // On force la mise à jour de l'affichage
+    var currentMsg = document.getElementById('systemMsg') ? document.getElementById('systemMsg').innerText : "";
+    window.updateDisplay(currentMsg);
+};
+
+// 2. Fonction d'affichage principale (Compatible Header Split)
+window.updateDisplay = function(message) {
+    // A. Mise à jour des colonnes de données (Gauche)
+    setHTML('disp_subjOD_sph', appState.subj.OD.sphere.toFixed(2)); setHTML('disp_subjOD_cyl', appState.subj.OD.cyl.toFixed(2));
+    setHTML('disp_subjOD_axe', appState.subj.OD.axe + "°"); setHTML('disp_subjOD_va', appState.subj.OD.va);
+    setHTML('disp_subjOG_sph', appState.subj.OG.sphere.toFixed(2)); setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
+    setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°"); setHTML('disp_subjOG_va', appState.subj.OG.va);
+
+    var boxOD = document.getElementById('subjDispOD'); var boxOG = document.getElementById('subjDispOG');
+    if(boxOD && boxOG) {
+        if(appState.activeEye === 'OD') { boxOD.classList.add('highlight'); boxOG.classList.remove('highlight'); } 
+        else { boxOD.classList.remove('highlight'); boxOG.classList.add('highlight'); }
+    }
+
+    // B. Mise à jour EN-TÊTE GAUCHE (Pilotage)
+    setHTML('dispPhase', appState.examPhase ? appState.examPhase.toUpperCase() : "INIT");
+    
+    var modeText = "MONOCULAIRE";
+    if (appState.examPhase === "Sb0.5" || (appState.examPhase && appState.examPhase.includes("Check")) || appState.examPhase === "Sb1.0") {
+        modeText = "BIO-MONOCULAIRE";
+    }
+    setHTML('dispMode', modeText);
+
+    // Boutons Pilotage OD/OG (Couleurs et état)
+    var btnPilotOD = document.getElementById('btnPilotOD'); 
+    var btnPilotOG = document.getElementById('btnPilotOG');
+    
+    // SÉCURITÉ : On ne continue que si les boutons existent (ce qui évite le bug)
+    if (btnPilotOD && btnPilotOG) {
+        var isMono = (appState.examPhase === "Sb0.2");
+        
+        // Reset des classes de base
+        btnPilotOD.className = 'btn-pilot'; 
+        btnPilotOG.className = 'btn-pilot';
+
+        if (appState.activeEye === 'OD') {
+            btnPilotOD.classList.add('active'); // Bleu (Actif)
+            if (isMono) btnPilotOG.classList.add('closed'); // Gris foncé
+            else btnPilotOG.classList.add('open'); // Blanc
+        } else {
+            btnPilotOG.classList.add('active'); // Bleu
+            if (isMono) btnPilotOD.classList.add('closed'); // Gris foncé
+            else btnPilotOD.classList.add('open'); // Blanc
+        }
+    }
+
+    // C. Mise à jour EN-TÊTE DROIT (Visuel VA)
+    setHTML('visBoxOD', appState.subj.OD.va); 
+    setHTML('visBoxOG', appState.subj.OG.va);
+    
+    var visOD = document.getElementById('visBoxOD'); 
+    var visOG = document.getElementById('visBoxOG');
+    if(visOD && visOG) {
+        if (appState.activeEye === 'OD') { visOD.classList.add('active-eye'); visOG.classList.remove('active-eye'); } 
+        else { visOD.classList.remove('active-eye'); visOG.classList.add('active-eye'); }
+    }
+
+    // D. Messages et Boutons
+    setHTML('valProfile', appState.profile); 
+    setHTML('systemMsg', message);
+    
+    var sysMsgEl = document.getElementById('systemMsg');
+    if(sysMsgEl) {
+        if (message.indexOf("VALIDÉE") !== -1 || message.indexOf("Validé") !== -1) sysMsgEl.classList.add('success-msg'); 
+        else sysMsgEl.classList.remove('success-msg');
+    }
+
+    if(window.ACUITY_TABLE && appState.vaIndex < ACUITY_TABLE.length) {
+        var currentData = ACUITY_TABLE[appState.vaIndex]; 
+        setHTML('valVA', currentData.va);
+        var linesArr = currentData.lines; 
+        var txt = linesArr[appState.letterIndex % linesArr.length];
+        setHTML('letterBox', txt);
+        
+        var count = txt.split(' ').length; 
+        var btnHTML = "";
+        for(var i=0; i<=count; i++) { 
+            btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; 
+        }
+        setHTML('btnContainer', btnHTML);
+    }
+};
 </script>
 </body>
 </html>
