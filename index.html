@@ -71,74 +71,81 @@
   .pat-uid { font-family: monospace; background: #ECEFF1; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #546E7A; }
   .pat-profile-badge { padding: 3px 10px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-  /* 2. Zone Examen *//* --- NOUVEAU LAYOUT SPLIT (VERSION LARGE DONNÉES) --- */
+  /* 2. Zone Examen */
 
-  /* 1. Conteneur Principal de droite */
+  /* --- NOUVEAU LAYOUT "FLAT" (UNIFORME CRÈME & SANS BORDURES) --- */
+
+  /* 1. Conteneur Principal */
   .right-panel {
       flex: 1; 
       width: 100%;
-      background: var(--bg-main);
+      background: #FCF9F2; /* FOND UNIQUE */
       display: flex;
       flex-direction: column; 
       overflow: hidden; 
       padding: 0;
   }
 
-  /* 2. En-tête Divisé (Double Header) */
+  /* 2. En-tête Divisé */
   .exam-header-wrapper {
       display: flex;
       width: 100%;
-      height: 80px; /* Un peu plus haut */
-      background: #fff;
-      border-bottom: 1px solid #E0E0E0;
+      height: 80px;
+      background: #FCF9F2; /* MÊME FOND */
+      border: none; /* PLUS DE BORDURE */
       flex: 0 0 auto;
   }
 
-  /* Partie GAUCHE de l'en-tête (Pilotage) - ÉLARGIE */
+  /* Partie GAUCHE (Pilotage) */
   .header-left-control {
-      flex: 0 0 920px; /* LARGEUR AUGMENTÉE POUR LES DONNÉES */
+      flex: 0 0 920px; 
       display: flex; flex-direction: column; justify-content: center;
-      padding: 0 15px; border-right: 1px solid #eee; background: #F9FAFB;
+      padding: 0 15px; 
+      border: none; /* PLUS DE BORDURE */
+      background: #FCF9F2; 
   }
   .phase-badge { font-size: 0.8rem; font-weight: 800; color: #546E7A; text-transform: uppercase; text-align: center; margin-bottom: 5px; }
   .control-row { display: flex; justify-content: center; gap: 15px; align-items: center; }
 
-  /* Partie DROITE de l'en-tête (Visuel) - RÉDUITE */
+  /* Partie DROITE (Visuel) */
   .header-right-visual {
-      flex: 1; /* Le reste (plus petit maintenant) */
+      flex: 1; 
       display: flex; align-items: center; justify-content: center; gap: 20px;
-      background: #fff;
+      background: #FCF9F2; 
   }
 
-  /* 3. Zone de Travail Divisée (Split) */
+  /* 3. Zone de Travail (Split) */
   .work-split {
       display: flex;
       flex: 1;
       overflow: hidden;
       width: 100%;
+      background: #FCF9F2; /* FOND UNIQUE PARTOUT */
   }
 
-  /* Colonne GAUCHE (Données) - ÉLARGIE */
+  /* Colonne GAUCHE (Données) */
   .side-data {
-      flex: 0 0 920px; /* LARGEUR AUGMENTÉE */
-      background: #F5F7F8;
-      border-right: 1px solid #CFD8DC;
-      padding: 15px; /* Plus d'espace */
+      flex: 0 0 920px; 
+      background: #FCF9F2; 
+      border: none; /* PLUS DE BORDURE */
+      padding: 15px; 
       overflow-x: auto;
       display: flex; align-items: flex-start; justify-content: center;
   }
 
-  /* Colonne DROITE (Lettres) - RÉDUITE */
+  /* Colonne DROITE (Lettres) */
   .side-letters {
       flex: 1; 
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      background: #FFFFFF; position: relative;
+      background: #FCF9F2; 
+      position: relative;
   }
 
   /* 4. Barre du Bas */
   .bottom-interaction-zone {
       flex: 0 0 auto; width: 100%; min-height: 110px;
-      background: #fff; border-top: 1px solid #eee;
+      background: #FCF9F2; 
+      border: none; 
       display: flex; justify-content: center; align-items: center;
       padding: 10px; z-index: 20;
   }
@@ -149,67 +156,72 @@
   .btn-pilot {
       width: 60px; height: 38px; border-radius: 6px; font-weight: bold; cursor: pointer; border: 2px solid transparent; font-size: 1rem;
   }
-  .btn-pilot.open { background: #fff; border-color: #B0BEC5; color: #78909C; }
-  .btn-pilot.closed { background: #455A64; border-color: #455A64; color: #90A4AE; opacity: 0.5; }
-  .btn-pilot.active { background: var(--primary); color: white; border-color: var(--primary-dark); opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+  .btn-pilot.open { background: #FFF; border-color: transparent; color: #78909C; box-shadow: 0 2px 5px rgba(0,0,0,0.05); } 
+  .btn-pilot.closed { background: #5D4037; border-color: #5D4037; color: #D7CCC8; opacity: 0.6; }
+  .btn-pilot.active { background: var(--primary); color: white; border-color: var(--primary-dark); opacity: 1; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
 
   .btn-mode-display {
-      padding: 5px 15px; background: #ECEFF1; color: #455A64; font-size: 0.85rem; font-weight: 700; border-radius: 12px; border: 1px solid #CFD8DC; text-transform: uppercase; min-width: 140px; text-align: center;
+      padding: 5px 15px; background: #EFEBE9; color: #5D4037;
+      font-size: 0.85rem; font-weight: 700; border-radius: 12px; border: none; 
+      text-transform: uppercase; min-width: 140px; text-align: center;
   }
 
   /* Indicateurs Visuels VA */
   .va-box-display {
       width: 80px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; /* Un peu plus petit */
-      font-weight: bold; font-family: 'Montserrat', sans-serif;
-      background: #FAFAFA; color: #CFD8DC; border: 2px solid #F0F0F0;
+      font-size: 1.5rem; font-weight: bold; font-family: 'Montserrat', sans-serif;
+      background: #FFF; 
+      color: #BCAAA4; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   }
   .va-box-display.active-eye {
-      background: #E0F7FA; color: var(--primary-dark); border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: #E0F7FA; color: var(--primary-dark); border: 2px solid var(--primary);
   }
 
-  /* --- COLONNES DE DONNÉES (VERSION XXL) --- */
-  .exam-data-strip { display: flex; gap: 10px; width: 100%; justify-content: center; }
+  /* --- COLONNES DE DONNÉES (Cartes Flottantes) --- */
+  .exam-data-strip { display: flex; gap: 15px; width: 100%; justify-content: center; }
 
   .data-col { 
       display: flex; flex-direction: column; 
-      width: 135px; /* PLUS LARGE */
-      background: #fff; border: 1px solid #CFD8DC; border-radius: 8px; padding: 10px; 
-      text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+      width: 135px;
+      background: #FFFFFF; /* On garde le blanc pour les données */
+      border: none; 
+      border-radius: 12px; 
+      padding: 10px; 
+      text-align: center; 
+      box-shadow: 0 4px 15px rgba(93, 64, 55, 0.08); /* Ombre douce pour effet "Carte" */
   }
   
   .col-active { 
-      width: 175px; /* BEAUCOUP PLUS LARGE pour le subjectif */
-      border: 3px solid var(--primary); z-index: 5; transform: scale(1.02); 
+      width: 175px; 
+      border: 2px solid var(--primary); z-index: 5; transform: scale(1.02); 
+      box-shadow: 0 8px 20px rgba(4, 171, 198, 0.15);
   }
 
-  .col-title { font-size: 0.8rem; font-weight: 800; color: #90A4AE; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+  .col-title { font-size: 0.8rem; font-weight: 800; color: #8D6E63; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #F5F5F5; padding-bottom: 4px; }
   .title-ra { color: var(--primary); } 
-  .title-subj { color: var(--primary-dark); font-size: 1rem; } /* Titre plus gros */
+  .title-subj { color: var(--primary-dark); font-size: 1rem; }
   
   .data-line { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 1rem; align-items: center; }
-  .lbl { font-weight: bold; color: #B0BEC5; font-size: 0.8rem; }
+  .lbl { font-weight: bold; color: #BCAAA4; font-size: 0.8rem; }
   
-  /* VALEURS PLUS GROSSES */
+  /* VALEURS */
   .val-input { 
       width: 100%; text-align: center; background: transparent; border: none; 
-      font-weight: 700; color: #546E7A; font-family: 'Montserrat', sans-serif; 
-      font-size: 1.2rem; /* Chiffres plus gros */
+      font-weight: 700; color: #5D4037; font-family: 'Montserrat', sans-serif; 
+      font-size: 1.2rem;
   }
   
-  .val-big { 
-      font-size: 1.8rem; /* Subjectif TRÈS gros */
-      font-weight: 800; color: #37474F; 
-  }
+  .val-big { font-size: 1.8rem; font-weight: 800; color: #3E2723; }
 
-  /* --- LETTRES (VERSION RÉDUITE) --- */
+  /* --- LETTRES --- */
   .letter-display { 
       font-family: 'Segoe UI', sans-serif; 
-      font-size: 3rem; /* RÉDUIT (était 5.5rem) */
-      font-weight: bold; color: #263238; letter-spacing: 8px; 
+      font-size: 3rem; 
+      font-weight: bold; color: #3E2723; 
+      letter-spacing: 8px; 
   }
   
-  .info-bar { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 15px; }
+  .info-bar { font-size: 1.1rem; color: #8D6E63; margin-bottom: 15px; }
 
   /* STYLE DES PANNEAUX */
   .section { 
