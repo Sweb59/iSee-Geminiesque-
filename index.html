@@ -1105,7 +1105,6 @@ window.checkCylInput = function(el) {
     val = Math.round(val * 4) / 4; 
     el.value = val.toFixed(2);
 };
-
 window.applyTransposition = function() {
     if(!tempCylInputId) return;
 
@@ -1123,7 +1122,30 @@ window.applyTransposition = function() {
 
     var cyl = parseFloat(elCyl.value.replace(',', '.'));
     var sph = elSph.value ? parseFloat(elSph.value.replace(',', '.')) : 0;
-    var axe = elAxe.value ? parseFloat(elAxe.value) : 0;
+    
+    // Vérification de l'axe
+    var axeVal = elAxe.value;
+    var axe = (axeVal && axeVal !== "") ? parseFloat(axeVal) : 0;
+
+    // Si l'axe est vide ou 0, on demande à l'utilisateur
+    if (axe === 0) {
+        // --- MESSAGE CLARIFIÉ ---
+        var msg = "⚠️ Transposition requise\n\n";
+        msg += "Pour transposer correctement le cylindre de " + elCyl.value + ", indiquez son axe d'origine.\n\n";
+        msg += "👉 Entrez l'axe du cylindre POSITIF (celui que vous venez d'écrire) :";
+        
+        var userRep = prompt(msg);
+        
+        if (userRep === null || userRep.trim() === "") {
+            return; // Annulation
+        }
+        
+        axe = parseFloat(userRep.replace(',', '.'));
+        if (isNaN(axe)) {
+            alert("Valeur d'axe invalide.");
+            return;
+        }
+    }
 
     // --- CALCUL ---
     var newSph = sph + cyl;
@@ -1131,12 +1153,11 @@ window.applyTransposition = function() {
     var newAxe = (axe + 90) % 180;
     if (newAxe === 0) newAxe = 180; 
 
-    // APPLICATION DES VALEURS
+    // APPLICATION
     elSph.value = (Math.round(newSph * 4) / 4).toFixed(2);
-    elCyl.value = (Math.round(newCyl * 4) / 4).toFixed(2); // La valeur est mise ici
+    elCyl.value = (Math.round(newCyl * 4) / 4).toFixed(2);
     elAxe.value = Math.round(newAxe);
 
-    // IMPORTANT : On ne vide pas le champ, on ferme juste la modale
     window.closeTransposeModal();
     
     if(window.onRaChanged) window.onRaChanged();
