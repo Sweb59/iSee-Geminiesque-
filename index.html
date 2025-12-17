@@ -1027,12 +1027,12 @@
       <marker id="arrowhead2" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#fd7e14" /></marker>
     </defs>
   </svg>
-</div><script>
+</div>
+  <script>
 // =============================================================================
-// 1. UTILITAIRES & CONFIGURATION (Placés au début pour la sécurité)
+// 1. CONFIGURATION & VARIABLES (Cœur de l'ancien code)
 // =============================================================================
 
-// Table d'acuité visuelle
 var ACUITY_TABLE = [
     { va: 0.04, lines: ["U", "P", "F", "V"] },
     { va: 0.05, lines: ["E", "Z", "N", "R"] },
@@ -1041,7 +1041,7 @@ var ACUITY_TABLE = [
     { va: 0.10, lines: ["D U F", "P H N"] },
     { va: 0.12, lines: ["E N R", "R H P"] },
     { va: 0.16, lines: ["U P H", "V R F"] },
-    { va: 0.20, lines: ["N Z", "P R H"] },
+    { va: 0.20, lines: ["N Z", "P R H"] }, 
     { va: 0.25, lines: ["H D F", "U R Z"] },
     { va: 0.32, lines: ["D F U N R", "R U P E H"] },
     { va: 0.40, lines: ["Z V D F H", "U V N R Z"] },
@@ -1054,100 +1054,38 @@ var ACUITY_TABLE = [
     { va: 2.00, lines: ["V H F D Z", "R N U F D"] }
 ];
 
-// Phrases de relance
-window.NEXT_PROMPTS = ["et ici ?", "lisez moi ces lettres là", "et celles-ci ?", "pouvez-vous lire ces lettres ci ?"];
-
-// Fonctions de base (Date, ID, Voix)
-function getAgeFromDob(dob) {
-    if(!dob) return 0;
-    var d = new Date(dob); var now = new Date();
-    var age = now.getFullYear() - d.getFullYear();
-    var m = now.getMonth() - d.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) { age--; }
-    return age;
-}
-
-function getAgeScore(age) {
-    if(age<=10) return 6; if(age<=20) return 5; if(age<=30) return 4; if(age<=50) return 2; if(age<=70) return 1; return 0;
-}
-
-function getProfileColor(p) { if(p==='1') return '#26A69A'; if(p==='2') return '#42A5F5'; if(p==='3') return '#FFA726'; return '#EF5350'; }
-
-window.generateShortUID = function() { 
-    return "TP" + Math.floor(Math.random()*10000); 
-};
-
-window.initVoices = function() { 
-    if('speechSynthesis' in window) window.speechSynthesis.getVoices(); 
-};
-
-function say(text, callback) {
-    if(!('speechSynthesis' in window)) { if(callback) callback(); return; }
-    if(window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-    
-    appState.isSpeaking = true; 
-    updateLockUI(true);
-    
-    var t = Array.isArray(text) ? text[Math.floor(Math.random()*text.length)] : text;
-    var u = new SpeechSynthesisUtterance(t); 
-    u.lang='fr-FR'; 
-    u.rate=1.1;
-    
-    u.onend = function() { 
-        appState.isSpeaking=false; 
-        updateLockUI(false); 
-        if(callback) callback(); 
-    };
-    
-    window.speechSynthesis.speak(u);
-}
-
-function updateLockUI(locked) {
-    var btns = document.querySelectorAll('.btn-resp, .btn-action');
-    btns.forEach(function(b) { 
-        if(locked) b.classList.add('locked'); 
-        else b.classList.remove('locked'); 
-    });
-}
-
-window.getRandomPrompt = function() { 
-    return window.NEXT_PROMPTS[Math.floor(Math.random() * window.NEXT_PROMPTS.length)]; 
-};
-
-// Helpers DOM
-window.getVal = function(id) { var el=document.getElementById(id); return (el && el.value) ? parseFloat(el.value.replace(',','.')) || 0 : 0; };
-window.setHTML = function(id, val) { var el=document.getElementById(id); if(el) el.innerHTML=val; };
-window.startChrono = function() { }; 
-window.initClock = function() { };
-
-// =============================================================================
-// 2. ETAT DE L'APPLICATION (STATE)
-// =============================================================================
-
 var appState = {
     isRunning: false, activeEye: 'OD', firstEye: 'OD', profile: null, initProfile: null, 
-    baseProfile: null, isSpeaking: false,
+    baseProfile: null, 
+    isSpeaking: false,
     subj: { OD: { sphere: 0, cyl: 0, axe: 0, va: "--" }, OG: { sphere: 0, cyl: 0, axe: 0, va: "--" } },
     memCyl: { OD: null, OG: null }, 
     vaIndex: 0, startVaIndex: 0, letterIndex: 0, pendingLetters: null, defoggedInZone: false,
     examPhase: "Sb0.2", patientInfo: { name: "", forename: "", dob: "", age: 0, uid: "" },
     
-    // Flags Logiques
+    // Flags Logiques (Ancien Code)
     sb02_OD_ok: false, sb02_OG_ok: false, seen025_OD: false, seen025_OG: false,
     sb05_OD_ok: false, sb05_OG_ok: false, sb10_OD_ok: false, sb10_OG_ok: false,
     tqs_attempted_06: false, count06_validations: 0, tqsFogCount: 0, checkStep: null, tempScore: 0, baseSphereValue: 0,
 
-    // Sécurités
-    sb10_line_defog: 0, safety_mode: false, safety_mem_letters: 0, hasRestartedSb10: false, 
+    // Sécurités (Ancien Code)
+    sb10_line_defog: 0, 
+    safety_mode: false,
+    safety_mem_letters: 0,
+    hasRestartedSb10: false, 
     
-    handednessEye: 'OD', pendingSchober: null, 
+    handednessEye: 'OD', 
+    pendingSchober: null, 
 
     saved_sb05: { OD: 0, OG: 0 }, saved_sb10: { OD: 0, OG: 0 },
-    axisStep: 20, axisDirectionHistory: [], cylHigh: false, lastInvalidInputId: null 
+    axisStep: 20, axisDirectionHistory: [], cylHigh: false,
+    lastInvalidInputId: null 
 };
 
+window.NEXT_PROMPTS = ["et ici ?", "lisez moi ces lettres là", "et celles-ci ?", "pouvez-vous lire ces lettres ci ?"];
+
 // =============================================================================
-// 3. VALIDATION & ALARME ORANGE (INPUTS)
+// 2. VALIDATION & ALARME ORANGE (INPUTS)
 // =============================================================================
 
 window.validateNumberInput = function(el) {
@@ -1167,6 +1105,7 @@ window.checkSphere = function(el) {
     if(!el.value) return;
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
+    // Check Limites Appareil
     if (val < -29.00 || val > 26.75) {
         appState.lastInvalidInputId = el.id;
         document.getElementById('modalWarning').classList.remove('hidden');
@@ -1180,7 +1119,9 @@ window.forceNegativeCyl = function(el) {
     if(!el.value) return;
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
-    if(val > 0) val = -val; // Conversion auto
+    // Conversion Cylindre Positif -> Négatif
+    if(val > 0) val = -val;
+    // Check Limites
     if (val < -10.00 || val > 0) {
         appState.lastInvalidInputId = el.id;
         document.getElementById('modalWarning').classList.remove('hidden');
@@ -1209,18 +1150,14 @@ window.checkAxis = function(el) {
 };
 
 // =============================================================================
-// 4. WORKFLOW & UI (MODALES)
+// 3. UI & WORKFLOW (Modales, Affichage, Schober Start)
 // =============================================================================
 
 // Etape 1 : Validation Patient -> Choix Méthode
 window.validatePatientID = function() {
     var dob = document.getElementById('inDob').value;
     if(!dob) { alert("La date de naissance est obligatoire."); return; }
-    
-    // On ferme la fenêtre ID
     document.getElementById('modalPatientID').classList.add('hidden');
-    
-    // On ouvre la fenêtre Choix Méthode
     document.getElementById('modalEntryMethod').classList.remove('hidden');
 };
 
@@ -1245,16 +1182,13 @@ window.simulateImport = function() {
     document.getElementById('modalInputData').classList.remove('hidden');
 };
 
+// --- CORRECTION ICI : LE NOM DE LA FONCTION DOIT ETRE "confirmDataAndPosition" ---
 // Etape 3 : Fin Saisie -> Latéralité
-window.finishDataEntry = function() {
-    document.getElementById('modalInputData').classList.add('hidden'); // Fermeture Saisie
+window.confirmDataAndPosition = function() {
+    // 1. Fermeture modale
+    document.getElementById('modalInputData').classList.add('hidden'); 
 
-    // Transfert des données
-    var prefixes = ['raOD', 'raOG', 'frontoOD', 'frontoOG'];
-    // On mappe les inputs de la modale vers les inputs cachés (si existants) ou on stocke
-    // Ici on suppose que les inputs de la modale (mod_*) sont copiés vers les inputs de stockage (raOD_*)
-    
-    // Mapping manuel pour être sûr
+    // 2. Transfert des données (Inputs Modale -> Inputs Cachés)
     document.getElementById('raOD_sph').value = document.getElementById('mod_raOD_sph').value || "0.00";
     document.getElementById('raOD_cyl').value = document.getElementById('mod_raOD_cyl').value || "0.00";
     document.getElementById('raOD_axe').value = document.getElementById('mod_raOD_axe').value || "0";
@@ -1271,7 +1205,7 @@ window.finishDataEntry = function() {
     document.getElementById('frontoOG_cyl').value = document.getElementById('mod_frontoOG_cyl').value || "0.00";
     document.getElementById('frontoOG_axe').value = document.getElementById('mod_frontoOG_axe').value || "0";
 
-    // Affichage Bandeau Patient
+    // 3. Mise à jour Bandeau Patient
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
@@ -1287,8 +1221,9 @@ window.finishDataEntry = function() {
         </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-    document.getElementById('examDataStrip').classList.remove('hidden');
     
+    // 4. Affichage des éléments suivants
+    document.getElementById('examDataStrip').classList.remove('hidden');
     document.getElementById('modalHandedness').classList.remove('hidden');
 };
 
@@ -1382,11 +1317,15 @@ window.startRulesAndIntro = function() {
 
 window.confirmAndLaunch = function() {
     document.getElementById('modalIntroConfirmation').classList.add('hidden');
+    window.triggerFinalStart();
+};
+
+window.triggerFinalStart = function() {
     window.launchExamSequence();
 };
 
 // =============================================================================
-// 5. AFFICHAGE (DISPLAY)
+// 7. AFFICHAGE (DISPLAY - NOUVEAU DESIGN)
 // =============================================================================
 
 window.updateDisplay = function(message) {
@@ -1453,7 +1392,6 @@ window.updateDisplay = function(message) {
         for(var i=0; i<=count; i++) { btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; }
         setHTML('btnContainer', btnHTML);
 
-        // Correction Visibilité
         var isSpecialMode = false;
         var cadBtns = document.getElementById('cadenceButtons');
         var chkPlus = document.getElementById('checkPlusZone');
@@ -1475,7 +1413,7 @@ window.setEye = function(eye) {
 };
 
 // =============================================================================
-// 6. LOGIQUE EXAMEN (ALGORITHMES)
+// 8. LOGIQUE EXAMEN (ANCIEN CODE)
 // =============================================================================
 
 window.launchExamSequence = function() {
@@ -1920,6 +1858,12 @@ window.startAppSequence = function() {
     document.getElementById('inUID').value = uid;
     document.getElementById('modalPatientID').classList.remove('hidden');
 };
+
+// --- HELPERS DOM ---
+window.getAgeFromDob = function(dob) { if(!dob) return 0; var d = new Date(dob); var n = new Date(); var a = n.getFullYear() - d.getFullYear(); if(n.getMonth() < d.getMonth() || (n.getMonth()===d.getMonth() && n.getDate() < d.getDate())) a--; return a; };
+window.getAgeScore = function(a) { if(a<=10) return 6; if(a<=20) return 5; if(a<=30) return 4; if(a<=50) return 2; if(a<=70) return 1; return 0; };
+window.getProfileColor = function(p) { if(p==='1') return '#26A69A'; if(p==='2') return '#42A5F5'; if(p==='3') return '#FFA726'; return '#EF5350'; };
+
 </script>
 </body>
 </html>
