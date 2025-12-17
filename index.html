@@ -1645,25 +1645,36 @@ window.validateSchober = function() {
     }
 };
 
+// --- LOGIQUE CHOIX OEIL DEPART (MODIFIE POUR 1-a) ---
 window.handleSchoberChoice = function(mode, eye) {
-    // --- GESTION DU CLIC 'VISION SIMULTANÉE' ---
-    if (eye === 'AUTO') {
-        // Si appState.handednessEye n'est pas défini (sécurité), on met OD par défaut
-        eye = appState.handednessEye || 'OD';
-        // Note: L'alerte a été supprimée pour fluidité, car le message est déjà dans la modale de confirmation
-    }
-    // -------------------------------------------
+    var startingEye = 'OD'; // Valeur par défaut de sécurité
 
-    appState.firstEye = eye; // Définit l'œil de démarrage
+    // CAS 1 : Vision Simultanée (Bouton 1 - Paramètre 'AUTO')
+    if (eye === 'AUTO') {
+        // On respecte la latéralité choisie à l'étape précédente
+        if (appState.handednessEye === 'OG') {
+            startingEye = 'OG';
+        } else {
+            startingEye = 'OD'; // Droitier ou par défaut
+        }
+    } 
+    // CAS 2 : Problème Binoculaire (Boutons 2 à 9)
+    else {
+        // On impose l'œil défini par le bouton (l'œil fixateur/sain)
+        startingEye = eye;
+    }
+
+    // Mise à jour de l'état global
+    appState.firstEye = startingEye; 
+    appState.activeEye = startingEye; // IMPORTANT : C'est cet œil qui commencera l'examen
     appState.isMonocularExam = (mode === 'mono');
 
-    // Cache le Schober
-    document.getElementById('schoberStep').classList.add('hidden');
+    console.log("Schober Validé. Oeil de départ : " + startingEye);
 
-    // Ouvre la modale Profil pour confirmation (STEP 5)
+    // Suite du flux -> Cache Schober, Affiche Profil
+    document.getElementById('schoberStep').classList.add('hidden');
     document.getElementById('modalProfileCalc').classList.remove('hidden');
 };
-
 window.onRaChanged = function() { 
     window.checkMyopia();
     if (appState.baseProfile === "1") {
