@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Assistant Réfraction - Dashboard Final</title>
+<title>Assistant Réfraction - Dashboard Fluid</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,28 +32,17 @@
       color: var(--text-main); 
       margin: 0; padding: 0;
       height: 100vh; 
-      overflow: hidden; 
+      overflow: hidden; /* Empêche le scroll global */
       font-size: 13px;
   }
 
   /* LAYOUT PRINCIPAL */
-  /* --- LAYOUT 1-C (BANDEAU + EXAMEN) --- */
   .app-container { display: flex; flex-direction: column; height: 100vh; max-width: 100%; margin: 0; padding: 0; }
-  header { display: none; } /* On cache l'ancien titre bleu */
-
-  .dashboard-wrapper {
-      display: flex;
-      flex-direction: column;
-      flex: 1; 
-      gap: 0;
-      overflow: hidden; 
-      height: 100%;
-      background: #FAFAFA;
-  }
+  header { display: none; } 
 
   /* 1. Bandeau Supérieur : Patient + Chrono */
   .top-banner {
-      flex: 0 0 50px; /* Hauteur fine fixe */
+      flex: 0 0 50px; 
       background: #FFFFFF;
       border-bottom: 1px solid #CFD8DC;
       padding: 0 20px;
@@ -64,112 +53,100 @@
       z-index: 20;
   }
 
-  /* Style ligne patient */
   .patient-line { display: flex; align-items: center; gap: 30px; font-size: 1rem; color: var(--text-main); width: 100%; }
   .pat-name { font-weight: 700; color: var(--primary-deep); text-transform: uppercase; font-size: 1.1rem; }
   .pat-forename { font-weight: 500; font-size: 1.1rem; }
   .pat-uid { font-family: monospace; background: #ECEFF1; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #546E7A; }
   .pat-profile-badge { padding: 3px 10px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-  /* 2. Zone Examen *//* --- NOUVEAU LAYOUT SPLIT (VERSION LARGE DONNÉES) --- */
-  /* 2. Zone Examen */
-
-  /* 1. Conteneur Principal de droite */
-  /* --- NOUVEAU LAYOUT "FLAT" (UNIFORME CRÈME & SANS BORDURES) --- */
-
-  /* 1. Conteneur Principal */
+  /* 2. Zone Principale (Split Screen) */
   .right-panel {
       flex: 1; 
       width: 100%;
-      background: var(--bg-main);
-      background: #FCF9F2; /* FOND UNIQUE */
+      background: var(--bg-main); /* FOND UNIQUE */
       display: flex;
       flex-direction: column; 
       overflow: hidden; 
       padding: 0;
   }
 
-  /* 2. En-tête Divisé (Double Header) */
-  /* 2. En-tête Divisé */
+  /* 2a. En-tête Divisé (Pilotage + Visuel) */
   .exam-header-wrapper {
       display: flex;
       width: 100%;
-      height: 80px; /* Un peu plus haut */
-      background: #fff;
-      border-bottom: 1px solid #E0E0E0;
       height: 80px;
-      background: #FCF9F2; /* MÊME FOND */
-      border: none; /* PLUS DE BORDURE */
+      background: var(--bg-main); 
+      border-bottom: 1px solid #eee; /* Légère séparation visuelle */
       flex: 0 0 auto;
   }
 
-  /* Partie GAUCHE de l'en-tête (Pilotage) - ÉLARGIE */
-  /* Partie GAUCHE (Pilotage) */
+  /* Partie GAUCHE (Pilotage) - FLUIDE (FLEX 2) */
   .header-left-control {
-      flex: 0 0 920px; /* LARGEUR AUGMENTÉE POUR LES DONNÉES */
-      flex: 0 0 920px; 
-      display: flex; flex-direction: column; justify-content: center;
-      padding: 0 15px; border-right: 1px solid #eee; background: #F9FAFB;
+      flex: 2; /* Prend 2/3 de l'espace */
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center;
       padding: 0 15px; 
-      border: none; /* PLUS DE BORDURE */
-      background: #FCF9F2; 
+      border-right: 1px solid #eee; 
+      background: var(--bg-main); 
   }
   .phase-badge { font-size: 0.8rem; font-weight: 800; color: #546E7A; text-transform: uppercase; text-align: center; margin-bottom: 5px; }
   .control-row { display: flex; justify-content: center; gap: 15px; align-items: center; }
 
-  /* Partie DROITE de l'en-tête (Visuel) - RÉDUITE */
-  /* Partie DROITE (Visuel) */
+  /* Partie DROITE (Visuel) - FLUIDE (FLEX 1) */
   .header-right-visual {
-      flex: 1; /* Le reste (plus petit maintenant) */
-      flex: 1; 
-      display: flex; align-items: center; justify-content: center; gap: 20px;
-      background: #fff;
-      background: #FCF9F2; 
+      flex: 1; /* Prend 1/3 de l'espace */
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 20px;
+      background: var(--bg-main); 
   }
 
-  /* 3. Zone de Travail Divisée (Split) */
   /* 3. Zone de Travail (Split) */
   .work-split {
       display: flex;
       flex: 1;
-      overflow: hidden;
+      overflow: hidden; /* Important pour gérer le scroll interne si nécessaire */
       width: 100%;
-      background: #FCF9F2; /* FOND UNIQUE PARTOUT */
+      background: var(--bg-main);
   }
 
-  /* Colonne GAUCHE (Données) - ÉLARGIE */
-  /* Colonne GAUCHE (Données) */
+  /* Colonne GAUCHE (Données) - FLUIDE (FLEX 2) */
   .side-data {
-      flex: 0 0 920px; /* LARGEUR AUGMENTÉE */
-      background: #F5F7F8;
-      border-right: 1px solid #CFD8DC;
-      padding: 15px; /* Plus d'espace */
-      flex: 0 0 920px; 
-      background: #FCF9F2; 
-      border: none; /* PLUS DE BORDURE */
+      flex: 2; /* 2/3 de l'espace */
+      background: var(--bg-main); 
       padding: 15px; 
-      overflow-x: auto;
-      display: flex; align-items: flex-start; justify-content: center;
+      overflow-x: auto; /* Scroll horizontal si l'écran est vraiment minuscule */
+      display: flex; 
+      align-items: flex-start; 
+      justify-content: center;
   }
 
-  /* Colonne DROITE (Lettres) - RÉDUITE */
-  /* Colonne DROITE (Lettres) */
+  /* Colonne DROITE (Lettres) - FLUIDE (FLEX 1) */
   .side-letters {
-      flex: 1; 
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      background: #FFFFFF; position: relative;
-      background: #FCF9F2; 
+      flex: 1; /* 1/3 de l'espace */
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+      align-items: center;
+      background: var(--bg-main); 
       position: relative;
+      border-left: 1px dashed #CFD8DC; /* Séparation discrète */
   }
 
   /* 4. Barre du Bas */
   .bottom-interaction-zone {
-      flex: 0 0 auto; width: 100%; min-height: 110px;
-      background: #fff; border-top: 1px solid #eee;
-      background: #FCF9F2; 
-      border: none; 
-      display: flex; justify-content: center; align-items: center;
-      padding: 10px; z-index: 20;
+      flex: 0 0 auto; 
+      width: 100%; 
+      min-height: 110px;
+      background: var(--bg-main); 
+      border-top: 1px solid #eee;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      padding: 10px; 
+      z-index: 20;
   }
 
   /* --- STYLES ÉLÉMENTS SPÉCIFIQUES --- */
@@ -177,16 +154,13 @@
   /* Boutons Pilotage */
   .btn-pilot {
       width: 60px; height: 38px; border-radius: 6px; font-weight: bold; cursor: pointer; border: 2px solid transparent; font-size: 1rem;
+      background: #5D4037; border-color: #5D4037; color: #D7CCC8; opacity: 0.6; /* Default closed */
+      transition: all 0.2s;
   }
-  .btn-pilot.open { background: #fff; border-color: #B0BEC5; color: #78909C; }
-  .btn-pilot.closed { background: #455A64; border-color: #455A64; color: #90A4AE; opacity: 0.5; }
-  .btn-pilot.active { background: var(--primary); color: white; border-color: var(--primary-dark); opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-  .btn-pilot.open { background: #FFF; border-color: transparent; color: #78909C; box-shadow: 0 2px 5px rgba(0,0,0,0.05); } 
-  .btn-pilot.closed { background: #5D4037; border-color: #5D4037; color: #D7CCC8; opacity: 0.6; }
+  .btn-pilot.open { background: #FFF; border-color: transparent; color: #78909C; box-shadow: 0 2px 5px rgba(0,0,0,0.05); opacity: 1; } 
   .btn-pilot.active { background: var(--primary); color: white; border-color: var(--primary-dark); opacity: 1; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
 
   .btn-mode-display {
-      padding: 5px 15px; background: #ECEFF1; color: #455A64; font-size: 0.85rem; font-weight: 700; border-radius: 12px; border: 1px solid #CFD8DC; text-transform: uppercase; min-width: 140px; text-align: center;
       padding: 5px 15px; background: #EFEBE9; color: #5D4037;
       font-size: 0.85rem; font-weight: 700; border-radius: 12px; border: none; 
       text-transform: uppercase; min-width: 140px; text-align: center;
@@ -195,100 +169,59 @@
   /* Indicateurs Visuels VA */
   .va-box-display {
       width: 80px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; /* Un peu plus petit */
-      font-weight: bold; font-family: 'Montserrat', sans-serif;
-      background: #FAFAFA; color: #CFD8DC; border: 2px solid #F0F0F0;
       font-size: 1.5rem; font-weight: bold; font-family: 'Montserrat', sans-serif;
       background: #FFF; 
       color: #BCAAA4; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: all 0.3s;
   }
   .va-box-display.active-eye {
-      background: #E0F7FA; color: var(--primary-dark); border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       background: #E0F7FA; color: var(--primary-dark); border: 2px solid var(--primary);
+      transform: scale(1.05);
   }
 
-  /* --- COLONNES DE DONNÉES (VERSION XXL) --- */
-  .exam-data-strip { display: flex; gap: 10px; width: 100%; justify-content: center; }
   /* --- COLONNES DE DONNÉES (Cartes Flottantes) --- */
-  .exam-data-strip { display: flex; gap: 15px; width: 100%; justify-content: center; }
+  .exam-data-strip { display: flex; gap: 10px; width: 100%; justify-content: center; flex-wrap: wrap; }
 
   .data-col { 
       display: flex; flex-direction: column; 
-      width: 135px; /* PLUS LARGE */
-      background: #fff; border: 1px solid #CFD8DC; border-radius: 8px; padding: 10px; 
-      text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-      width: 135px;
-      background: #FFFFFF; /* On garde le blanc pour les données */
+      width: 130px; /* Largeur de base un peu réduite pour la fluidité */
+      background: #FFFFFF; 
       border: none; 
       border-radius: 12px; 
       padding: 10px; 
       text-align: center; 
-      box-shadow: 0 4px 15px rgba(93, 64, 55, 0.08); /* Ombre douce pour effet "Carte" */
+      box-shadow: 0 4px 15px rgba(93, 64, 55, 0.08); 
   }
 
   .col-active { 
-      width: 175px; /* BEAUCOUP PLUS LARGE pour le subjectif */
-      border: 3px solid var(--primary); z-index: 5; transform: scale(1.02); 
-      width: 175px; 
+      width: 170px; /* Plus large pour le subjectif */
       border: 2px solid var(--primary); z-index: 5; transform: scale(1.02); 
       box-shadow: 0 8px 20px rgba(4, 171, 198, 0.15);
   }
 
-  .col-title { font-size: 0.8rem; font-weight: 800; color: #90A4AE; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
   .col-title { font-size: 0.8rem; font-weight: 800; color: #8D6E63; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #F5F5F5; padding-bottom: 4px; }
   .title-ra { color: var(--primary); } 
-  .title-subj { color: var(--primary-dark); font-size: 1rem; } /* Titre plus gros */
   .title-subj { color: var(--primary-dark); font-size: 1rem; }
 
   .data-line { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 1rem; align-items: center; }
-  .lbl { font-weight: bold; color: #B0BEC5; font-size: 0.8rem; }
   .lbl { font-weight: bold; color: #BCAAA4; font-size: 0.8rem; }
 
-  /* VALEURS PLUS GROSSES */
   /* VALEURS */
   .val-input { 
       width: 100%; text-align: center; background: transparent; border: none; 
-      font-weight: 700; color: #546E7A; font-family: 'Montserrat', sans-serif; 
-      font-size: 1.2rem; /* Chiffres plus gros */
       font-weight: 700; color: #5D4037; font-family: 'Montserrat', sans-serif; 
-      font-size: 1.2rem;
+      font-size: 1.1rem;
   }
 
-  .val-big { 
-      font-size: 1.8rem; /* Subjectif TRÈS gros */
-      font-weight: 800; color: #37474F; 
-  }
   .val-big { font-size: 1.8rem; font-weight: 800; color: #3E2723; }
 
-  /* --- LETTRES (VERSION RÉDUITE) --- */
   /* --- LETTRES --- */
   .letter-display { 
       font-family: 'Segoe UI', sans-serif; 
-      font-size: 3rem; /* RÉDUIT (était 5.5rem) */
-      font-weight: bold; color: #263238; letter-spacing: 8px; 
       font-size: 3rem; 
       font-weight: bold; color: #3E2723; 
       letter-spacing: 8px; 
-  }
-
-  .info-bar { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 15px; }
-  .info-bar { font-size: 1.1rem; color: #8D6E63; margin-bottom: 15px; }
-
-  /* STYLE DES PANNEAUX */
-  .section { 
-      background: var(--panel); 
-      border: 1px solid var(--border); 
-      border-radius: 8px; 
-      padding: 10px; 
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  }
-
-  h2 { 
-      margin-top: 0; margin-bottom: 8px; 
-      color: var(--primary-dark); 
-      font-size: 1rem; 
-      border-bottom: 1px solid var(--primary-border); 
-      padding-bottom: 2px; 
+      text-align: center;
   }
 
   .hidden { display: none !important; }
@@ -300,9 +233,6 @@
   .summary-val { color: var(--primary-dark); font-weight: bold; }
 
   .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-  /* Grille compacte pour la section 2 */
-  .mini-data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; text-align: center; }
 
   label { display: block; font-weight: 600; margin-bottom: 1px; font-size: 0.75rem; color: var(--text-muted); }
   input, select { 
@@ -333,40 +263,20 @@
 
   /* 1. Autoréfractomètre (RA) */
   input[id^="ra"] {
-      color: var(--primary);              /* Texte : Primary (Cyan) */
-      background-color: var(--primary-light); /* Fond : Primary Light (Cyan très pâle) */
-      font-family: 'Montserrat', sans-serif;  /* Police moderne */
+      color: var(--primary);            
+      background-color: var(--primary-light); 
+      font-family: 'Montserrat', sans-serif;  
       font-weight: 700;
       border: 1px solid var(--primary-border);
   }
 
   /* 2. Frontofocomètre */
   input[id^="fronto"] {
-      color: var(--primary-border);       /* Texte : Plus clair que primary */
-      background-color: #ffffff;          /* Fond : Blanc (Plus clair que primary-light) */
+      color: var(--primary-border);       
+      background-color: #ffffff;          
       font-family: 'Montserrat', sans-serif;
       font-weight: 600;
   }
-    /* GRILLE VALEURS */
-  .col-head { background: #ECEFF1; font-weight: bold; font-size: 0.7rem; padding: 4px 0; border-radius: 3px; }
-  .col-input { padding: 3px; text-align: center; font-weight: 600; }
-  .val-box { 
-      background: var(--primary-light); color: var(--primary-dark);
-      border: 1px solid var(--primary-border);
-      font-weight: bold; font-size: 0.95rem; 
-      display: flex; align-items: center; justify-content: center; 
-      border-radius: 4px; min-height: 24px;
-  }
-  .col-max-va { background: #E8F5E9; color: #2E7D32; font-size: 0.8rem; border-color: #C8E6C9; }
-
-  /* TITRES BLOCS DONNEES */
-  .data-block-title {
-      font-size: 0.75rem; font-weight:bold; color:var(--primary); text-align:center; 
-      margin-bottom:3px; text-transform:uppercase; border-bottom:1px solid var(--primary-light);
-  }
-
-
-
 
   /* MESSAGE BOX (CACHÉE) */
   .message-box { display: none !important; }
@@ -378,15 +288,15 @@
   .btn-grid { 
       display: flex; 
       justify-content: center; 
-      gap: 40px; 
+      gap: 30px; 
       flex-wrap: wrap; 
   }
 
   .btn-resp { 
-      width: 80px; height: 80px;
+      width: 70px; height: 70px;
       border-radius: 50%; border: none; 
       background: var(--primary-light); color: var(--primary-dark); 
-      font-size: 2rem; 
+      font-size: 1.8rem; 
       font-weight: bold; 
       cursor: pointer; transition: 0.2s; 
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -442,9 +352,13 @@
   @media (max-width: 900px) {
       body { overflow: auto; height: auto; } 
       .app-container { height: auto; display: block; }
-      .dashboard-wrapper { display: block; } 
-      .left-panel { width: 100%; margin-bottom: 15px; }
-      .right-panel { min-height: 400px; }
+      .right-panel { min-height: 400px; display: block; }
+      .exam-header-wrapper { display: block; height: auto; }
+      .work-split { display: block; }
+      .side-data { width: 100%; border-right: none; border-bottom: 1px solid #eee; }
+      .side-letters { width: 100%; min-height: 200px; padding: 20px; }
+      /* En mobile, on remet les largeurs à 100% ou auto */
+      .header-left-control, .header-right-visual { width: 100%; flex: none; border: none; padding: 10px; }
   }
 
   /* MODAL */
@@ -493,18 +407,11 @@
       padding-bottom: 5px;
       font-size: 1.1rem;
   }
-  .device-header {
-      font-weight: 700; color: var(--primary); margin-bottom: 15px; text-transform: uppercase; font-size: 1.1rem; text-align: center;
-  }
-  .data-source-lbl {
-      font-weight: 600; color: var(--primary-dark); margin-bottom: 5px; margin-top: 15px; display: block;
-  }
 
   /* --- STYLE TEST DE SCHOBER --- */
   .schober-container { display: flex; flex-direction: column; gap: 15px; width: 100%; align-items: center; border: 1px solid #ECEFF1; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
   .schober-group-title { font-weight: bold; font-size: 1rem; color: var(--primary-deep); text-transform: uppercase; margin-bottom: 15px; border-bottom: 2px solid var(--primary-light); display: inline-block; padding-bottom: 5px; }
 
-  /* Nouveaux styles pour les sous-catégories */
   .schober-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; }
   .schober-sub-group { display: flex; flex-direction: column; align-items: center; background: #FAFAFA; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
   .schober-sub-title { font-size: 0.8rem; font-weight: 700; color: #00838F; margin-bottom: 10px; text-align: center; max-width: 140px; min-height: 30px; display:flex; align-items:center; justify-content:center; }
@@ -820,7 +727,7 @@
         <div class="exam-header-wrapper">
             <div class="header-left-control">
                 <div class="phase-badge">PHASE : <span id="dispPhase">INIT</span></div>
-                <div class="control-buttons-row" style="display:flex; justify-content:center; gap:10px;">
+                <div class="control-row">
                     <button id="btnPilotOD" class="btn-pilot" onclick="window.setEye('OD')">OD</button>
                     <div id="dispMode" class="btn-mode-display">MONOCULAIRE</div>
                     <button id="btnPilotOG" class="btn-pilot" onclick="window.setEye('OG')">OG</button>
@@ -836,7 +743,7 @@
         <div class="work-split">
 
             <div class="side-data">
-                <div id="examDataStrip" class="exam-data-strip hidden" style="display:flex; gap:5px;">
+                <div id="examDataStrip" class="exam-data-strip hidden">
                      <div id="dataSection" style="display:none;"></div> 
 
                      <div class="data-col col-passive">
@@ -2798,166 +2705,14 @@ function updateDisplay(message) {
 
     // Gestion des classes des colonnes de données
     if(appState.activeEye === 'OD') {
-        boxOD.classList.add('active'); boxOG.classList.remove('active');
+        boxOD.classList.add('col-active'); boxOD.classList.remove('col-passive');
+        boxOG.classList.remove('col-active'); boxOG.classList.add('col-passive');
     } else {
-        boxOD.classList.remove('active'); boxOG.classList.add('active');
+        boxOD.classList.remove('col-active'); boxOD.classList.add('col-passive');
+        boxOG.classList.add('col-active'); boxOG.classList.remove('col-passive');
     }
 
     // Gestion des classes des boutons Yeux (Nouvelle logique Occlusion)
-    var isMonocularPhase = (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5");
-
-    if(appState.activeEye === 'OD') {
-        btnOD.className = 'eye-btn active';
-        btnOG.className = isMonocularPhase ? 'eye-btn occluded-mode' : 'eye-btn';
-    } else {
-        btnOD.className = isMonocularPhase ? 'eye-btn occluded-mode' : 'eye-btn';
-        btnOG.className = 'eye-btn active';
-    }
-
-    setHTML('valProfile', appState.profile);
-    setHTML('systemMsg', message);
-    if (message.indexOf("VALIDÉE") !== -1 || message.indexOf("Validé") !== -1) document.getElementById('systemMsg').classList.add('success-msg'); else document.getElementById('systemMsg').classList.remove('success-msg');
-
-    var currentData = ACUITY_TABLE[appState.vaIndex]; setHTML('valVA', currentData.va);
-    var linesArr = currentData.lines; var txt = linesArr[appState.letterIndex % linesArr.length];
-    setHTML('letterBox', txt);
-    var count = txt.split(' ').length; var btnHTML = "";
-    for(var i=0; i<=count; i++) { btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; }
-    setHTML('btnContainer', btnHTML);
-
-    // Visuals Eye (Gauche) - Masquage des champs de saisie
-    // (MODIFIÉ: Suppression de applyVisuals car plus d'éléments à masquer dans le panneau gauche)
-}
-
-// --- AXE ---
-window.initAxisCheck = function() {
-    appState.examPhase = "AxisCheck"; var target = getTargetEye(); var raAxis = (appState.activeEye === 'OD') ? getVal('raOD_axe') : getVal('raOG_axe');
-    appState.startAxisRA = raAxis; var cyl = Math.abs(target.cyl); appState.cylHigh = (cyl >= 4.50);
-    if (cyl < 2.50) appState.axisStep = 20; else appState.axisStep = 10; 
-    appState.axisDirectionHistory = [];
-    document.getElementById('jccVisuals').classList.remove('hidden'); document.getElementById('visPos1').classList.remove('active'); document.getElementById('visPos2').classList.remove('active');
-    document.getElementById('axisDecisions').classList.add('hidden'); document.getElementById('btnReplayAxis').classList.add('hidden'); 
-    updateDisplay("Axe: Init CXJ. Cyl=" + cyl.toFixed(2));
-    if (appState.cylHigh) { alert("Cylindre Fort détecté. Méthode comparative (RA vs RA+5 / RA-5)."); } 
-    else { 
-        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer. Vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faudra lire toutes les lettres dans votre tête. Je ferai pareil, comme cela nous serons plus au moins synchronisés.", function() {
-            setTimeout(function() { runJccSequence(); }, 1000);
-        });
-    }
-};
-
-window.runJccSequence = function() {
-    if (appState.isSpeaking) return; // LOCK
-    var p1 = document.getElementById('visPos1'); var p2 = document.getElementById('visPos2');
-    document.getElementById('axisDecisions').classList.add('hidden'); document.getElementById('btnReplayAxis').classList.add('hidden');
-    say("Vous préférez lire les lettres dans la position une ?", function() {
-        p1.classList.add('active'); p2.classList.remove('active');
-        setTimeout(function() {
-            say("Ou vous préférez lire les lettres dans la position deux, ou c'est pareil ?", function() {
-                  p1.classList.remove('active'); p2.classList.add('active');
-                  setTimeout(function() { p2.classList.remove('active'); document.getElementById('axisDecisions').classList.remove('hidden'); document.getElementById('btnReplayAxis').classList.remove('hidden'); }, 500);
-            });
-        }, 2000);
-    });
-};
-
-window.handleJccChoice = function(choice) {
-    if (appState.isSpeaking) return; // LOCK
-    var target = getTargetEye();
-    if (choice === 'same') { alert("Axe validé ! Passage à la Puissance."); return; }
-    var direction = (choice === 'pos1') ? 'cw' : 'ccw'; appState.axisDirectionHistory.push(direction);
-    var consecutiveCount = 0; for (var i = appState.axisDirectionHistory.length - 1; i >= 0; i--) { if (appState.axisDirectionHistory[i] === direction) consecutiveCount++; else break; }
-    if (consecutiveCount >= 2 && appState.axisDirectionHistory.length >= 2) {
-        alert("ALERTE : Déviation importante. Retour à l'axe RA et lecture à voix haute."); target.axe = appState.startAxisRA; updateDisplay("Reset Axe -> RA. Lecture à voix haute.");
-        appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10; appState.axisDirectionHistory = []; 
-        say("Nous allons recommencer. Cette fois, je vais vous demander de lire les lettres à voix haute.");
-        return;
-    }
-    var rot = (choice === 'pos1') ? -appState.axisStep : appState.axisStep;
-    if (appState.axisDirectionHistory.length > 1) {
-        var lastDir = appState.axisDirectionHistory[appState.axisDirectionHistory.length - 2];
-        if (lastDir !== direction) { 
-            if (appState.axisStep === 20) appState.axisStep = 10; else if (appState.axisStep === 10) appState.axisStep = 5; 
-            updateDisplay("Inversion -> Pas de " + appState.axisStep + "°");
-        }
-    }
-
-    // Modification ici pour utiliser la fonction de normalisation (0-175)
-    target.axe = normalizeAxis(target.axe + rot);
-
-    updateDisplay("Nouvel Axe : " + target.axe + "°"); nextLetters(); setTimeout(function() { runJccSequence(); }, 1000);
-};
-
-// --- NOUVELLES FONCTIONS DE GESTION DE FLUX (STOP/RESTART) ---
-window.restartExam = function() {
-    // 1. Hide the modal
-    document.getElementById('modalDefogLimit').classList.add('hidden');
-    document.getElementById('modalTqsLimit').classList.add('hidden');
-
-    // 2. Reset specific safety flags/counters that might prevent restart
-    appState.defoggedInZone = false;
-    appState.tqsFogCount = 0;
-    // The rest are handled by launchExamSequence, but let's be safe
-    appState.sb02_OD_ok = false;
-    appState.sb02_OG_ok = false;
-
-    // 3. Relaunch the sequence
-    // This function re-reads RA, re-calculates fog, and sets phase to Sb0.2 (for profiles 3)
-    window.launchExamSequence();
-};
-
-window.prepareCycloStop = function() {
-    // Masquer les boutons de choix
-    document.getElementById('defogButtons').classList.add('hidden');
-    // Afficher le bouton de sauvegarde
-    document.getElementById('saveCycloContainer').classList.remove('hidden');
-};
-
-window.prepareCycloStopTqs = function() {
-    // Masquer les boutons de choix
-    document.getElementById('tqsButtons').classList.add('hidden');
-    // Afficher le bouton de sauvegarde
-    document.getElementById('saveCycloContainerTqs').classList.remove('hidden');
-};
-
-window.savePatientData = function() {
-    alert("Données sauvegardées pour l'examen sous cycloplégique.");
-    location.reload(); 
-};
-  // --- CORRECTION DU PILOTAGE (A COLLER A LA FIN DU SCRIPT) ---
-
-// 1. Fonction de choix de l'œil (Mise à jour pour le nouveau design)
-window.setEye = function(eye) {
-    appState.activeEye = eye;
-    // On force la mise à jour de l'affichage
-    var currentMsg = document.getElementById('systemMsg') ? document.getElementById('systemMsg').innerText : "";
-    window.updateDisplay(currentMsg);
-};
-
-// 2. Fonction d'affichage principale (Compatible Header Split)
-window.updateDisplay = function(message) {
-    // A. Mise à jour des colonnes de données (Gauche)
-    setHTML('disp_subjOD_sph', appState.subj.OD.sphere.toFixed(2)); setHTML('disp_subjOD_cyl', appState.subj.OD.cyl.toFixed(2));
-    setHTML('disp_subjOD_axe', appState.subj.OD.axe + "°"); setHTML('disp_subjOD_va', appState.subj.OD.va);
-    setHTML('disp_subjOG_sph', appState.subj.OG.sphere.toFixed(2)); setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
-    setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°"); setHTML('disp_subjOG_va', appState.subj.OG.va);
-
-    var boxOD = document.getElementById('subjDispOD'); var boxOG = document.getElementById('subjDispOG');
-    if(boxOD && boxOG) {
-        if(appState.activeEye === 'OD') { boxOD.classList.add('highlight'); boxOG.classList.remove('highlight'); } 
-        else { boxOD.classList.remove('highlight'); boxOG.classList.add('highlight'); }
-    }
-
-    // B. Mise à jour EN-TÊTE GAUCHE (Pilotage)
-    setHTML('dispPhase', appState.examPhase ? appState.examPhase.toUpperCase() : "INIT");
-
-    var modeText = "MONOCULAIRE";
-    if (appState.examPhase === "Sb0.5" || (appState.examPhase && appState.examPhase.includes("Check")) || appState.examPhase === "Sb1.0") {
-        modeText = "BIO-MONOCULAIRE";
-    }
-    setHTML('dispMode', modeText);
-
-    // Boutons Pilotage OD/OG (Couleurs et état)
     var btnPilotOD = document.getElementById('btnPilotOD'); 
     var btnPilotOG = document.getElementById('btnPilotOG');
 
@@ -2985,50 +2740,54 @@ window.updateDisplay = function(message) {
         else { visOD.classList.remove('active-eye'); visOG.classList.add('active-eye'); }
     }
 
-    // D. Messages
-    setHTML('valProfile', appState.profile); 
+    setHTML('valProfile', appState.profile);
     setHTML('systemMsg', message);
-    var sysMsgEl = document.getElementById('systemMsg');
-    if(sysMsgEl) {
-        if (message.indexOf("VALIDÉE") !== -1 || message.indexOf("Validé") !== -1) sysMsgEl.classList.add('success-msg'); 
-        else sysMsgEl.classList.remove('success-msg');
-    }
+    if (message.indexOf("VALIDÉE") !== -1 || message.indexOf("Validé") !== -1) document.getElementById('systemMsg').classList.add('success-msg'); else document.getElementById('systemMsg').classList.remove('success-msg');
 
-    // E. Génération des boutons de réponse ET FORCE AFFICHAGE
-    if(window.ACUITY_TABLE && appState.vaIndex < ACUITY_TABLE.length) {
-        var currentData = ACUITY_TABLE[appState.vaIndex]; 
-        setHTML('valVA', currentData.va);
-        var linesArr = currentData.lines; 
-        var txt = linesArr[appState.letterIndex % linesArr.length];
-        setHTML('letterBox', txt);
+    var currentData = ACUITY_TABLE[appState.vaIndex]; setHTML('valVA', currentData.va);
+    var linesArr = currentData.lines; var txt = linesArr[appState.letterIndex % linesArr.length];
+    setHTML('letterBox', txt);
+    var count = txt.split(' ').length; var btnHTML = "";
+    for(var i=0; i<=count; i++) { btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; }
+    setHTML('btnContainer', btnHTML);
 
-        var count = txt.split(' ').length; 
-        var btnHTML = "";
-        for(var i=0; i<=count; i++) { 
-            btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; 
-        }
-        setHTML('btnContainer', btnHTML);
+     // --- CORRECTION VISIBILITÉ (Le Fix Important) ---
+    var isSpecialMode = false;
+    var cadBtns = document.getElementById('cadenceButtons');
+    var chkPlus = document.getElementById('checkPlusZone');
+    var axisCtr = document.getElementById('axisControls');
 
-        // --- CORRECTION VISIBILITÉ (Le Fix Important) ---
-        var isSpecialMode = false;
-        var cadBtns = document.getElementById('cadenceButtons');
-        var chkPlus = document.getElementById('checkPlusZone');
-        var axisCtr = document.getElementById('axisControls');
+    if (cadBtns && !cadBtns.classList.contains('hidden')) isSpecialMode = true;
+    if (chkPlus && !chkPlus.classList.contains('hidden')) isSpecialMode = true;
+    if (axisCtr && !axisCtr.classList.contains('hidden')) isSpecialMode = true;
 
-        if (cadBtns && !cadBtns.classList.contains('hidden')) isSpecialMode = true;
-        if (chkPlus && !chkPlus.classList.contains('hidden')) isSpecialMode = true;
-        if (axisCtr && !axisCtr.classList.contains('hidden')) isSpecialMode = true;
-
-        var stdBtns = document.getElementById('standardButtons');
-        if (stdBtns) {
-            if (!isSpecialMode) {
-                stdBtns.classList.remove('hidden');
-            } else {
-                stdBtns.classList.add('hidden');
-            }
+    var stdBtns = document.getElementById('standardButtons');
+    if (stdBtns) {
+        if (!isSpecialMode) {
+            stdBtns.classList.remove('hidden');
+        } else {
+            stdBtns.classList.add('hidden');
         }
     }
+
+    // E. Mise à jour Badge Phase
+    setHTML('dispPhase', appState.examPhase ? appState.examPhase.toUpperCase() : "INIT");
+
+    var modeText = "MONOCULAIRE";
+    if (appState.examPhase === "Sb0.5" || (appState.examPhase && appState.examPhase.includes("Check")) || appState.examPhase === "Sb1.0") {
+        modeText = "BIO-MONOCULAIRE";
+    }
+    setHTML('dispMode', modeText);
 };
+
+// 1. Fonction de choix de l'œil (Mise à jour pour le nouveau design)
+window.setEye = function(eye) {
+    appState.activeEye = eye;
+    // On force la mise à jour de l'affichage
+    var currentMsg = document.getElementById('systemMsg') ? document.getElementById('systemMsg').innerText : "";
+    window.updateDisplay(currentMsg);
+};
+
 </script>
 </body>
 </html>
