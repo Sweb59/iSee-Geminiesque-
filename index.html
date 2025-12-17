@@ -1454,7 +1454,7 @@ function revealDataSection(profile, inputsEnabled) {
     // Fermeture Fenêtre Profil
     document.getElementById('modalProfileCalc').classList.add('hidden');
 
-    // --- MISE A JOUR DEFINITIVE AVEC LE BADGE PROFIL ---
+    // --- CORRECTION : AFFICHAGE LIGNE UNIQUE (SANS ETIQUETTES) ---
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
@@ -1462,26 +1462,23 @@ function revealDataSection(profile, inputsEnabled) {
     var uid = document.getElementById('inUID').value || "--";
     var pColor = getProfileColor(profile);
 
+    // On construit la ligne identique au Schober, avec le badge profil en plus
     var summaryHTML = `
-        <div class="summary-grid">
-            <div class="summary-row"><span class="summary-lbl">Nom</span><span class="summary-val">${nom.toUpperCase()} ${prenom}</span></div>
-            <div class="summary-row"><span class="summary-lbl">Age</span><span class="summary-val">${age}</span></div>
-
-            <div class="summary-row" style="align-items:center;">
-                <span class="summary-lbl">UID</span>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="summary-val" style="font-family:monospace; color:var(--text-muted); font-size:0.9rem;">${uid}</span>
-                    <span style="background:${pColor}; color:white; padding:1px 6px; border-radius:4px; font-size:0.75rem; font-weight:bold;" title="Profil">${profile}</span>
-                </div>
-            </div>
+        <div class="patient-line">
+            <div><span class="pat-name">${nom.toUpperCase()}</span> <span class="pat-forename">${prenom}</span></div>
+            <div style="color:#78909C;">${age}</div>
+            <div><span class="pat-uid" title="UID">${uid}</span></div>
+            <div><span class="pat-profile-badge" style="background:${pColor}">PROFIL ${profile}</span></div>
+            <div id="badgeProfilePlace" style="display:none;"></div> 
         </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
+    // -------------------------------------------------------------
 
     document.getElementById('dataSection').classList.remove('hidden');
     toggleInputs('dataSection', inputsEnabled);
 
-    // --- CHANGEMENT ICI : ON VA DIRECTEMENT A L'INSTALLATION (STEP 6) ---
+    // Passage à l'installation
     window.openPositioningModal();
 }
 
