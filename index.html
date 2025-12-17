@@ -1027,10 +1027,9 @@
       <marker id="arrowhead2" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#fd7e14" /></marker>
     </defs>
   </svg>
-</div>
-  <script>
+</div><script>
 // =============================================================================
-// 1. CONFIGURATION & VARIABLES (Cœur de l'ancien code)
+// 1. CONFIGURATION & VARIABLES
 // =============================================================================
 
 var ACUITY_TABLE = [
@@ -1041,7 +1040,7 @@ var ACUITY_TABLE = [
     { va: 0.10, lines: ["D U F", "P H N"] },
     { va: 0.12, lines: ["E N R", "R H P"] },
     { va: 0.16, lines: ["U P H", "V R F"] },
-    { va: 0.20, lines: ["N Z", "P R H"] }, 
+    { va: 0.20, lines: ["N Z", "P R H"] },
     { va: 0.25, lines: ["H D F", "U R Z"] },
     { va: 0.32, lines: ["D F U N R", "R U P E H"] },
     { va: 0.40, lines: ["Z V D F H", "U V N R Z"] },
@@ -1054,43 +1053,61 @@ var ACUITY_TABLE = [
     { va: 2.00, lines: ["V H F D Z", "R N U F D"] }
 ];
 
+window.NEXT_PROMPTS = ["et ici ?", "lisez moi ces lettres là", "et celles-ci ?", "pouvez-vous lire ces lettres ci ?"];
+
 var appState = {
     isRunning: false, activeEye: 'OD', firstEye: 'OD', profile: null, initProfile: null, 
-    baseProfile: null, 
-    isSpeaking: false,
+    baseProfile: null, isSpeaking: false,
     subj: { OD: { sphere: 0, cyl: 0, axe: 0, va: "--" }, OG: { sphere: 0, cyl: 0, axe: 0, va: "--" } },
     memCyl: { OD: null, OG: null }, 
     vaIndex: 0, startVaIndex: 0, letterIndex: 0, pendingLetters: null, defoggedInZone: false,
     examPhase: "Sb0.2", patientInfo: { name: "", forename: "", dob: "", age: 0, uid: "" },
     
-    // Flags Logiques (Ancien Code)
+    // Flags Logiques
     sb02_OD_ok: false, sb02_OG_ok: false, seen025_OD: false, seen025_OG: false,
     sb05_OD_ok: false, sb05_OG_ok: false, sb10_OD_ok: false, sb10_OG_ok: false,
     tqs_attempted_06: false, count06_validations: 0, tqsFogCount: 0, checkStep: null, tempScore: 0, baseSphereValue: 0,
 
-    // Sécurités (Ancien Code)
-    sb10_line_defog: 0, 
-    safety_mode: false,
-    safety_mem_letters: 0,
-    hasRestartedSb10: false, 
+    // Sécurités
+    sb10_line_defog: 0, safety_mode: false, safety_mem_letters: 0, hasRestartedSb10: false, 
     
-    handednessEye: 'OD', 
-    pendingSchober: null, 
+    handednessEye: 'OD', pendingSchober: null, 
 
     saved_sb05: { OD: 0, OG: 0 }, saved_sb10: { OD: 0, OG: 0 },
-    axisStep: 20, axisDirectionHistory: [], cylHigh: false,
-    lastInvalidInputId: null 
+    axisStep: 20, axisDirectionHistory: [], cylHigh: false, lastInvalidInputId: null 
 };
 
-window.NEXT_PROMPTS = ["et ici ?", "lisez moi ces lettres là", "et celles-ci ?", "pouvez-vous lire ces lettres ci ?"];
-
 // =============================================================================
-// 2. VALIDATION & ALARME ORANGE (INPUTS)
+// 2. FONCTIONS DE VALIDATION & HELPERS (Manquantes précédemment)
 // =============================================================================
 
-window.validateNumberInput = function(el) {
-    el.value = el.value.replace(/[^0-9.,-]/g, '');
+window.generateShortUID = function() { return "TP" + Math.floor(Math.random()*10000); };
+window.getVal = function(id) { var el=document.getElementById(id); return (el && el.value) ? parseFloat(el.value.replace(',','.')) || 0 : 0; };
+window.setHTML = function(id, val) { var el=document.getElementById(id); if(el) el.innerHTML=val; };
+window.startChrono = function() { }; 
+window.initClock = function() { };
+
+// Vérifie si Myope pour afficher/masquer le bouton Profil 1
+window.checkMyopia = function() {
+    var s1 = window.getVal('raOD_sph'); var s2 = window.getVal('raOG_sph');
+    var btn = document.getElementById('btnProfile1');
+    if (btn) { if (s1 < 0 || s2 < 0) { btn.style.display = 'none'; } else { btn.style.display = 'inline-block'; } }
 };
+
+// Appelé quand RA change
+window.onRaChanged = function() { 
+    window.checkMyopia();
+    // Auto-adaptation profil si déjà défini
+    if (appState.baseProfile === "1") {
+        var s1 = window.getVal('raOD_sph'); var s2 = window.getVal('raOG_sph');
+        if (s1 < 0 || s2 < 0) { appState.initProfile = "2"; setHTML('displayProfileName', "2"); } 
+        else { appState.initProfile = "1"; setHTML('displayProfileName', "1"); }
+        var el = document.querySelector('.pat-profile-badge');
+        if(el) { el.innerText = "PROFIL " + appState.initProfile; el.style.background = getProfileColor(appState.initProfile); }
+    }
+};
+
+window.validateNumberInput = function(el) { el.value = el.value.replace(/[^0-9.,-]/g, ''); };
 
 window.closeWarningModal = function() {
     document.getElementById('modalWarning').classList.add('hidden');
@@ -1105,30 +1122,25 @@ window.checkSphere = function(el) {
     if(!el.value) return;
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
-    // Check Limites Appareil
     if (val < -29.00 || val > 26.75) {
         appState.lastInvalidInputId = el.id;
         document.getElementById('modalWarning').classList.remove('hidden');
         return;
     }
-    val = Math.round(val * 4) / 4; 
-    el.value = val.toFixed(2);
+    val = Math.round(val * 4) / 4; el.value = val.toFixed(2);
 };
 
 window.forceNegativeCyl = function(el) {
     if(!el.value) return;
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
-    // Conversion Cylindre Positif -> Négatif
-    if(val > 0) val = -val;
-    // Check Limites
+    if(val > 0) val = -val; 
     if (val < -10.00 || val > 0) {
         appState.lastInvalidInputId = el.id;
         document.getElementById('modalWarning').classList.remove('hidden');
         return;
     }
-    val = Math.round(val * 4) / 4; 
-    el.value = val.toFixed(2);
+    val = Math.round(val * 4) / 4; el.value = val.toFixed(2);
 };
 
 function normalizeAxis(val) {
@@ -1150,10 +1162,10 @@ window.checkAxis = function(el) {
 };
 
 // =============================================================================
-// 3. UI & WORKFLOW (Modales, Affichage, Schober Start)
+// 3. WORKFLOW (MODALES & NAVIGATION)
 // =============================================================================
 
-// Etape 1 : Validation Patient -> Choix Méthode
+// Etape 1 : Validation ID
 window.validatePatientID = function() {
     var dob = document.getElementById('inDob').value;
     if(!dob) { alert("La date de naissance est obligatoire."); return; }
@@ -1161,55 +1173,40 @@ window.validatePatientID = function() {
     document.getElementById('modalEntryMethod').classList.remove('hidden');
 };
 
-// Etape 2 : Choix Méthode -> Saisie
+// Etape 2 : Choix Méthode
 window.handleMethodChoice = function(method) {
     document.getElementById('modalEntryMethod').classList.add('hidden');
     if (method === 'manual') window.openDataEntryModal();
     else window.simulateImport();
 };
 
-window.openDataEntryModal = function() {
-    document.getElementById('modalInputData').classList.remove('hidden');
-};
+window.openDataEntryModal = function() { document.getElementById('modalInputData').classList.remove('hidden'); };
 
 window.simulateImport = function() {
-    document.getElementById('mod_raOD_sph').value = "-1.50";
-    document.getElementById('mod_raOD_cyl').value = "-0.50";
-    document.getElementById('mod_raOD_axe').value = "180";
-    document.getElementById('mod_raOG_sph').value = "-1.75";
-    document.getElementById('mod_raOG_cyl').value = "-0.25";
-    document.getElementById('mod_raOG_axe').value = "170";
+    document.getElementById('mod_raOD_sph').value = "-1.50"; document.getElementById('mod_raOD_cyl').value = "-0.50"; document.getElementById('mod_raOD_axe').value = "180";
+    document.getElementById('mod_raOG_sph').value = "-1.75"; document.getElementById('mod_raOG_cyl').value = "-0.25"; document.getElementById('mod_raOG_axe').value = "170";
     document.getElementById('modalInputData').classList.remove('hidden');
 };
 
-// --- CORRECTION ICI : LE NOM DE LA FONCTION DOIT ETRE "confirmDataAndPosition" ---
-// Etape 3 : Fin Saisie -> Latéralité
+// Etape 3 : Validation Données (Le bouton Valider de la modale Saisie)
 window.confirmDataAndPosition = function() {
-    // 1. Fermeture modale
     document.getElementById('modalInputData').classList.add('hidden'); 
 
-    // 2. Transfert des données (Inputs Modale -> Inputs Cachés)
-    document.getElementById('raOD_sph').value = document.getElementById('mod_raOD_sph').value || "0.00";
-    document.getElementById('raOD_cyl').value = document.getElementById('mod_raOD_cyl').value || "0.00";
-    document.getElementById('raOD_axe').value = document.getElementById('mod_raOD_axe').value || "0";
-    
-    document.getElementById('raOG_sph').value = document.getElementById('mod_raOG_sph').value || "0.00";
-    document.getElementById('raOG_cyl').value = document.getElementById('mod_raOG_cyl').value || "0.00";
-    document.getElementById('raOG_axe').value = document.getElementById('mod_raOG_axe').value || "0";
-    
-    document.getElementById('frontoOD_sph').value = document.getElementById('mod_frontoOD_sph').value || "0.00";
-    document.getElementById('frontoOD_cyl').value = document.getElementById('mod_frontoOD_cyl').value || "0.00";
-    document.getElementById('frontoOD_axe').value = document.getElementById('mod_frontoOD_axe').value || "0";
-    
-    document.getElementById('frontoOG_sph').value = document.getElementById('mod_frontoOG_sph').value || "0.00";
-    document.getElementById('frontoOG_cyl').value = document.getElementById('mod_frontoOG_cyl').value || "0.00";
-    document.getElementById('frontoOG_axe').value = document.getElementById('mod_frontoOG_axe').value || "0";
+    // Transfert Inputs
+    var fields = ['raOD_sph','raOD_cyl','raOD_axe','raOG_sph','raOG_cyl','raOG_axe','frontoOD_sph','frontoOD_cyl','frontoOD_axe','frontoOG_sph','frontoOG_cyl','frontoOG_axe'];
+    fields.forEach(function(f) {
+        var mod = document.getElementById('mod_'+f);
+        var dest = document.getElementById(f);
+        if(mod && dest) dest.value = mod.value || (f.includes('axe') ? "0" : "0.00");
+    });
 
-    // 3. Mise à jour Bandeau Patient
+    if(window.onRaChanged) window.onRaChanged(); // IMPORTANT
+
+    // Update Header
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "-";
     var dob = document.getElementById('inDob').value;
-    var age = dob ? getAgeFromDob(dob) + " ans" : "-";
+    var age = getAgeFromDob(dob) + " ans";
     var uid = document.getElementById('inUID').value || "--";
 
     var summaryHTML = `
@@ -1221,13 +1218,13 @@ window.confirmDataAndPosition = function() {
         </div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-    
-    // 4. Affichage des éléments suivants
     document.getElementById('examDataStrip').classList.remove('hidden');
+    
+    // Suite -> Latéralité
     document.getElementById('modalHandedness').classList.remove('hidden');
 };
 
-// Etape 4 : Latéralité -> Schober
+// Etape 4 : Latéralité
 window.setHandedness = function(handEye) {
     appState.handednessEye = handEye;
     document.getElementById('modalHandedness').classList.add('hidden');
@@ -1235,7 +1232,7 @@ window.setHandedness = function(handEye) {
     document.getElementById('schoberStep').classList.remove('hidden');
 };
 
-// Etape 5 : Schober -> Calcul Profil
+// Etape 5 : Schober
 window.confirmSchoberSelection = function(id, mode, eye) {
     appState.pendingSchober = { mode: mode, eye: eye };
     document.getElementById('modalSchoberConfirm').classList.remove('hidden');
@@ -1255,7 +1252,7 @@ window.handleSchoberChoice = function(mode, eye) {
     document.getElementById('modalProfileCalc').classList.remove('hidden');
 };
 
-// Etape 6 : Profil -> Installation
+// Etape 6 : Profil
 window.calculateProfileAndShowData = function() {
     var age = getAgeFromDob(document.getElementById('inDob').value);
     var score = getAgeScore(age);
@@ -1282,34 +1279,30 @@ window.forceProfileAndShowData = function(forcedProfile) {
 
 function revealDataSection(profile, inputsEnabled) {
     appState.initProfile = profile; 
-    
     var pColor = getProfileColor(profile);
     var el = document.getElementById('badgeProfilePlace');
     if(el) {
         el.style.display = 'block';
         el.innerHTML = `<span class="pat-profile-badge" style="background:${pColor}">PROFIL ${profile}</span>`;
     }
-
     document.getElementById('modalProfileCalc').classList.add('hidden');
     window.openPositioningModal();
 }
 
-// Etape 7 : Installation -> Intro -> Examen
-window.openPositioningModal = function() {
-    document.getElementById('modalPosition').classList.remove('hidden');
-};
+// Etape 7 : Start
+window.openPositioningModal = function() { document.getElementById('modalPosition').classList.remove('hidden'); };
 
 window.startRulesAndIntro = function() {
     document.getElementById('modalPosition').classList.add('hidden');
     
-    // Init Subjectif pour affichage
+    // Init Subjectif (Copie RA)
     var raOD = { s: getVal('raOD_sph'), c: getVal('raOD_cyl'), a: getVal('raOD_axe') };
     var raOG = { s: getVal('raOG_sph'), c: getVal('raOG_cyl'), a: getVal('raOG_axe') };
     appState.subj.OD = { sphere: raOD.s, cyl: raOD.c, axe: raOD.a, va: "--" };
     appState.subj.OG = { sphere: raOG.s, cyl: raOG.c, axe: raOG.a, va: "--" };
     window.updateDisplay("Lecture des consignes...");
 
-    var introText = "Pour avoir une bonne mesure de votre vision de loin, il faut lire d’une manière naturelle.";
+    var introText = "Pour avoir une bonne mesure de votre vision de loin, il faut lire naturellement.";
     say(introText, function() {
         document.getElementById('modalIntroConfirmation').classList.remove('hidden');
     });
@@ -1320,37 +1313,29 @@ window.confirmAndLaunch = function() {
     window.triggerFinalStart();
 };
 
-window.triggerFinalStart = function() {
-    window.launchExamSequence();
-};
+window.triggerFinalStart = function() { window.launchExamSequence(); };
 
 // =============================================================================
-// 7. AFFICHAGE (DISPLAY - NOUVEAU DESIGN)
+// 8. LOGIQUE AFFICHAGE & UTILITAIRES
 // =============================================================================
 
 window.updateDisplay = function(message) {
-    // 1. Valeurs
     setHTML('disp_subjOD_sph', appState.subj.OD.sphere.toFixed(2)); setHTML('disp_subjOD_cyl', appState.subj.OD.cyl.toFixed(2));
     setHTML('disp_subjOD_axe', appState.subj.OD.axe + "°"); setHTML('disp_subjOD_va', appState.subj.OD.va);
     setHTML('disp_subjOG_sph', appState.subj.OG.sphere.toFixed(2)); setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
     setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°"); setHTML('disp_subjOG_va', appState.subj.OG.va);
 
-    // 2. Bordures
     var boxOD = document.getElementById('subjDispOD'); var boxOG = document.getElementById('subjDispOG');
     if(boxOD && boxOG) {
         if(appState.activeEye === 'OD') { boxOD.classList.add('col-active'); boxOG.classList.remove('col-active'); } 
         else { boxOD.classList.remove('col-active'); boxOG.classList.add('col-active'); }
     }
 
-    // 3. Header
     setHTML('dispPhase', appState.examPhase ? appState.examPhase.toUpperCase() : "INIT");
     var modeText = "MONOCULAIRE";
-    if (appState.examPhase === "Sb0.5" || (appState.examPhase && appState.examPhase.includes("Check")) || appState.examPhase === "Sb1.0") {
-        modeText = "BIO-MONOCULAIRE";
-    }
+    if (appState.examPhase === "Sb0.5" || (appState.examPhase && appState.examPhase.includes("Check")) || appState.examPhase === "Sb1.0") { modeText = "BIO-MONOCULAIRE"; }
     setHTML('dispMode', modeText);
 
-    // 4. Pilote Boutons
     var btnPilotOD = document.getElementById('btnPilotOD'); var btnPilotOG = document.getElementById('btnPilotOG');
     if (btnPilotOD && btnPilotOG) {
         var isMono = (appState.examPhase === "Sb0.2");
@@ -1364,7 +1349,6 @@ window.updateDisplay = function(message) {
         }
     }
 
-    // 5. Visuel
     setHTML('visBoxOD', appState.subj.OD.va); setHTML('visBoxOG', appState.subj.OG.va);
     var visOD = document.getElementById('visBoxOD'); var visOG = document.getElementById('visBoxOG');
     if(visOD && visOG) {
@@ -1372,21 +1356,19 @@ window.updateDisplay = function(message) {
         else { visOD.classList.remove('active-eye'); visOG.classList.add('active-eye'); }
     }
 
-    // 6. Messages
-    setHTML('valProfile', appState.profile); 
-    setHTML('systemMsg', message);
+    setHTML('valProfile', appState.profile); setHTML('systemMsg', message);
     var sysMsgEl = document.getElementById('systemMsg');
     if(sysMsgEl) {
         if (message.indexOf("VALIDÉE") !== -1 || message.indexOf("Validé") !== -1) sysMsgEl.classList.add('success-msg'); 
         else sysMsgEl.classList.remove('success-msg');
     }
 
-    // 7. Boutons Lettres
     if(window.ACUITY_TABLE && appState.vaIndex < ACUITY_TABLE.length) {
         var currentData = ACUITY_TABLE[appState.vaIndex]; 
         var linesArr = currentData.lines; 
         var txt = linesArr[appState.letterIndex % linesArr.length];
         setHTML('letterBox', txt);
+        
         var count = txt.split(' ').length; 
         var btnHTML = "";
         for(var i=0; i<=count; i++) { btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; }
@@ -1413,7 +1395,7 @@ window.setEye = function(eye) {
 };
 
 // =============================================================================
-// 8. LOGIQUE EXAMEN (ANCIEN CODE)
+// 9. LOGIQUE ALGORITHMIQUE EXAMEN
 // =============================================================================
 
 window.launchExamSequence = function() {
@@ -1426,7 +1408,6 @@ window.launchExamSequence = function() {
         if (p === '1' && (raOD.s < 0 || raOG.s < 0)) { p = '2'; }
         appState.profile = p;
 
-        // CALCUL BROUILLAGE
         if (p === "3" || p === "3+") {
             var fogOD = (raOD.s < 0) ? 2.00 : 2.25; var fogOG = (raOG.s < 0) ? 2.00 : 2.25;
             appState.subj.OD = { sphere: raOD.s + fogOD, cyl: raOD.c, axe: raOD.a, va: "--" };
@@ -1459,7 +1440,7 @@ window.launchExamSequence = function() {
 
         document.getElementById('examContent').classList.remove('hidden');
         window.updateDisplay("Profil " + appState.profile + ". Phase " + appState.examPhase);
-        say("C'est parti !");
+        say("Lisez moi s'il vous plait les lettres que vous voyez sur l'écran au fond de la pièce");
 
     } catch(e) { alert("Erreur Lancement: " + e); }
 };
@@ -1508,7 +1489,7 @@ function processLogic(lettersRead, cadence) {
     var totalLetters = currentTxt.split(' ').length; var isSmallLine = totalLetters < 5;
     var isPassed = false;
 
-    // --- SB0.2 ---
+    // SB0.2
     if (appState.examPhase === "Sb0.2") {
         if (cadence === 'rabbit') {
             if (isSmallLine) { if (lettersRead === totalLetters) isPassed = true; } 
@@ -1542,7 +1523,7 @@ function processLogic(lettersRead, cadence) {
         }
     }
 
-    // --- SB0.5 (TQS) ---
+    // SB0.5
     if (appState.examPhase === "Sb0.5") {
         if (lettersRead >= 3) isPassed = true; else isPassed = false;
 
@@ -1579,13 +1560,13 @@ function processLogic(lettersRead, cadence) {
         }
     }
 
-    // --- STANDARD / SB1.0 ---
+    // STANDARD
     if (cadence === 'rabbit') {
         if (isSmallLine && lettersRead === totalLetters) isPassed = true;
         if (!isSmallLine && lettersRead > 3) isPassed = true;
     }
 
-    // --- CHECK MINUS ---
+    // CHECK MINUS
     if (appState.examPhase === "SphereCheckMinus") {
         if (appState.checkStep === "TEST_125_PRE") {
             appState.tempScore = lettersRead; getTargetEye().sphere -= 0.25;
@@ -1608,7 +1589,7 @@ function processLogic(lettersRead, cadence) {
         return;
     }
 
-    // --- SB1.0 ---
+    // SB1.0
     if (appState.examPhase === "Sb1.0") {
         var sph = getTargetEye().sphere;
         if(appState.safety_mode && sph >= 0) {
@@ -1646,7 +1627,7 @@ function processLogic(lettersRead, cadence) {
     }
 }
 
-// --- UTILS SUITE ---
+// UTILS
 function getTargetEye() { return (appState.activeEye === 'OD') ? appState.subj.OD : appState.subj.OG; }
 function changeSphereAndRetest(delta) { var target = getTargetEye(); target.sphere += delta; nextLetters(); }
 function nextLetters() { appState.letterIndex++; }
@@ -1811,7 +1792,7 @@ window.decideMinus = function(choice) {
     }
 }
 
-// --- AXE ---
+// AXE
 window.initAxisCheck = function() {
     appState.examPhase = "AxisCheck"; var target = getTargetEye(); 
     var cyl = Math.abs(target.cyl); 
@@ -1851,18 +1832,47 @@ window.handleJccChoice = function(choice) {
     setTimeout(function() { runJccSequence(); }, 1000);
 };
 
-// --- START ---
-window.startAppSequence = function() {
-    window.initVoices();
-    var uid = window.generateShortUID();
-    document.getElementById('inUID').value = uid;
-    document.getElementById('modalPatientID').classList.remove('hidden');
-};
-
-// --- HELPERS DOM ---
+// --- DÉMARRAGE ET HELPERS ---
 window.getAgeFromDob = function(dob) { if(!dob) return 0; var d = new Date(dob); var n = new Date(); var a = n.getFullYear() - d.getFullYear(); if(n.getMonth() < d.getMonth() || (n.getMonth()===d.getMonth() && n.getDate() < d.getDate())) a--; return a; };
 window.getAgeScore = function(a) { if(a<=10) return 6; if(a<=20) return 5; if(a<=30) return 4; if(a<=50) return 2; if(a<=70) return 1; return 0; };
 window.getProfileColor = function(p) { if(p==='1') return '#26A69A'; if(p==='2') return '#42A5F5'; if(p==='3') return '#FFA726'; return '#EF5350'; };
+
+window.initVoices = function() { if('speechSynthesis' in window) window.speechSynthesis.getVoices(); };
+function say(text, callback) {
+    if(window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+    appState.isSpeaking = true; updateLockUI(true);
+    var t = Array.isArray(text) ? text[Math.floor(Math.random()*text.length)] : text;
+    var u = new SpeechSynthesisUtterance(t); u.lang='fr-FR'; u.rate=1.1;
+    u.onend = function() { appState.isSpeaking=false; updateLockUI(false); if(callback) callback(); };
+    window.speechSynthesis.speak(u);
+}
+function updateLockUI(locked) {
+    var btns = document.querySelectorAll('.btn-resp, .btn-action');
+    btns.forEach(function(b) { if(locked) b.classList.add('locked'); else b.classList.remove('locked'); });
+}
+window.getRandomPrompt = function() { return window.NEXT_PROMPTS[Math.floor(Math.random() * window.NEXT_PROMPTS.length)]; };
+
+// --- FORCE STARTUP ---
+try {
+    window.initVoices();
+    var uid = window.generateShortUID();
+    var uidEl = document.getElementById('inUID');
+    if(uidEl) uidEl.value = uid;
+    
+    // Forçage de l'ouverture de la première modale (Patient ID)
+    var mod = document.getElementById('modalPatientID');
+    if(mod) mod.classList.remove('hidden');
+    else console.error("Modal modalPatientID not found in HTML");
+} catch(e) {
+    alert("Erreur de démarrage JS : " + e.message);
+}
+
+// Sécurité supplémentaire : Démarrage si onload a échoué
+document.addEventListener('DOMContentLoaded', function() {
+    if(document.getElementById('modalPatientID').classList.contains('hidden')) {
+        document.getElementById('modalPatientID').classList.remove('hidden');
+    }
+});
 
 </script>
 </body>
