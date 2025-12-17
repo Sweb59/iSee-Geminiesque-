@@ -625,9 +625,9 @@
                 <strong>JUSTE INVERSER LE SIGNE (+ vers -)</strong><br>
                 <span style="font-size:0.8rem; color:#666;">(Si c'est une erreur de frappe)</span>
             </button>
-            <button class="btn-action btn-grey" style="background:#fff; border:1px solid #ccc; color:#555; border-radius:6px; padding:10px;" onclick="window.closeTransposeModal()">
-                Annuler / Corriger manuellement
-            </button>
+            <button class="btn-action btn-grey" style="background:#fff; border:1px solid #ccc; color:#555; border-radius:6px; padding:10px;" onclick="window.cancelCorrection()">
+    Annuler / Corriger manuellement
+</button>
         </div>
     </div>
 </div>
@@ -1079,8 +1079,8 @@ window.checkSphere = function(el) {
     val = Math.round(val * 4) / 4; // Step 0.25
     el.value = val.toFixed(2);
 };
-// --- DEBUT LOGIQUE TRANSPOSITION ---
-var tempCylInputId = null; // Mémorise quel champ a déclenché l'alerte
+// --- DEBUT LOGIQUE TRANSPOSITION (CORRIGÉ) ---
+var tempCylInputId = null; 
 
 window.checkCylInput = function(el) {
     if(!el.value) return;
@@ -1089,21 +1089,19 @@ window.checkCylInput = function(el) {
 
     // DETECTION CYLINDRE POSITIF
     if(val > 0) {
-        tempCylInputId = el.id; // On garde l'ID (ex: 'raOD_cyl')
+        tempCylInputId = el.id; 
         document.getElementById('txtPosCylVal').innerText = "+" + val.toFixed(2);
         document.getElementById('modalCylTranspose').classList.remove('hidden');
-        el.blur(); // Enlève le focus
+        el.blur(); 
         return;
     }
 
-    // Si négatif mais hors limites (-10.00)
     if (val < -10.00) {
         appState.lastInvalidInputId = el.id;
         document.getElementById('modalWarning').classList.remove('hidden');
         return;
     }
 
-    // Formatage normal (arrondi 0.25)
     val = Math.round(val * 4) / 4; 
     el.value = val.toFixed(2);
 };
@@ -1111,20 +1109,14 @@ window.checkCylInput = function(el) {
 window.applyTransposition = function() {
     if(!tempCylInputId) return;
 
-    // On déduit les IDs des champs Sphère et Axe associés
-    var parts = tempCylInputId.split('_'); // ex: ["raOD", "cyl"] ou ["mod", "raOD", "cyl"]
-    
-    // Astuce pour gérer les ID complexes comme "mod_raOD_cyl" vs "raOD_cyl"
-    var prefix = "";
-    if(parts.length === 3) prefix = parts[0] + "_" + parts[1]; // ex: "mod_raOD"
-    else prefix = parts[0]; // ex: "raOD" ou "frontoOD"
+    var parts = tempCylInputId.split('_'); 
+    var prefix = (parts.length === 3) ? parts[0] + "_" + parts[1] : parts[0];
 
     var elCyl = document.getElementById(tempCylInputId);
     var elSph = document.getElementById(prefix + '_sph');
     var elAxe = document.getElementById(prefix + '_axe');
 
     if(!elSph || !elAxe) {
-        console.error("Impossible de trouver les champs Sphère/Axe pour " + prefix);
         window.closeTransposeModal();
         return;
     }
@@ -1133,22 +1125,20 @@ window.applyTransposition = function() {
     var sph = elSph.value ? parseFloat(elSph.value.replace(',', '.')) : 0;
     var axe = elAxe.value ? parseFloat(elAxe.value) : 0;
 
-    // --- CALCUL MATHEMATIQUE ---
+    // --- CALCUL ---
     var newSph = sph + cyl;
     var newCyl = -cyl;
     var newAxe = (axe + 90) % 180;
     if (newAxe === 0) newAxe = 180; 
 
-    // Application
+    // APPLICATION DES VALEURS
     elSph.value = (Math.round(newSph * 4) / 4).toFixed(2);
-    elCyl.value = (Math.round(newCyl * 4) / 4).toFixed(2);
+    elCyl.value = (Math.round(newCyl * 4) / 4).toFixed(2); // La valeur est mise ici
     elAxe.value = Math.round(newAxe);
 
-    // Validation visuelle
-    if(window.checkSphere) window.checkSphere(elSph);
-
+    // IMPORTANT : On ne vide pas le champ, on ferme juste la modale
     window.closeTransposeModal();
-    // Si c'est l'autorefractomètre, on met à jour le profil myopie
+    
     if(window.onRaChanged) window.onRaChanged();
 };
 
@@ -1156,19 +1146,28 @@ window.invertCylSign = function() {
     if(!tempCylInputId) return;
     var el = document.getElementById(tempCylInputId);
     var val = parseFloat(el.value.replace(',', '.'));
-    el.value = (-val).toFixed(2);
+    
+    // APPLICATION DE L'INVERSION
+    el.value = (-val).toFixed(2); // La valeur est mise ici
+    
+    // On ferme juste la modale sans vider le champ
     window.closeTransposeModal();
+    
     if(window.onRaChanged) window.onRaChanged();
+};
+
+// Fonction pour le bouton "Annuler / Corriger manuellement"
+window.cancelCorrection = function() {
+    var el = document.getElementById(tempCylInputId);
+    if(el) { 
+        el.value = ""; // C'EST ICI SEULEMENT QU'ON VIDE LE CHAMP
+        el.focus(); 
+    }
+    window.closeTransposeModal();
 };
 
 window.closeTransposeModal = function() {
     document.getElementById('modalCylTranspose').classList.add('hidden');
-    // On vide la variable temporaire mais on peut remettre le focus si besoin
-    var el = document.getElementById(tempCylInputId);
-    if(el) { 
-        el.value = ""; // On vide le champ fautif pour forcer la resaisie
-        el.focus(); 
-    }
     tempCylInputId = null;
 };
 // --- FIN LOGIQUE TRANSPOSITION ---
