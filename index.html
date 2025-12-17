@@ -71,8 +71,7 @@
   .pat-uid { font-family: monospace; background: #ECEFF1; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #546E7A; }
   .pat-profile-badge { padding: 3px 10px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-  /* 2. Zone Examen */
-  /* --- NOUVEAU LAYOUT SPLIT (GAUCHE / DROITE) --- */
+  /* 2. Zone Examen *//* --- NOUVEAU LAYOUT SPLIT (VERSION LARGE DONNÉES) --- */
 
   /* 1. Conteneur Principal de droite */
   .right-panel {
@@ -89,54 +88,54 @@
   .exam-header-wrapper {
       display: flex;
       width: 100%;
-      height: 70px; /* Hauteur fixe */
+      height: 80px; /* Un peu plus haut */
       background: #fff;
       border-bottom: 1px solid #E0E0E0;
       flex: 0 0 auto;
   }
 
-  /* Partie GAUCHE de l'en-tête (Pilotage) */
+  /* Partie GAUCHE de l'en-tête (Pilotage) - ÉLARGIE */
   .header-left-control {
-      flex: 0 0 660px; /* Largeur fixe pour couvrir les données */
+      flex: 0 0 920px; /* LARGEUR AUGMENTÉE POUR LES DONNÉES */
       display: flex; flex-direction: column; justify-content: center;
       padding: 0 15px; border-right: 1px solid #eee; background: #F9FAFB;
   }
-  .phase-badge { font-size: 0.7rem; font-weight: 800; color: #546E7A; text-transform: uppercase; text-align: center; margin-bottom: 4px; }
-  .control-row { display: flex; justify-content: center; gap: 10px; align-items: center; }
+  .phase-badge { font-size: 0.8rem; font-weight: 800; color: #546E7A; text-transform: uppercase; text-align: center; margin-bottom: 5px; }
+  .control-row { display: flex; justify-content: center; gap: 15px; align-items: center; }
 
-  /* Partie DROITE de l'en-tête (Visuel) */
+  /* Partie DROITE de l'en-tête (Visuel) - RÉDUITE */
   .header-right-visual {
-      flex: 1; /* Prend le reste */
-      display: flex; align-items: center; justify-content: center; gap: 40px;
+      flex: 1; /* Le reste (plus petit maintenant) */
+      display: flex; align-items: center; justify-content: center; gap: 20px;
       background: #fff;
   }
 
   /* 3. Zone de Travail Divisée (Split) */
   .work-split {
       display: flex;
-      flex: 1; /* Prend toute la hauteur restante */
+      flex: 1;
       overflow: hidden;
       width: 100%;
   }
 
-  /* Colonne GAUCHE (Données) */
+  /* Colonne GAUCHE (Données) - ÉLARGIE */
   .side-data {
-      flex: 0 0 660px; /* Largeur fixe alignée avec l'en-tête */
+      flex: 0 0 920px; /* LARGEUR AUGMENTÉE */
       background: #F5F7F8;
       border-right: 1px solid #CFD8DC;
-      padding: 10px;
+      padding: 15px; /* Plus d'espace */
       overflow-x: auto;
-      display: flex; align-items: flex-start; justify-content: center; /* Données en haut */
+      display: flex; align-items: flex-start; justify-content: center;
   }
 
-  /* Colonne DROITE (Lettres) */
+  /* Colonne DROITE (Lettres) - RÉDUITE */
   .side-letters {
       flex: 1; 
       display: flex; flex-direction: column; justify-content: center; align-items: center;
       background: #FFFFFF; position: relative;
   }
 
-  /* 4. Barre du Bas (Boutons Réponses) */
+  /* 4. Barre du Bas */
   .bottom-interaction-zone {
       flex: 0 0 auto; width: 100%; min-height: 110px;
       background: #fff; border-top: 1px solid #eee;
@@ -146,41 +145,70 @@
 
   /* --- STYLES ÉLÉMENTS SPÉCIFIQUES --- */
   
-  /* Boutons Pilotage (Gauche) */
+  /* Boutons Pilotage */
   .btn-pilot {
-      width: 50px; height: 34px; border-radius: 6px; font-weight: bold; cursor: pointer; border: 2px solid transparent; font-size: 0.9rem;
+      width: 60px; height: 38px; border-radius: 6px; font-weight: bold; cursor: pointer; border: 2px solid transparent; font-size: 1rem;
   }
   .btn-pilot.open { background: #fff; border-color: #B0BEC5; color: #78909C; }
   .btn-pilot.closed { background: #455A64; border-color: #455A64; color: #90A4AE; opacity: 0.5; }
   .btn-pilot.active { background: var(--primary); color: white; border-color: var(--primary-dark); opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
   .btn-mode-display {
-      padding: 4px 12px; background: #ECEFF1; color: #455A64; font-size: 0.75rem; font-weight: 700; border-radius: 12px; border: 1px solid #CFD8DC; text-transform: uppercase; min-width: 120px; text-align: center;
+      padding: 5px 15px; background: #ECEFF1; color: #455A64; font-size: 0.85rem; font-weight: 700; border-radius: 12px; border: 1px solid #CFD8DC; text-transform: uppercase; min-width: 140px; text-align: center;
   }
 
-  /* Indicateurs Visuels (Droite) */
+  /* Indicateurs Visuels VA */
   .va-box-display {
-      width: 90px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-size: 1.8rem; font-weight: bold; font-family: 'Montserrat', sans-serif;
+      width: 80px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; /* Un peu plus petit */
+      font-weight: bold; font-family: 'Montserrat', sans-serif;
       background: #FAFAFA; color: #CFD8DC; border: 2px solid #F0F0F0;
   }
   .va-box-display.active-eye {
       background: #E0F7FA; color: var(--primary-dark); border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   }
 
-  /* Colonnes de Données */
-  .exam-data-strip { display: flex; gap: 8px; width: 100%; justify-content: center; }
-  .data-col { display: flex; flex-direction: column; width: 100px; background: #fff; border: 1px solid #CFD8DC; border-radius: 6px; padding: 6px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-  .col-active { width: 120px; border: 2px solid var(--primary); z-index: 5; transform: scale(1.02); }
-  .col-title { font-size: 0.65rem; font-weight: 800; color: #90A4AE; text-transform: uppercase; margin-bottom: 5px; border-bottom: 1px solid #eee; }
-  .title-ra { color: var(--primary); } .title-subj { color: var(--primary-dark); font-size: 0.8rem; }
-  .data-line { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.8rem; }
-  .lbl { font-weight: bold; color: #B0BEC5; font-size: 0.65rem; }
-  .val-input { width: 100%; text-align: center; background: transparent; border: none; font-weight: 600; color: #546E7A; font-family: 'Montserrat', sans-serif; }
-  .val-big { font-size: 1.1rem; font-weight: 700; color: #37474F; }
+  /* --- COLONNES DE DONNÉES (VERSION XXL) --- */
+  .exam-data-strip { display: flex; gap: 10px; width: 100%; justify-content: center; }
 
-  /* Lettres */
-  .letter-display { font-family: 'Segoe UI', sans-serif; font-size: 5.5rem; font-weight: bold; color: #263238; letter-spacing: 12px; }
+  .data-col { 
+      display: flex; flex-direction: column; 
+      width: 135px; /* PLUS LARGE */
+      background: #fff; border: 1px solid #CFD8DC; border-radius: 8px; padding: 10px; 
+      text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+  }
+  
+  .col-active { 
+      width: 175px; /* BEAUCOUP PLUS LARGE pour le subjectif */
+      border: 3px solid var(--primary); z-index: 5; transform: scale(1.02); 
+  }
+
+  .col-title { font-size: 0.8rem; font-weight: 800; color: #90A4AE; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+  .title-ra { color: var(--primary); } 
+  .title-subj { color: var(--primary-dark); font-size: 1rem; } /* Titre plus gros */
+  
+  .data-line { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 1rem; align-items: center; }
+  .lbl { font-weight: bold; color: #B0BEC5; font-size: 0.8rem; }
+  
+  /* VALEURS PLUS GROSSES */
+  .val-input { 
+      width: 100%; text-align: center; background: transparent; border: none; 
+      font-weight: 700; color: #546E7A; font-family: 'Montserrat', sans-serif; 
+      font-size: 1.2rem; /* Chiffres plus gros */
+  }
+  
+  .val-big { 
+      font-size: 1.8rem; /* Subjectif TRÈS gros */
+      font-weight: 800; color: #37474F; 
+  }
+
+  /* --- LETTRES (VERSION RÉDUITE) --- */
+  .letter-display { 
+      font-family: 'Segoe UI', sans-serif; 
+      font-size: 3rem; /* RÉDUIT (était 5.5rem) */
+      font-weight: bold; color: #263238; letter-spacing: 8px; 
+  }
+  
   .info-bar { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 15px; }
 
   /* STYLE DES PANNEAUX */
