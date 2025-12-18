@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Assistant Réfraction - Dashboard Final</title>
-<title>Assistant Réfraction - Dashboard Fluid</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +33,6 @@
       margin: 0; padding: 0;
       height: 100vh; 
       overflow: hidden; 
-      overflow: hidden; /* Empêche le scroll global */
       font-size: 13px;
   }
 
@@ -52,12 +50,10 @@
       height: 100%;
       background: #FAFAFA;
   }
-  header { display: none; } 
 
   /* 1. Bandeau Supérieur : Patient + Chrono */
   .top-banner {
       flex: 0 0 50px; /* Hauteur fine fixe */
-      flex: 0 0 50px; 
       background: #FFFFFF;
       border-bottom: 1px solid #CFD8DC;
       padding: 0 20px;
@@ -82,13 +78,11 @@
   /* --- NOUVEAU LAYOUT "FLAT" (UNIFORME CRÈME & SANS BORDURES) --- */
 
   /* 1. Conteneur Principal */
-  /* 2. Zone Principale (Split Screen) */
   .right-panel {
       flex: 1; 
       width: 100%;
       background: var(--bg-main);
       background: #FCF9F2; /* FOND UNIQUE */
-      background: var(--bg-main); /* FOND UNIQUE */
       display: flex;
       flex-direction: column; 
       overflow: hidden; 
@@ -97,7 +91,6 @@
 
   /* 2. En-tête Divisé (Double Header) */
   /* 2. En-tête Divisé */
-  /* 2a. En-tête Divisé (Pilotage + Visuel) */
   .exam-header-wrapper {
       display: flex;
       width: 100%;
@@ -107,47 +100,31 @@
       height: 80px;
       background: #FCF9F2; /* MÊME FOND */
       border: none; /* PLUS DE BORDURE */
-      background: var(--bg-main); 
-      border-bottom: 1px solid #eee; /* Légère séparation visuelle */
       flex: 0 0 auto;
   }
 
   /* Partie GAUCHE de l'en-tête (Pilotage) - ÉLARGIE */
   /* Partie GAUCHE (Pilotage) */
-  /* Partie GAUCHE (Pilotage) - FLUIDE (FLEX 2) */
   .header-left-control {
       flex: 0 0 920px; /* LARGEUR AUGMENTÉE POUR LES DONNÉES */
       flex: 0 0 920px; 
       display: flex; flex-direction: column; justify-content: center;
       padding: 0 15px; border-right: 1px solid #eee; background: #F9FAFB;
-      flex: 2; /* Prend 2/3 de l'espace */
-      display: flex; 
-      flex-direction: column; 
-      justify-content: center;
       padding: 0 15px; 
       border: none; /* PLUS DE BORDURE */
       background: #FCF9F2; 
-      border-right: 1px solid #eee; 
-      background: var(--bg-main); 
   }
   .phase-badge { font-size: 0.8rem; font-weight: 800; color: #546E7A; text-transform: uppercase; text-align: center; margin-bottom: 5px; }
   .control-row { display: flex; justify-content: center; gap: 15px; align-items: center; }
 
   /* Partie DROITE de l'en-tête (Visuel) - RÉDUITE */
   /* Partie DROITE (Visuel) */
-  /* Partie DROITE (Visuel) - FLUIDE (FLEX 1) */
   .header-right-visual {
       flex: 1; /* Le reste (plus petit maintenant) */
       flex: 1; 
       display: flex; align-items: center; justify-content: center; gap: 20px;
       background: #fff;
       background: #FCF9F2; 
-      flex: 1; /* Prend 1/3 de l'espace */
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      gap: 20px;
-      background: var(--bg-main); 
   }
 
   /* 3. Zone de Travail Divisée (Split) */
@@ -156,15 +133,12 @@
       display: flex;
       flex: 1;
       overflow: hidden;
-      overflow: hidden; /* Important pour gérer le scroll interne si nécessaire */
       width: 100%;
       background: #FCF9F2; /* FOND UNIQUE PARTOUT */
-      background: var(--bg-main);
   }
 
   /* Colonne GAUCHE (Données) - ÉLARGIE */
   /* Colonne GAUCHE (Données) */
-  /* Colonne GAUCHE (Données) - FLUIDE (FLEX 2) */
   .side-data {
       flex: 0 0 920px; /* LARGEUR AUGMENTÉE */
       background: #F5F7F8;
@@ -173,33 +147,19 @@
       flex: 0 0 920px; 
       background: #FCF9F2; 
       border: none; /* PLUS DE BORDURE */
-      flex: 2; /* 2/3 de l'espace */
-      background: var(--bg-main); 
       padding: 15px; 
       overflow-x: auto;
       display: flex; align-items: flex-start; justify-content: center;
-      overflow-x: auto; /* Scroll horizontal si l'écran est vraiment minuscule */
-      display: flex; 
-      align-items: flex-start; 
-      justify-content: center;
   }
 
   /* Colonne DROITE (Lettres) - RÉDUITE */
   /* Colonne DROITE (Lettres) */
-  /* Colonne DROITE (Lettres) - FLUIDE (FLEX 1) */
   .side-letters {
       flex: 1; 
       display: flex; flex-direction: column; justify-content: center; align-items: center;
       background: #FFFFFF; position: relative;
       background: #FCF9F2; 
-      flex: 1; /* 1/3 de l'espace */
-      display: flex; 
-      flex-direction: column; 
-      justify-content: center; 
-      align-items: center;
-      background: var(--bg-main); 
       position: relative;
-      border-left: 1px dashed #CFD8DC; /* Séparation discrète */
   }
 
   /* 4. Barre du Bas */
@@ -210,16 +170,6 @@
       border: none; 
       display: flex; justify-content: center; align-items: center;
       padding: 10px; z-index: 20;
-      flex: 0 0 auto; 
-      width: 100%; 
-      min-height: 110px;
-      background: var(--bg-main); 
-      border-top: 1px solid #eee;
-      display: flex; 
-      justify-content: center; 
-      align-items: center;
-      padding: 10px; 
-      z-index: 20;
   }
 
   /* --- STYLES ÉLÉMENTS SPÉCIFIQUES --- */
@@ -227,15 +177,12 @@
   /* Boutons Pilotage */
   .btn-pilot {
       width: 60px; height: 38px; border-radius: 6px; font-weight: bold; cursor: pointer; border: 2px solid transparent; font-size: 1rem;
-      background: #5D4037; border-color: #5D4037; color: #D7CCC8; opacity: 0.6; /* Default closed */
-      transition: all 0.2s;
   }
   .btn-pilot.open { background: #fff; border-color: #B0BEC5; color: #78909C; }
   .btn-pilot.closed { background: #455A64; border-color: #455A64; color: #90A4AE; opacity: 0.5; }
   .btn-pilot.active { background: var(--primary); color: white; border-color: var(--primary-dark); opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
   .btn-pilot.open { background: #FFF; border-color: transparent; color: #78909C; box-shadow: 0 2px 5px rgba(0,0,0,0.05); } 
   .btn-pilot.closed { background: #5D4037; border-color: #5D4037; color: #D7CCC8; opacity: 0.6; }
-  .btn-pilot.open { background: #FFF; border-color: transparent; color: #78909C; box-shadow: 0 2px 5px rgba(0,0,0,0.05); opacity: 1; } 
   .btn-pilot.active { background: var(--primary); color: white; border-color: var(--primary-dark); opacity: 1; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
 
   .btn-mode-display {
@@ -254,19 +201,16 @@
       font-size: 1.5rem; font-weight: bold; font-family: 'Montserrat', sans-serif;
       background: #FFF; 
       color: #BCAAA4; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      transition: all 0.3s;
   }
   .va-box-display.active-eye {
       background: #E0F7FA; color: var(--primary-dark); border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       background: #E0F7FA; color: var(--primary-dark); border: 2px solid var(--primary);
-      transform: scale(1.05);
   }
 
   /* --- COLONNES DE DONNÉES (VERSION XXL) --- */
   .exam-data-strip { display: flex; gap: 10px; width: 100%; justify-content: center; }
   /* --- COLONNES DE DONNÉES (Cartes Flottantes) --- */
   .exam-data-strip { display: flex; gap: 15px; width: 100%; justify-content: center; }
-  .exam-data-strip { display: flex; gap: 10px; width: 100%; justify-content: center; flex-wrap: wrap; }
 
   .data-col { 
       display: flex; flex-direction: column; 
@@ -275,21 +219,17 @@
       text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
       width: 135px;
       background: #FFFFFF; /* On garde le blanc pour les données */
-      width: 130px; /* Largeur de base un peu réduite pour la fluidité */
-      background: #FFFFFF; 
       border: none; 
       border-radius: 12px; 
       padding: 10px; 
       text-align: center; 
       box-shadow: 0 4px 15px rgba(93, 64, 55, 0.08); /* Ombre douce pour effet "Carte" */
-      box-shadow: 0 4px 15px rgba(93, 64, 55, 0.08); 
   }
 
   .col-active { 
       width: 175px; /* BEAUCOUP PLUS LARGE pour le subjectif */
       border: 3px solid var(--primary); z-index: 5; transform: scale(1.02); 
       width: 175px; 
-      width: 170px; /* Plus large pour le subjectif */
       border: 2px solid var(--primary); z-index: 5; transform: scale(1.02); 
       box-shadow: 0 8px 20px rgba(4, 171, 198, 0.15);
   }
@@ -312,7 +252,6 @@
       font-size: 1.2rem; /* Chiffres plus gros */
       font-weight: 700; color: #5D4037; font-family: 'Montserrat', sans-serif; 
       font-size: 1.2rem;
-      font-size: 1.1rem;
   }
 
   .val-big { 
@@ -350,7 +289,6 @@
       font-size: 1rem; 
       border-bottom: 1px solid var(--primary-border); 
       padding-bottom: 2px; 
-      text-align: center;
   }
 
   .hidden { display: none !important; }
@@ -398,9 +336,6 @@
       color: var(--primary);              /* Texte : Primary (Cyan) */
       background-color: var(--primary-light); /* Fond : Primary Light (Cyan très pâle) */
       font-family: 'Montserrat', sans-serif;  /* Police moderne */
-      color: var(--primary);            
-      background-color: var(--primary-light); 
-      font-family: 'Montserrat', sans-serif;  
       font-weight: 700;
       border: 1px solid var(--primary-border);
   }
@@ -409,8 +344,6 @@
   input[id^="fronto"] {
       color: var(--primary-border);       /* Texte : Plus clair que primary */
       background-color: #ffffff;          /* Fond : Blanc (Plus clair que primary-light) */
-      color: var(--primary-border);       
-      background-color: #ffffff;          
       font-family: 'Montserrat', sans-serif;
       font-weight: 600;
   }
@@ -446,17 +379,14 @@
       display: flex; 
       justify-content: center; 
       gap: 40px; 
-      gap: 30px; 
       flex-wrap: wrap; 
   }
 
   .btn-resp { 
       width: 80px; height: 80px;
-      width: 70px; height: 70px;
       border-radius: 50%; border: none; 
       background: var(--primary-light); color: var(--primary-dark); 
       font-size: 2rem; 
-      font-size: 1.8rem; 
       font-weight: bold; 
       cursor: pointer; transition: 0.2s; 
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -515,13 +445,6 @@
       .dashboard-wrapper { display: block; } 
       .left-panel { width: 100%; margin-bottom: 15px; }
       .right-panel { min-height: 400px; }
-      .right-panel { min-height: 400px; display: block; }
-      .exam-header-wrapper { display: block; height: auto; }
-      .work-split { display: block; }
-      .side-data { width: 100%; border-right: none; border-bottom: 1px solid #eee; }
-      .side-letters { width: 100%; min-height: 200px; padding: 20px; }
-      /* En mobile, on remet les largeurs à 100% ou auto */
-      .header-left-control, .header-right-visual { width: 100%; flex: none; border: none; padding: 10px; }
   }
 
   /* MODAL */
@@ -898,7 +821,6 @@
             <div class="header-left-control">
                 <div class="phase-badge">PHASE : <span id="dispPhase">INIT</span></div>
                 <div class="control-buttons-row" style="display:flex; justify-content:center; gap:10px;">
-                <div class="control-row">
                     <button id="btnPilotOD" class="btn-pilot" onclick="window.setEye('OD')">OD</button>
                     <div id="dispMode" class="btn-mode-display">MONOCULAIRE</div>
                     <button id="btnPilotOG" class="btn-pilot" onclick="window.setEye('OG')">OG</button>
@@ -915,7 +837,6 @@
 
             <div class="side-data">
                 <div id="examDataStrip" class="exam-data-strip hidden" style="display:flex; gap:5px;">
-                <div id="examDataStrip" class="exam-data-strip hidden">
                      <div id="dataSection" style="display:none;"></div> 
 
                      <div class="data-col col-passive">
@@ -2878,12 +2799,8 @@ function updateDisplay(message) {
     // Gestion des classes des colonnes de données
     if(appState.activeEye === 'OD') {
         boxOD.classList.add('active'); boxOG.classList.remove('active');
-        boxOD.classList.add('col-active'); boxOD.classList.remove('col-passive');
-        boxOG.classList.remove('col-active'); boxOG.classList.add('col-passive');
     } else {
         boxOD.classList.remove('active'); boxOG.classList.add('active');
-        boxOD.classList.remove('col-active'); boxOD.classList.add('col-passive');
-        boxOG.classList.add('col-active'); boxOG.classList.remove('col-passive');
     }
 
     // Gestion des classes des boutons Yeux (Nouvelle logique Occlusion)
@@ -3070,14 +2987,12 @@ window.updateDisplay = function(message) {
 
     // D. Messages
     setHTML('valProfile', appState.profile); 
-    setHTML('valProfile', appState.profile);
     setHTML('systemMsg', message);
     var sysMsgEl = document.getElementById('systemMsg');
     if(sysMsgEl) {
         if (message.indexOf("VALIDÉE") !== -1 || message.indexOf("Validé") !== -1) sysMsgEl.classList.add('success-msg'); 
         else sysMsgEl.classList.remove('success-msg');
     }
-    if (message.indexOf("VALIDÉE") !== -1 || message.indexOf("Validé") !== -1) document.getElementById('systemMsg').classList.add('success-msg'); else document.getElementById('systemMsg').classList.remove('success-msg');
 
     // E. Génération des boutons de réponse ET FORCE AFFICHAGE
     if(window.ACUITY_TABLE && appState.vaIndex < ACUITY_TABLE.length) {
@@ -3111,50 +3026,9 @@ window.updateDisplay = function(message) {
             } else {
                 stdBtns.classList.add('hidden');
             }
-    var currentData = ACUITY_TABLE[appState.vaIndex]; setHTML('valVA', currentData.va);
-    var linesArr = currentData.lines; var txt = linesArr[appState.letterIndex % linesArr.length];
-    setHTML('letterBox', txt);
-    var count = txt.split(' ').length; var btnHTML = "";
-    for(var i=0; i<=count; i++) { btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; }
-    setHTML('btnContainer', btnHTML);
-
-     // --- CORRECTION VISIBILITÉ (Le Fix Important) ---
-    var isSpecialMode = false;
-    var cadBtns = document.getElementById('cadenceButtons');
-    var chkPlus = document.getElementById('checkPlusZone');
-    var axisCtr = document.getElementById('axisControls');
-
-    if (cadBtns && !cadBtns.classList.contains('hidden')) isSpecialMode = true;
-    if (chkPlus && !chkPlus.classList.contains('hidden')) isSpecialMode = true;
-    if (axisCtr && !axisCtr.classList.contains('hidden')) isSpecialMode = true;
-
-    var stdBtns = document.getElementById('standardButtons');
-    if (stdBtns) {
-        if (!isSpecialMode) {
-            stdBtns.classList.remove('hidden');
-        } else {
-            stdBtns.classList.add('hidden');
         }
     }
-
-    // E. Mise à jour Badge Phase
-    setHTML('dispPhase', appState.examPhase ? appState.examPhase.toUpperCase() : "INIT");
-
-    var modeText = "MONOCULAIRE";
-    if (appState.examPhase === "Sb0.5" || (appState.examPhase && appState.examPhase.includes("Check")) || appState.examPhase === "Sb1.0") {
-        modeText = "BIO-MONOCULAIRE";
-    }
-    setHTML('dispMode', modeText);
 };
-
-// 1. Fonction de choix de l'œil (Mise à jour pour le nouveau design)
-window.setEye = function(eye) {
-    appState.activeEye = eye;
-    // On force la mise à jour de l'affichage
-    var currentMsg = document.getElementById('systemMsg') ? document.getElementById('systemMsg').innerText : "";
-    window.updateDisplay(currentMsg);
-};
-
 </script>
 </body>
 </html>
