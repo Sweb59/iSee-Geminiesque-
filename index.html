@@ -208,57 +208,72 @@
   }
 
   /* --- COLONNES DE DONNÉES (VERSION XXL) --- */
-  .exam-data-strip { display: flex; gap: 10px; width: 100%; justify-content: center; }
-  /* --- COLONNES DE DONNÉES (Cartes Flottantes) --- */
+
+  /* --- COLONNES DE DONNÉES (VERSION XXL) --- */
   .exam-data-strip { display: flex; gap: 15px; width: 100%; justify-content: center; }
 
+  /* 1. Style standard des colonnes (RA, Fronto) */
   .data-col { 
       display: flex; flex-direction: column; 
-      width: 135px; /* PLUS LARGE */
-      background: #fff; border: 1px solid #CFD8DC; border-radius: 8px; padding: 10px; 
-      text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
       width: 135px;
-      background: #FFFFFF; /* On garde le blanc pour les données */
-      border: none; 
+      background: #FFFFFF; 
+      border: 1px solid #CFD8DC; /* Bordure grise standard */
       border-radius: 12px; 
       padding: 10px; 
       text-align: center; 
-      box-shadow: 0 4px 15px rgba(93, 64, 55, 0.08); /* Ombre douce pour effet "Carte" */
+      box-shadow: 0 4px 15px rgba(93, 64, 55, 0.08);
+      transition: all 0.3s ease; /* Transition fluide */
   }
 
+  /* 2. Style de la colonne Subjectif - ETAT INACTIF (Comme un bouton éteint) */
   .col-active { 
-      width: 175px; /* BEAUCOUP PLUS LARGE pour le subjectif */
-      border: 3px solid var(--primary); z-index: 5; transform: scale(1.02); 
       width: 175px; 
-      border: 2px solid var(--primary); z-index: 5; transform: scale(1.02); 
-      box-shadow: 0 8px 20px rgba(4, 171, 198, 0.15);
+      border: 2px solid #CFD8DC; /* Bordure grise */
+      background-color: #FFFFFF; /* Fond Blanc */
+      z-index: 5; 
+      transform: scale(1.00); 
   }
 
-  .col-title { font-size: 0.8rem; font-weight: 800; color: #90A4AE; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
-  .col-title { font-size: 0.8rem; font-weight: 800; color: #8D6E63; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #F5F5F5; padding-bottom: 4px; }
-  .title-ra { color: var(--primary); } 
-  .title-subj { color: var(--primary-dark); font-size: 1rem; } /* Titre plus gros */
-  .title-subj { color: var(--primary-dark); font-size: 1rem; }
+  /* 3. Style de la colonne Subjectif - ETAT ACTIF (HIGHLIGHT) (Comme un bouton allumé) */
+  .col-active.highlight {
+      background-color: var(--primary) !important; /* Fond CYAN */
+      border-color: var(--primary-deep) !important; /* Bordure FONCÉE */
+      transform: scale(1.05); /* Zoom */
+      box-shadow: 0 10px 25px rgba(4, 171, 198, 0.3);
+  }
 
+  /* --- GESTION DES COULEURS DU TEXTE (INVERSION) --- */
+
+  /* Titres */
+  .col-title { 
+      font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; 
+      border-bottom: 1px solid #F5F5F5; padding-bottom: 4px; 
+  }
+  .title-ra { color: var(--primary); }
+  
+  /* Titre Subjectif : Foncé par défaut, BLANC si actif */
+  .title-subj { color: var(--primary-dark); font-size: 1rem; transition: color 0.2s; }
+  .col-active.highlight .title-subj { color: #FFFFFF !important; border-bottom-color: rgba(255,255,255,0.3); }
+
+  /* Labels (S, C, A) : Gris par défaut, BLANC CASSE si actif */
   .data-line { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 1rem; align-items: center; }
-  .lbl { font-weight: bold; color: #B0BEC5; font-size: 0.8rem; }
-  .lbl { font-weight: bold; color: #BCAAA4; font-size: 0.8rem; }
+  .lbl { font-weight: bold; color: #BCAAA4; font-size: 0.8rem; transition: color 0.2s; }
+  .col-active.highlight .lbl { color: rgba(255,255,255, 0.8) !important; }
 
-  /* VALEURS PLUS GROSSES */
-  /* VALEURS */
+  /* Valeurs Standard */
   .val-input { 
       width: 100%; text-align: center; background: transparent; border: none; 
-      font-weight: 700; color: #546E7A; font-family: 'Montserrat', sans-serif; 
-      font-size: 1.2rem; /* Chiffres plus gros */
-      font-weight: 700; color: #5D4037; font-family: 'Montserrat', sans-serif; 
-      font-size: 1.2rem;
+      font-weight: 700; color: #5D4037; font-family: 'Montserrat', sans-serif; font-size: 1.2rem;
   }
 
-  .val-big { 
-      font-size: 1.8rem; /* Subjectif TRÈS gros */
-      font-weight: 800; color: #37474F; 
-  }
-  .val-big { font-size: 1.8rem; font-weight: 800; color: #3E2723; }
+  /* Valeurs Subjectif (Grosses) : Foncé par défaut, BLANC si actif */
+  .val-big { font-size: 1.8rem; font-weight: 800; color: #3E2723; transition: color 0.2s; }
+  .col-active.highlight .val-big { color: #FFFFFF !important; }
+
+  /* VA (Ligne du bas) */
+  #disp_subjOD_va, #disp_subjOG_va { font-weight:bold; color:var(--primary); transition: color 0.2s; }
+  .col-active.highlight #disp_subjOD_va, 
+  .col-active.highlight #disp_subjOG_va { color: #FFFFFF !important; }
 
   /* --- LETTRES (VERSION RÉDUITE) --- */
   /* --- LETTRES --- */
