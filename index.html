@@ -207,10 +207,10 @@
       background: #E0F7FA; color: var(--primary-dark); border: 2px solid var(--primary);
   }
 
-  /* --- COLONNES DE DONNÉES (CORRECTIF FINAL) --- */
+  /* --- COLONNES DE DONNÉES (DESIGN CERCLES) --- */
   .exam-data-strip { 
       display: flex; 
-      gap: 10px; /* Espace entre les cartes */
+      gap: 5px; /* On réduit l'écart car la colonne centrale est plus large */
       width: 100%; 
       justify-content: center; 
       align-items: flex-start; 
@@ -229,24 +229,60 @@
       transition: all 0.3s ease; 
   }
 
-  /* 2. Colonne Centrale (Légende) */
+  /* ================================================================= */
+  /* 2. COLONNE CENTRALE (DESIGN "VERTEBRALE") */
+  /* ================================================================= */
   .center-labels {
-      display: flex; flex-direction: column; align-items: center;
-      width: 40px; /* Largeur de la colonne vertébrale */
+      display: flex; 
+      flex-direction: column; 
+      align-items: center;
+      
+      /* Apparence de la colonne conteneur */
+      width: 50px; /* Plus large pour accueillir les cercles */
       padding: 10px 0;
+      background-color: #FAFAFA; /* Fond gris très clair */
+      border-left: 2px solid #E0E0E0; /* Bordure Gauche */
+      border-right: 2px solid #E0E0E0; /* Bordure Droite */
+      border-radius: 30px; /* Forme de pilule */
+      margin: 0 5px; /* Petit espacement latéral */
       flex-shrink: 0;
   }
 
+  /* Le style des CERCLES (S, C, A) */
   .label-row {
-      display: flex; align-items: center; justify-content: center;
-      height: 29px; /* Hauteur forcée pour alignement */
-      margin-bottom: 6px; 
-      font-weight: 900; color: #90A4AE; font-size: 0.9rem; font-family: 'Montserrat', sans-serif;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      
+      /* Dimensions du cercle */
+      width: 34px; 
+      height: 34px;
+      border-radius: 50%; /* Forme ronde */
+      border: 2px solid #B0BEC5; /* Bordure du cercle */
+      background-color: #FFFFFF; /* Fond blanc pour contraste */
+      
+      /* Typographie */
+      font-weight: 800; 
+      font-size: 1.1rem; /* Texte plus grand */
+      color: #546E7A; 
+      font-family: 'Montserrat', sans-serif;
+
+      /* ALIGNEMENT VERTICAL PRÉCIS */
+      /* Doit correspondre à la hauteur + marge des lignes de données */
+      margin-bottom: 2px; /* Ajusté pour s'aligner avec les inputs */
   }
   
-  .va-label { margin-top: 5px; padding-top: 2px; color: var(--primary); font-size: 0.85rem; }
+  /* Cas spécifique pour VA (Cercle Bleu) */
+  .va-label {
+      margin-top: 5px; 
+      border-color: var(--primary); /* Bordure Cyan */
+      color: var(--primary); /* Texte Cyan */
+      font-size: 1rem;
+  }
 
+  /* ================================================================= */
   /* 3. Carte Subjectif - ÉTAT INACTIF (Gris) */
+  /* ================================================================= */
   .col-active { 
       width: 175px; z-index: 1; transform: scale(0.98); 
       background-color: #F5F5F5; border: 2px solid #E0E0E0; box-shadow: none; 
@@ -256,7 +292,9 @@
   .col-active #disp_subjOD_va, .col-active #disp_subjOG_va { color: #B0BEC5; font-weight: bold; transition: color 0.2s; }
   .col-active .val-input { color: #B0BEC5 !important; width: 100%; text-align: center; background: transparent; border: none; font-weight: 700; font-size: 1.2rem; }
 
+  /* ================================================================= */
   /* 4. Carte Subjectif - ÉTAT ACTIF (Cyan/Blanc) */
+  /* ================================================================= */
   .col-active.highlight {
       z-index: 10; transform: scale(1.05); 
       background-color: var(--primary) !important; border-color: var(--primary-deep) !important; 
@@ -267,8 +305,10 @@
   .col-active.highlight #disp_subjOD_va, .col-active.highlight #disp_subjOG_va { color: #FFFFFF !important; }
   .col-active.highlight .val-input { color: #FFFFFF !important; }
 
-  /* 5. Alignements */
-  .lbl { display: none !important; } /* On cache S, C, A dans les cartes */
+  /* ================================================================= */
+  /* 5. ALIGNEMENTS */
+  /* ================================================================= */
+  .lbl { display: none !important; } 
   
   .col-title { 
       font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; 
@@ -277,9 +317,11 @@
   .title-ra { color: var(--primary); }
   .title-subj { color: var(--primary-dark); font-size: 1rem; transition: color 0.2s; }
   
+  /* Ajustement de la hauteur des lignes de données pour s'aligner aux cercles */
   .data-line { 
       display: flex; justify-content: center; align-items: center; 
-      height: 29px; margin-bottom: 6px; 
+      height: 34px; /* Hauteur identique aux cercles */
+      margin-bottom: 2px; /* Marge identique aux cercles */
   }
   .val-input { font-family: 'Montserrat', sans-serif; }
   
