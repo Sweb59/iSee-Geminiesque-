@@ -104,14 +104,15 @@
   }
 
   /* Partie GAUCHE de l'en-tête (Pilotage) - ÉLARGIE */
-  /* Partie GAUCHE (Pilotage) */
+ /* Partie GAUCHE (Pilotage) */
   .header-left-control {
-      flex: 0 0 920px; /* LARGEUR AUGMENTÉE POUR LES DONNÉES */
-      flex: 0 0 920px; 
-      display: flex; flex-direction: column; justify-content: center;
-      padding: 0 15px; border-right: 1px solid #eee; background: #F9FAFB;
+      flex: 0 0 1050px;       /* <--- MODIFICATION ICI (Doit être égal à side-data) */
+      
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center;
       padding: 0 15px; 
-      border: none; /* PLUS DE BORDURE */
+      border: none; 
       background: #FCF9F2; 
   }
   .phase-badge { font-size: 0.8rem; font-weight: 800; color: #546E7A; text-transform: uppercase; text-align: center; margin-bottom: 5px; }
@@ -137,29 +138,32 @@
       background: #FCF9F2; /* FOND UNIQUE PARTOUT */
   }
 
-  /* Colonne GAUCHE (Données) - ÉLARGIE */
   /* Colonne GAUCHE (Données) */
   .side-data {
-      flex: 0 0 920px; /* LARGEUR AUGMENTÉE */
-      background: #F5F7F8;
-      border-right: 1px solid #CFD8DC;
-      padding: 110px; /* Plus d'espace */
-      flex: 0 0 920px; 
-      background: #FCF9F2; 
-      border: none; /* PLUS DE BORDURE */
-      padding: 110px; 
-      overflow-x: auto;
-      display: flex; align-items: flex-start; justify-content: center;
+      flex: 0 0 1050px;       /* <--- LARGEUR AUGMENTÉE (était 920px) */
+      
+      background: #FCF9F2;
+      border: none;
+      padding: 110px;
+      
+      overflow-x: hidden;     /* <--- ASCENSEUR SUPPRIMÉ (était auto) */
+      
+      display: flex; 
+      align-items: flex-start; 
+      justify-content: center;
   }
 
-  /* Colonne DROITE (Lettres) - RÉDUITE */
   /* Colonne DROITE (Lettres) */
   .side-letters {
       flex: 1; 
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      background: #FFFFFF; position: relative;
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; /* Centre verticalement */
+      align-items: center;     /* Centre horizontalement les blocs */
+      text-align: center;      /* Centre le texte à l'intérieur */
       background: #FCF9F2; 
       position: relative;
+      overflow: hidden;        /* Évite que les grandes lettres ne dépassent */
   }
 
   /* 4. Barre du Bas */
