@@ -103,10 +103,9 @@
       flex: 0 0 auto;
   }
 
-  /* Partie GAUCHE de l'en-tête (Pilotage) - ÉLARGIE */
  /* Partie GAUCHE (Pilotage) */
   .header-left-control {
-      flex: 0 0 1050px;       /* <--- MODIFICATION ICI (Doit être égal à side-data) */
+      flex: 0 0 1000px; /* Doit être identique à side-data (1000px) */
       
       display: flex; 
       flex-direction: column; 
@@ -138,32 +137,34 @@
       background: #FCF9F2; /* FOND UNIQUE PARTOUT */
   }
 
-  /* Colonne GAUCHE (Données) */
+ /* Colonne GAUCHE (Données) */
   .side-data {
-      flex: 0 0 1050px;       /* <--- LARGEUR AUGMENTÉE (était 920px) */
+      flex: 0 0 1000px; /* Réduit de 1050 à 1000px (Suffisant pour enlever l'ascenseur) */
       
       background: #FCF9F2;
       border: none;
       padding: 110px;
       
-      overflow-x: hidden;     /* <--- ASCENSEUR SUPPRIMÉ (était auto) */
-      
+      overflow-x: hidden;
       display: flex; 
       align-items: flex-start; 
       justify-content: center;
   }
 
-  /* Colonne DROITE (Lettres) */
+ /* Colonne DROITE (Lettres) */
   .side-letters {
       flex: 1; 
       display: flex; 
       flex-direction: column; 
-      justify-content: center; /* Centre verticalement */
-      align-items: center;     /* Centre horizontalement les blocs */
-      text-align: center;      /* Centre le texte à l'intérieur */
+      justify-content: center; 
+      align-items: center;     
+      text-align: center;
       background: #FCF9F2; 
       position: relative;
-      overflow: hidden;        /* Évite que les grandes lettres ne dépassent */
+      overflow: hidden;
+      
+      /* C'EST ICI LA CORRECTION IMPORTANTE : */
+      min-width: 350px; /* Empêche la colonne d'être écrasée en dessous de 350px */
   }
 
   /* 4. Barre du Bas */
