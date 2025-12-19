@@ -207,10 +207,16 @@
       background: #E0F7FA; color: var(--primary-dark); border: 2px solid var(--primary);
   }
 
-  /* --- COLONNES DE DONNÉES (VERSION XXL) --- */
-  .exam-data-strip { display: flex; gap: 15px; width: 100%; justify-content: center; }
+  /* --- COLONNES DE DONNÉES (VERSION FINALE AVEC CENTRE) --- */
+  .exam-data-strip { 
+      display: flex; 
+      gap: 10px; /* Espace entre les cartes et la colonne centrale */
+      width: 100%; 
+      justify-content: center; 
+      align-items: flex-start; /* Important pour l'alignement haut */
+  }
 
-  /* 1. Style des colonnes passives (RA, Fronto) */
+  /* 1. Style de base des colonnes (RA, Fronto) */
   .data-col { 
       display: flex; flex-direction: column; 
       width: 135px;
@@ -224,76 +230,92 @@
   }
 
   /* ================================================================= */
-  /* 2. ÉTAT INACTIF (L'œil qu'on n'examine PAS) -> GRISÉ */
+  /* 2. STYLE DE LA COLONNE CENTRALE (S, C, A, VA) */
+  /* ================================================================= */
+  .center-labels {
+      display: flex; 
+      flex-direction: column; 
+      align-items: center;
+      width: 30px; /* Colonne étroite au centre */
+      padding: 10px 0; /* Même padding vertical que les cartes */
+  }
+
+  .label-row {
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      height: 29px; /* HAUTEUR FIXE POUR S'ALIGNER AVEC LES CHIFFRES */
+      margin-bottom: 6px; /* MÊME MARGE QUE LES CHIFFRES */
+      font-weight: 900; 
+      color: #90A4AE; /* Gris moyen pour la légende */
+      font-size: 0.9rem;
+      font-family: 'Montserrat', sans-serif;
+  }
+
+  .va-label {
+      margin-top: 5px; /* Espace supplémentaire pour s'aligner avec la VA */
+      padding-top: 2px;
+      color: var(--primary); 
+      font-size: 0.85rem;
+  }
+
+  /* ================================================================= */
+  /* 3. ÉTAT INACTIF (Œil non examiné) -> GRISÉ & ÉTEINT */
   /* ================================================================= */
   .col-active { 
       width: 175px; 
       z-index: 1; 
-      transform: scale(0.98); 
-      background-color: #F5F5F5; 
-      border: 2px solid #E0E0E0; 
+      transform: scale(0.98); /* Légèrement plus petit */
+      background-color: #F5F5F5; /* Fond GRIS */
+      border: 2px solid #E0E0E0; /* Bordure GRISE */
       box-shadow: none; 
   }
 
-  /* Textes INACTIFS (Gris) */
+  /* Tous les textes en GRIS CLAIR pour l'état inactif */
   .col-active .col-title { color: #B0BEC5; border-bottom-color: #E0E0E0; }
-  
-  .col-active .val-big { 
-      color: #B0BEC5; font-size: 1.8rem; font-weight: 800; transition: color 0.2s;
-  }
-  
-  .col-active #disp_subjOD_va, .col-active #disp_subjOG_va { 
-      color: #B0BEC5; font-weight: bold; transition: color 0.2s;
-  }
-
-  .col-active .val-input { 
-       width: 100%; text-align: center; background: transparent; border: none; 
-       font-weight: 700; font-family: 'Montserrat', sans-serif; font-size: 1.2rem;
-       color: #B0BEC5; 
-  }
+  .col-active .val-big { color: #B0BEC5; font-size: 1.8rem; font-weight: 800; transition: color 0.2s; }
+  .col-active #disp_subjOD_va, .col-active #disp_subjOG_va { color: #B0BEC5; font-weight: bold; transition: color 0.2s; }
+  .col-active .val-input { width: 100%; text-align: center; background: transparent; border: none; font-weight: 700; font-family: 'Montserrat', sans-serif; font-size: 1.2rem; color: #B0BEC5; }
 
   /* ================================================================= */
-  /* 3. ÉTAT ACTIF (L'œil sélectionné) -> CYAN/BLANC */
+  /* 4. ÉTAT ACTIF (Œil examiné) -> CYAN & BLANC */
   /* ================================================================= */
   .col-active.highlight {
       z-index: 10; 
-      transform: scale(1.05); 
-      background-color: var(--primary) !important; 
-      border-color: var(--primary-deep) !important; 
+      transform: scale(1.05); /* Zoom de mise en avant */
+      background-color: var(--primary) !important; /* Fond CYAN */
+      border-color: var(--primary-deep) !important; /* Bordure FONCÉE */
       box-shadow: 0 10px 25px rgba(4, 171, 198, 0.3);
   }
 
-  /* Textes ACTIFS (Blanc) */
-  .col-active.highlight .col-title { 
-      color: #FFFFFF !important; border-bottom-color: rgba(255,255,255,0.3); 
-  }
-
+  /* Tous les textes en BLANC pour l'état actif */
+  .col-active.highlight .col-title { color: #FFFFFF !important; border-bottom-color: rgba(255,255,255,0.3); }
   .col-active.highlight .val-big { color: #FFFFFF !important; }
-  
-  .col-active.highlight #disp_subjOD_va, 
-  .col-active.highlight #disp_subjOG_va { color: #FFFFFF !important; }
-
+  .col-active.highlight #disp_subjOD_va, .col-active.highlight #disp_subjOG_va { color: #FFFFFF !important; }
   .col-active.highlight .val-input { color: #FFFFFF !important; }
 
   /* ================================================================= */
-  /* 4. SUPPRESSION DES LABELS (S, C, A, VA) */
+  /* 5. ALIGNEMENTS TECHNIQUES */
   /* ================================================================= */
-  .lbl {
-      display: none !important; /* C'est cette ligne qui cache les lettres */
-  }
+  
+  /* On cache les labels DANS les cartes car ils sont au centre maintenant */
+  .lbl { display: none !important; }
 
-  /* Ajustements généraux */
   .col-title { 
       font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; 
       border-bottom: 1px solid #F5F5F5; padding-bottom: 4px; 
+      width: 100%; 
+      white-space: nowrap;
   }
   .title-ra { color: var(--primary); }
   .title-subj { color: var(--primary-dark); font-size: 1rem; transition: color 0.2s; }
   
   .data-line { 
       display: flex; 
-      justify-content: center; /* On centre maintenant car il n'y a plus de label à gauche */
-      margin-bottom: 6px; font-size: 1rem; align-items: center; 
+      justify-content: center; /* On centre les chiffres */
+      align-items: center; 
+      height: 29px; /* HAUTEUR FORCÉE pour s'aligner avec la colonne centrale */
+      margin-bottom: 6px; 
   }
   
   .val-input { 
@@ -905,6 +927,32 @@
                          </div>
                      </div>
 
+<div id="subjDispOD" class="data-col col-active">
+    <div class="col-title title-subj">OD (Exam)</div>
+    <div class="data-line"><span class="lbl">S</span><span id="disp_subjOD_sph" class="val-input val-big">--</span></div>
+    <div class="data-line"><span class="lbl">C</span><span id="disp_subjOD_cyl" class="val-input val-big">--</span></div>
+    <div class="data-line"><span class="lbl">A</span><span id="disp_subjOD_axe" class="val-input val-big">--</span></div>
+    <div style="margin-top:5px; border-top:1px solid #eee; padding-top:2px;">
+       <span class="lbl" style="color:var(--primary);">VA</span> 
+       <span id="disp_subjOD_va" style="font-weight:bold; color:var(--primary);">--</span>
+    </div>
+</div> 
+<div class="center-labels">
+    <div class="col-title" style="border:none; opacity:0;">&nbsp;</div>
+    
+    <div class="label-row">S</div>
+    <div class="label-row">C</div>
+    <div class="label-row">A</div>
+    
+    <div class="label-row va-label">VA</div>
+</div>
+<div id="subjDispOG" class="data-col col-active">
+    <div class="col-title title-subj">OG (Exam)</div>
+    ```
+
+Une fois que vous avez collé ce bloc HTML entre les deux `div`, dites-moi "OK" et je vous donne le CSS pour aligner tout ça proprement.
+
+                  
                      <div id="subjDispOG" class="data-col col-active">
                          <div class="col-title title-subj">OG (Exam)</div>
                          <div class="data-line"><span class="lbl">S</span><span id="disp_subjOG_sph" class="val-input val-big">--</span></div>
