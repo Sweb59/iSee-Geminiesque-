@@ -104,16 +104,14 @@
   }
 
  /* Partie GAUCHE (Pilotage) */
-  .header-left-control {
-      flex: 0 0 1000px; /* Doit être identique à side-data (1000px) */
-      
-      display: flex; 
-      flex-direction: column; 
-      justify-content: center;
-      padding: 0 15px; 
-      border: none; 
-      background: #FCF9F2; 
-  }
+.header-left-control {
+    flex: 0 0 65%;    /* <--- PASSAGE EN % (environ 2/3 de l'écran) */
+    max-width: 65%;   /* Sécurité */
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 10px;  /* <--- PADDING RÉDUIT */
+    border: none; 
+    background: #FCF9F2; 
+}
   .phase-badge { font-size: 0.8rem; font-weight: 800; color: #546E7A; text-transform: uppercase; text-align: center; margin-bottom: 5px; }
   .control-row { display: flex; justify-content: center; gap: 15px; align-items: center; }
 
@@ -138,18 +136,15 @@
   }
 
  /* Colonne GAUCHE (Données) */
-  .side-data {
-      flex: 0 0 1000px; /* Réduit de 1050 à 1000px (Suffisant pour enlever l'ascenseur) */
-      
-      background: #FCF9F2;
-      border: none;
-      padding: 110px;
-      
-      overflow-x: hidden;
-      display: flex; 
-      align-items: flex-start; 
-      justify-content: center;
-  }
+.side-data {
+    flex: 0 0 65%;    /* <--- IDEM QUE LE HEADER */
+    max-width: 65%;   
+    background: #FCF9F2;
+    border: none;
+    padding: 20px 10px; /* <--- PADDING DRASTIQUEMENT RÉDUIT (C'est ça qui bloquait) */
+    overflow-x: hidden;
+    display: flex; align-items: flex-start; justify-content: center;
+}
 
  /* Colonne DROITE (Lettres) */
   .side-letters {
@@ -212,35 +207,30 @@
       background: #E0F7FA; color: var(--primary-dark); border: 2px solid var(--primary);
   }
 
-  /* --- COLONNES DE DONNÉES (DESIGN CERCLES) --- */
-  .exam-data-strip { 
-      display: flex; 
-      gap: 5px; /* On réduit l'écart car la colonne centrale est plus large */
-      width: 100%; 
-      justify-content: center; 
-      align-items: flex-start; 
-  }
+ /* --- COLONNES DE DONNÉES --- */
+.exam-data-strip { 
+    display: flex; 
+    gap: 5px;        /* Petit écart entre les cartes */
+    width: 100%;     /* <--- IMPORTANT : Prend toute la largeur disponible */
+    justify-content: space-between; /* Répartit les cartes équitablement */
+    align-items: flex-start; 
+}
 
-  /* 1. Colonnes Passives (RA, Fronto) */
-  .data-col { 
-      display: flex; 
-      flex-direction: column; 
-      width: 135px;
-
-      /* --- MODIFICATIONS --- */
-      background: var(--bg-main);       /* Fond crème (#FCF9F2) */
-      
-      /* Bordure identique au fond de la carte active (Cyan) */
-      border: 2px solid var(--primary); 
-      
-      box-shadow: none;                 /* Pas d'ombre */
-      /* --------------------- */
-
-      border-radius: 12px; 
-      padding: 10px; 
-      text-align: center; 
-      transition: all 0.3s ease; 
-  }
+ /* 1. Colonnes Passives (RA, Fronto) */
+.data-col { 
+    display: flex; flex-direction: column; 
+    /* width: 135px;  <-- SUPPRIMER CETTE LIGNE */
+    flex: 1;          /* <--- NOUVEAU : S'étire pour remplir l'espace */
+    min-width: 0;     /* Permet à la colonne de rétrécir si besoin */
+    
+    background: var(--bg-main); 
+    border: none; /* Ou votre bordure cyan si vous l'avez gardée */
+    
+    border-radius: 8px; 
+    padding: 5px;     /* Padding interne réduit */
+    text-align: center; 
+    transition: all 0.3s ease; 
+}
 
   /* ================================================================= */
   /* 2. COLONNE CENTRALE (DESIGN "VERTEBRALE") */
@@ -293,15 +283,23 @@
       font-size: 1rem;
   }
 
-  /* ================================================================= */
-  /* 3. Carte Subjectif - ÉTAT INACTIF (Gris) */
-  /* ================================================================= */
-  .col-active { 
-      width: 175px; z-index: 1; transform: scale(0.98); 
-      background-color: #F5F5F5; border: 2px solid #E0E0E0; box-shadow: none; 
-  }
+ /* 3. Carte Subjectif - ÉTAT INACTIF */
+.col-active { 
+    /* width: 175px; <-- SUPPRIMER CETTE LIGNE */
+    flex: 1.2;       /* <--- Un peu plus large que les AR/LM (Ratio 1.2 vs 1) */
+    min-width: 0;    /* Important pour le responsive */
+    
+    z-index: 1; transform: scale(0.98); 
+    background-color: #F5F5F5; border: 2px solid #E0E0E0; box-shadow: none; 
+    border-radius: 8px; /* Ajout esthétique */
+}
   .col-active .col-title { color: #B0BEC5; border-bottom-color: #E0E0E0; }
-  .col-active .val-big { color: #B0BEC5; font-size: 1.8rem; font-weight: 800; transition: color 0.2s; }
+ .col-active .val-big { 
+    color: #B0BEC5; 
+    font-size: 1.3rem; /* <--- RÉDUIT (était 1.8rem) */
+    font-weight: 800; 
+    transition: color 0.2s; 
+}
   .col-active #disp_subjOD_va, .col-active #disp_subjOG_va { color: #B0BEC5; font-weight: bold; transition: color 0.2s; }
   .col-active .val-input { color: #B0BEC5 !important; width: 100%; text-align: center; background: transparent; border: none; font-weight: 700; font-size: 1.2rem; }
 
@@ -410,26 +408,26 @@
   /* --- COULEURS PERSONNALISÉES DES DONNÉES --- */
 
 /* 1. Autoréfractomètre (RA) */
-  input[id^="ra"] {
-      color: var(--primary);             /* Texte Cyan */
-      background-color: transparent;     /* Fond transparent (laisse voir le crème) */
-      font-family: 'Montserrat', sans-serif;
-      font-weight: 700;
-      border: none;                      /* AUCUNE BORDURE */
-      text-align: center;                /* TEXTE CENTRÉ */
-      font-size: 1.1rem;                 /* Légèrement plus grand pour la lisibilité */
-  }
+input[id^="ra"] {
+    color: var(--primary); 
+    background-color: transparent; 
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    border: none; 
+    text-align: center; 
+    
+    width: 100%;        /* <--- IMPORTANT : Prend la largeur de la colonne */
+    font-size: 0.9rem;  /* <--- TAILLE RÉDUITE (était 1.1rem ou +) */
+    padding: 2px 0;     /* Ajustement vertical */
+}
 
-  /* 2. Frontofocomètre */
-  input[id^="fronto"] {
-      color: var(--primary);             /* Texte Cyan */
-      background-color: transparent;     /* Fond transparent */
-      font-family: 'Montserrat', sans-serif;
-      font-weight: 600;
-      border: none;                      /* AUCUNE BORDURE */
-      text-align: center;                /* TEXTE CENTRÉ */
-      font-size: 1.1rem;
-  }
+/* Faites pareil pour input[id^="fronto"] juste en dessous */
+input[id^="fronto"] {
+    /* ... (mêmes propriétés de couleur) ... */
+    width: 100%;
+    font-size: 0.9rem;  /* <--- TAILLE RÉDUITE */
+    padding: 2px 0;
+}
   
   /* GRILLE VALEURS */
   .col-head { background: #ECEFF1; font-weight: bold; font-size: 0.7rem; padding: 4px 0; border-radius: 3px; }
