@@ -208,11 +208,9 @@
   }
 
   /* --- COLONNES DE DONNÉES (VERSION XXL) --- */
-
-  /* --- COLONNES DE DONNÉES (VERSION XXL) --- */
   .exam-data-strip { display: flex; gap: 15px; width: 100%; justify-content: center; }
 
-  /* 1. Style des colonnes passives (RA, Fronto) - On ne touche pas */
+  /* 1. Style des colonnes passives (RA, Fronto) */
   .data-col { 
       display: flex; flex-direction: column; 
       width: 135px;
@@ -226,75 +224,81 @@
   }
 
   /* ================================================================= */
-  /* 2. ÉTAT INACTIF (L'œil qu'on n'examine PAS) -> STYLE GRISÉ/ÉTEINT */
+  /* 2. ÉTAT INACTIF (L'œil qu'on n'examine PAS) -> GRISÉ */
   /* ================================================================= */
   .col-active { 
       width: 175px; 
       z-index: 1; 
-      transform: scale(0.98); /* Légèrement en retrait */
-      
-      /* FOND GRIS & BORDURE GRISE */
+      transform: scale(0.98); 
       background-color: #F5F5F5; 
       border: 2px solid #E0E0E0; 
-      box-shadow: none; /* Pas d'ombre pour l'inactif */
+      box-shadow: none; 
   }
 
-  /* TEXTES EN GRIS CLAIR (Effet désactivé) */
-  .col-active .col-title { color: #B0BEC5; border-bottom-color: #E0E0E0; } /* Titre gris */
-  .col-active .lbl { color: #CFD8DC; } /* Labels (S,C,A) très clairs */
+  /* Textes INACTIFS (Gris) */
+  .col-active .col-title { color: #B0BEC5; border-bottom-color: #E0E0E0; }
   
-  /* Les valeurs (Chiffres) en GRIS */
   .col-active .val-big { 
-      color: #B0BEC5; /* Chiffres gris */
-      font-size: 1.8rem; font-weight: 800; transition: color 0.2s;
+      color: #B0BEC5; font-size: 1.8rem; font-weight: 800; transition: color 0.2s;
   }
   
-  /* La VA en gris */
   .col-active #disp_subjOD_va, .col-active #disp_subjOG_va { 
       color: #B0BEC5; font-weight: bold; transition: color 0.2s;
   }
 
-  /* Autres inputs standards dans la carte */
   .col-active .val-input { 
        width: 100%; text-align: center; background: transparent; border: none; 
        font-weight: 700; font-family: 'Montserrat', sans-serif; font-size: 1.2rem;
-       color: #B0BEC5; /* Gris */
+       color: #B0BEC5; 
   }
 
   /* ================================================================= */
-  /* 3. ÉTAT ACTIF (L'œil sélectionné) -> STYLE CYAN/BLANC (HIGHLIGHT) */
+  /* 3. ÉTAT ACTIF (L'œil sélectionné) -> CYAN/BLANC */
   /* ================================================================= */
   .col-active.highlight {
       z-index: 10; 
-      transform: scale(1.05); /* Mise en avant (Zoom) */
-      
-      /* FOND CYAN & BORDURE FONCÉE */
+      transform: scale(1.05); 
       background-color: var(--primary) !important; 
       border-color: var(--primary-deep) !important; 
       box-shadow: 0 10px 25px rgba(4, 171, 198, 0.3);
   }
 
-  /* TEXTES EN BLANC (Effet Allumé) */
+  /* Textes ACTIFS (Blanc) */
   .col-active.highlight .col-title { 
-      color: #FFFFFF !important; 
-      border-bottom-color: rgba(255,255,255,0.3); 
+      color: #FFFFFF !important; border-bottom-color: rgba(255,255,255,0.3); 
   }
 
-  .col-active.highlight .lbl { 
-      color: rgba(255,255,255, 0.7) !important; 
-  }
-
-  .col-active.highlight .val-big { 
-      color: #FFFFFF !important; /* Chiffres Blancs Purs */
-  }
+  .col-active.highlight .val-big { color: #FFFFFF !important; }
   
   .col-active.highlight #disp_subjOD_va, 
-  .col-active.highlight #disp_subjOG_va {
-      color: #FFFFFF !important;
+  .col-active.highlight #disp_subjOG_va { color: #FFFFFF !important; }
+
+  .col-active.highlight .val-input { color: #FFFFFF !important; }
+
+  /* ================================================================= */
+  /* 4. SUPPRESSION DES LABELS (S, C, A, VA) */
+  /* ================================================================= */
+  .lbl {
+      display: none !important; /* C'est cette ligne qui cache les lettres */
   }
 
-  .col-active.highlight .val-input {
-      color: #FFFFFF !important;
+  /* Ajustements généraux */
+  .col-title { 
+      font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; 
+      border-bottom: 1px solid #F5F5F5; padding-bottom: 4px; 
+  }
+  .title-ra { color: var(--primary); }
+  .title-subj { color: var(--primary-dark); font-size: 1rem; transition: color 0.2s; }
+  
+  .data-line { 
+      display: flex; 
+      justify-content: center; /* On centre maintenant car il n'y a plus de label à gauche */
+      margin-bottom: 6px; font-size: 1rem; align-items: center; 
+  }
+  
+  .val-input { 
+      width: 100%; text-align: center; background: transparent; border: none; 
+      font-weight: 700; color: #5D4037; font-family: 'Montserrat', sans-serif; font-size: 1.2rem;
   }
   
   /* --- LETTRES (VERSION RÉDUITE) --- */
