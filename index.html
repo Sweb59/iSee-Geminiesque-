@@ -221,13 +221,16 @@
       display: flex; 
       flex-direction: column; 
       width: 135px;
+
+      /* --- MODIFICATIONS --- */
+      background: var(--bg-main);       /* Fond crème (#FCF9F2) */
       
-      /* --- MODIFICATIONS : FOND "PLAT" --- */
-      background: var(--bg-main); /* Utilise la variable crème (#FCF9F2) */
-      border: none;               /* Supprime la bordure grise */
-      box-shadow: none;           /* Supprime l'ombre portée */
-      /* ----------------------------------- */
+      /* Bordure identique au fond de la carte active (Cyan) */
+      border: 2px solid var(--primary); 
       
+      box-shadow: none;                 /* Pas d'ombre */
+      /* --------------------- */
+
       border-radius: 12px; 
       padding: 10px; 
       text-align: center; 
