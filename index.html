@@ -125,14 +125,19 @@
       background: #FCF9F2; 
   }
 
-  /* 3. Zone de Travail Divisée (Split) */
   /* 3. Zone de Travail (Split) */
   .work-split {
       display: flex;
-      flex: 1;
-      overflow: hidden;
+      flex: 1;              /* Prend tout l'espace vertical disponible */
+      
+      /* C'EST ICI LA CORRECTION : */
+      overflow-y: auto;     /* Active l'ascenseur vertical SI BESOIN */
+      overflow-x: hidden;   /* Pas d'ascenseur horizontal */
+      min-height: 0;        /* Astuce Flexbox indispensable pour le scroll */
+      
       width: 100%;
-      background: #FCF9F2; /* FOND UNIQUE PARTOUT */
+      background: #FCF9F2; 
+      position: relative;
   }
 
  /* Colonne GAUCHE (Données) */
@@ -164,12 +169,21 @@
 
   /* 4. Barre du Bas */
   .bottom-interaction-zone {
-      flex: 0 0 auto; width: 100%; min-height: 110px;
-      background: #fff; border-top: 1px solid #eee;
+      flex: 0 0 auto;       /* Ne rétrécit pas, ne grandit pas : taille fixe */
+      width: 100%; 
+      min-height: 110px;
+      
       background: #FCF9F2; 
-      border: none; 
-      display: flex; justify-content: center; align-items: center;
-      padding: 10px; z-index: 20;
+      border-top: 1px solid rgba(0,0,0,0.05); /* Petite séparation subtile */
+      
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      padding: 10px; 
+      
+      z-index: 50;          /* Force l'affichage au-dessus du reste */
+      position: relative;
+      box-shadow: 0 -5px 15px rgba(0,0,0,0.05); /* Légère ombre pour détacher du fond */
   }
 
   /* --- STYLES ÉLÉMENTS SPÉCIFIQUES --- */
