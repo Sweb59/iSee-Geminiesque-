@@ -81,11 +81,11 @@
   .right-panel {
       flex: 1; 
       width: 100%;
-      background: var(--bg-main);
-      background: #FCF9F2; /* FOND UNIQUE */
+      height: 100%;       /* <--- IMPORTANT : Force le conteneur à ne pas dépasser l'écran */
+      background: #FCF9F2; 
       display: flex;
       flex-direction: column; 
-      overflow: hidden; 
+      overflow: hidden;   /* Coupe tout ce qui dépasse */
       padding: 0;
   }
 
@@ -128,16 +128,14 @@
   /* 3. Zone de Travail (Split) */
   .work-split {
       display: flex;
-      flex: 1;              /* Prend tout l'espace vertical disponible */
-      
-      /* C'EST ICI LA CORRECTION : */
-      overflow-y: auto;     /* Active l'ascenseur vertical SI BESOIN */
-      overflow-x: hidden;   /* Pas d'ascenseur horizontal */
-      min-height: 0;        /* Astuce Flexbox indispensable pour le scroll */
-      
+      flex: 1;              /* Prend tout l'espace restant */
+      overflow-y: auto;     /* <--- Scroll Vertical autorisé */
+      overflow-x: hidden;   
+      min-height: 0;        /* <--- Indispensable pour que le flex-scroll fonctionne */
       width: 100%;
       background: #FCF9F2; 
       position: relative;
+      z-index: 1;           /* Inférieur à la barre du bas */
   }
 
  /* Colonne GAUCHE (Données) */
@@ -169,21 +167,22 @@
 
   /* 4. Barre du Bas */
   .bottom-interaction-zone {
-      flex: 0 0 auto;       /* Ne rétrécit pas, ne grandit pas : taille fixe */
+      flex: 0 0 110px;      /* Hauteur FIXE et impérative */
+      flex-shrink: 0;       /* <--- CRUCIAL : Interdit d'écraser cette zone */
       width: 100%; 
       min-height: 110px;
       
       background: #FCF9F2; 
-      border-top: 1px solid rgba(0,0,0,0.05); /* Petite séparation subtile */
+      border-top: 1px solid rgba(0,0,0,0.05); 
       
       display: flex; 
       justify-content: center; 
       align-items: center;
       padding: 10px; 
       
-      z-index: 50;          /* Force l'affichage au-dessus du reste */
+      z-index: 1000;        /* <--- On s'assure qu'elle est au-dessus de tout */
       position: relative;
-      box-shadow: 0 -5px 15px rgba(0,0,0,0.05); /* Légère ombre pour détacher du fond */
+      box-shadow: 0 -5px 20px rgba(0,0,0,0.1); /* Ombre plus forte pour bien la voir */
   }
 
   /* --- STYLES ÉLÉMENTS SPÉCIFIQUES --- */
