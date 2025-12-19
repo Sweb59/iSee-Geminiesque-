@@ -218,14 +218,19 @@
 
   /* 1. Colonnes Passives (RA, Fronto) */
   .data-col { 
-      display: flex; flex-direction: column; 
+      display: flex; 
+      flex-direction: column; 
       width: 135px;
-      background: #FFFFFF; 
-      border: 1px solid #CFD8DC; 
+      
+      /* --- MODIFICATIONS : FOND "PLAT" --- */
+      background: var(--bg-main); /* Utilise la variable crème (#FCF9F2) */
+      border: none;               /* Supprime la bordure grise */
+      box-shadow: none;           /* Supprime l'ombre portée */
+      /* ----------------------------------- */
+      
       border-radius: 12px; 
       padding: 10px; 
       text-align: center; 
-      box-shadow: 0 4px 15px rgba(93, 64, 55, 0.08);
       transition: all 0.3s ease; 
   }
 
