@@ -1167,6 +1167,20 @@ input[id^="fronto"] {
     </div>
 </div>
 
+<div id="modalSchoberQuestion" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2 style="color:var(--primary); border:none; font-size:1.6rem;">Réponse du patient ?</h2>
+        <div class="modal-text" style="font-size:1.2rem; margin-bottom:30px;">
+            A-t-il répondu <strong>OUI</strong> ?<br>
+            <span style="font-size:0.9rem; color:#78909C;">(Voit-il la croix ET le cercle ?)</span>
+        </div>
+        <div style="display:flex; gap:20px; justify-content:center;">
+            <button class="btn-action btn-grey" style="width:auto; padding:15px 40px; font-size:1.2rem;" onclick="window.handleSchoberAnswer('non')">NON</button>
+            <button class="btn-action btn-validate" style="width:auto; padding:15px 40px; font-size:1.2rem;" onclick="window.handleSchoberAnswer('oui')">OUI</button>
+        </div>
+    </div>
+</div>
+  
 <div id="modalSchoberConfirm" class="modal-overlay hidden">
     <div class="modal-content">
         <h2 style="color:var(--primary); border:none; font-size:1.6rem;">Confirmation Schober</h2>
@@ -2191,43 +2205,58 @@ function syncModalToDashboard(type) {
         });
     });
 }
-// Remplacez tout votre bloc window.setHandedness par celui-ci :
+
+  // --- BLOC REPARE (A coller entre syncModalToDashboard et toggleInputs) ---
 
 window.setHandedness = function(handEye) {
-    // 1. On stocke la latéralité choisie
+    // 1. Stockage & UI
     appState.handednessEye = handEye; 
-
-    // 2. On ferme la modale Latéralité
     document.getElementById('modalHandedness').classList.add('hidden');
-
-    // 3. On affiche le Schober
     document.getElementById('waitingMsg').classList.add('hidden'); 
     document.getElementById('schoberStep').classList.remove('hidden');
 
-    // --- DEBUT MODIFICATION : VERROUILLAGE & VOCAL ---
-    
-    // A. On verrouille immédiatement les boutons Schober (visuel + clic)
+    // 2. Verrouillage VISUEL des boutons Schober
     var schoberBtns = document.querySelectorAll('.btn-schober');
     schoberBtns.forEach(function(btn) {
-        btn.style.pointerEvents = 'none'; // Désactive le clic
-        btn.style.opacity = '0.4';        // Grise les boutons
-        btn.style.filter = 'grayscale(100%)'; // Optionnel : rend gris pour bien montrer que c'est inactif
+        btn.style.pointerEvents = 'none'; 
+        btn.style.opacity = '0.4';        
+        btn.style.filter = 'grayscale(100%)'; 
         btn.style.transition = 'all 0.3s';
     });
 
-    // B. On lance la phrase vocale
+    // 3. Vocal + Ouverture Modale
     say("Sur l'écran en face de vous, voyez-vous une croix et un cercle, en même temps ?", function() {
-        
-        // C. CALLBACK : Une fois la phrase terminée, on déverrouille
-        schoberBtns.forEach(function(btn) {
-            btn.style.pointerEvents = 'auto'; // Réactive le clic
-            btn.style.opacity = '1';          // Rétablit l'opacité
-            btn.style.filter = 'none';        // Enlève le gris
-            btn.style.cursor = 'pointer';
-        });
+        document.getElementById('modalSchoberQuestion').classList.remove('hidden');
     });
-    // --- FIN MODIFICATION ---
 };
+
+window.handleSchoberAnswer = function(reponse) {
+    // 1. Fermer la modale
+    document.getElementById('modalSchoberQuestion').classList.add('hidden');
+
+    // Fonction déverrouillage
+    var unlockButtons = function() {
+        var schoberBtns = document.querySelectorAll('.btn-schober');
+        schoberBtns.forEach(function(btn) {
+            btn.style.pointerEvents = 'auto'; 
+            btn.style.opacity = '1';          
+            btn.style.filter = 'none';        
+            btn.style.cursor = 'pointer';     
+        });
+    };
+
+    if (reponse === 'oui') {
+        unlockButtons();
+    } else {
+        var phraseNon = "Alors, que voyez-vous exactement ? La croix seule ? Le cercle seul ? Tantôt la croix, tantôt le cercle ? Dites moi.";
+        say(phraseNon, function() {
+            unlockButtons();
+        });
+    }
+};
+
+// --- FIN BLOC REPARE ---
+  
 function toggleInputs(sectionId, enable) {
     var sec = document.getElementById(sectionId);
     if(sec) {
