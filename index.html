@@ -798,12 +798,36 @@ input[id^="fronto"] {
   .btn-import { background: var(--primary-dark); }
   .btn-import:hover { background: var(--primary-deep); }
 
-  .btn-tortue, .btn-lapin { 
-      background: var(--primary-light); color: var(--primary-dark); border: 2px solid var(--primary-border); 
-      font-size: 1.3rem; padding: 15px 40px; 
+  /* --- Style spécifique pour GROSSIR les émojis --- */
+  .emoji-icon {
+      font-size: 3rem;        /* Taille géante pour l'émoji */
+      vertical-align: middle; 
+      margin-right: 15px;     /* Espace entre l'animal et le texte */
+      line-height: 0;         /* Empêche l'émoji de déformer la hauteur */
+      margin-top: -5px;       /* Petit ajustement vertical */
   }
-  .btn-tortue:hover, .btn-lapin:hover { background: var(--primary); color: white; }
 
+  /* --- Ajustement du bouton pour accueillir l'émoji --- */
+  .btn-tortue, .btn-lapin {
+      background: var(--primary-light); 
+      color: var(--primary-dark); 
+      border: 2px solid var(--primary-border);
+      
+      font-size: 1.3rem;      /* Taille normale pour le texte */
+      padding: 0 40px;        /* Padding horizontal */
+      
+      /* Flexbox pour aligner l'émoji et le texte */
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      
+      height: 80px;           /* Hauteur fixe pour que ça reste propre */
+  }
+
+  .btn-tortue:hover, .btn-lapin:hover { 
+      background: var(--primary); 
+      color: white; 
+  }
   /* PROFIL */
   .force-profile-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 15px; }
   .btn-profile { padding: 8px; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -1330,12 +1354,17 @@ input[id^="fronto"] {
 
         <div id="cadenceButtons" class="response-area hidden">
             <p style="margin-bottom:10px; font-weight:600;">Vitesse de lecture ?</p>
+            
             <div style="display:flex; justify-content:center; gap:15px;">
-                <button class="btn-action btn-tortue" onclick="window.handleCadence('turtle')">🐢 Hésitant</button>
-                <button class="btn-action btn-lapin" onclick="window.handleCadence('rabbit')">🐇 Fluide</button>
+                <button class="btn-action btn-tortue" onclick="window.handleCadence('turtle')">
+                    <span class="emoji-icon">🐢</span> Hésitant
+                </button>
+
+                <button class="btn-action btn-lapin" onclick="window.handleCadence('rabbit')">
+                    <span class="emoji-icon">🐇</span> Fluide
+                </button>
             </div>
         </div>
-
         <div id="checkPlusZone" class="response-area hidden">
             <div id="stepPlusWrapper">
                 <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
