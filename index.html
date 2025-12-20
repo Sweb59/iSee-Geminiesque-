@@ -135,9 +135,11 @@
       flex-direction: column; 
       justify-content: center;
       
-      /* Couleur par défaut : CRÈME */
       background: #FCF9F2; 
-      border: 2px solid #04ABC6; 
+      
+      /* C'EST ICI LE CHANGEMENT : BORDURE PLUS LARGE (4px) */
+      border: 4px solid #04ABC6; 
+      
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(4, 171, 198, 0.1);
   }
@@ -198,16 +200,24 @@
       border: 1px solid #EEEEEE;
   }
 
-  /* 5. Zone Boutons (Bas Droite) */
+ /* 5. Zone Boutons (Bas de l'écran - Centrée) */
   #zoneBoutons {
-      grid-column: 7 / 21;
-      grid-row: 17 / 21;    /* Tout en bas */
-      background: #fff;
-      border-top: 1px solid #eee;
-      display: flex; justify-content: center; align-items: center;
-      border-radius: 8px;
+      /* PREND TOUTE LA LARGEUR pour permettre un centrage parfait */
+      grid-column: 1 / 21;
+      
+      /* Tout en bas de la grille */
+      grid-row: 18 / 21;    
+      
+      display: flex; 
+      justify-content: center; /* Centre les boutons horizontalement */
+      align-items: center;
+      
+      /* COULEUR CRÈME */
+      background: #FCF9F2; 
+      
+      border-top: 1px solid rgba(0,0,0,0.05); /* Séparation subtile */
+      z-index: 100;
   }
-
   /* --- LE SCHOBER (OVERLAY TOTAL) --- */
   #schoberStep {
       position: fixed;   /* Sort de la grille, se place par rapport à la fenêtre */
