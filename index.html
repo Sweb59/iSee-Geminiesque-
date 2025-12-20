@@ -1137,6 +1137,26 @@ input[id^="fronto"] {
     /* Déplacement vers la droite */
     transform: translate(110px, -50%) scale(1);
 }
+
+/* --- STYLE BIO-MONOCULAIRE (Oeil Passif / Transparent) --- */
+.exam-data-strip .col-bio-inactive {
+    /* Fond Cyan très léger et transparent */
+    background: rgba(4, 171, 198, 0.1) !important; 
+    
+    /* Bordure Cyan semi-transparente */
+    border-color: rgba(4, 171, 198, 0.4) !important; 
+    
+    transform: scale(1) !important; /* Garde la taille normale */
+    opacity: 0.9;
+}
+
+/* Force la couleur du texte en Cyan Foncé pour la lisibilité */
+.exam-data-strip .col-bio-inactive .val-big,
+.exam-data-strip .col-bio-inactive .col-title,
+.exam-data-strip .col-bio-inactive .val-input,
+.exam-data-strip .col-bio-inactive span {
+    color: #00838F !important; 
+}
   
 </style>
 </head>
@@ -2507,7 +2527,7 @@ window.startRulesAndIntro = function() {
     setHTML('disp_subjOD_axe', normalizeAxis(raOD.a) + "°"); setHTML('disp_subjOG_axe', normalizeAxis(raOG.a) + "°");
     setHTML('disp_subjOD_va', "--"); setHTML('disp_subjOG_va', "--");
 
-    // 4. --- NOUVEAU : FORÇAGE VISUEL (YEUX OUVERTS) ---
+    // 4. FORÇAGE VISUEL (YEUX OUVERTS)
     // On met les deux cartes en Cyan (Sélectionnées)
     document.getElementById('subjDispOD').classList.add('highlight');
     document.getElementById('subjDispOG').classList.add('highlight');
@@ -2518,18 +2538,20 @@ window.startRulesAndIntro = function() {
     if(btnOD) { btnOD.classList.add('active'); btnOD.classList.remove('closed'); }
     if(btnOG) { btnOG.classList.add('active'); btnOG.classList.remove('closed'); }
 
-    // 5. --- NOUVEAU : NOM DE LA PHASE ---
+    // 5. TEXTES INDICATEURS
     setHTML('dispPhase', "Règles de lecture");
-    // -------------------------------------------------
+    
+    // --- AJOUT ICI : ON FORCE L'AFFICHAGE BINOCULAIRE ---
+    setHTML('dispMode', "BINOCULAIRE");
+    // ----------------------------------------------------
 
-    // LA SUITE (VOIX) NE CHANGE PAS :
+    // LA SUITE (VOIX)
     var introText = "Pour avoir une bonne mesure de votre vision de loin, il faut lire d’une manière naturelle, c’est à dire rapide et spontanée. Si vous ne pouvez pas lire vous le dites tout de suite, et si vous faites une erreur, comme vous avez lu naturellement, elle sera plus facile à corriger ! Mais si vous lisez d’une manière lente et réfléchie, le risque est de masquer vos erreurs et on ne peut pas améliorer une personne qui ne veut pas se tromper ! Donc il faut lire vite, si vous ne pouvez pas vous le dites tout de suite et si vous vous trompez aucune importance !";
 
     say(introText, function() {
         document.getElementById('modalIntroConfirmation').classList.remove('hidden');
     });
 };
-
 window.confirmAndLaunch = function() {
     document.getElementById('modalIntroConfirmation').classList.add('hidden');
     window.startChrono(); // DEMARRAGE CHRONO ICI
@@ -3688,10 +3710,34 @@ window.updateDisplay = function(message) {
     setHTML('disp_subjOG_sph', appState.subj.OG.sphere.toFixed(2)); setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
     setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°"); setHTML('disp_subjOG_va', appState.subj.OG.va);
 
-    var boxOD = document.getElementById('subjDispOD'); var boxOG = document.getElementById('subjDispOG');
+    // --- GESTION VISUELLE BIO-MONOCULAIRE ---
+    var boxOD = document.getElementById('subjDispOD'); 
+    var boxOG = document.getElementById('subjDispOG');
+    
+    // Liste des phases où les deux yeux sont ouverts (Bio-Mono)
+    var bioPhases = ["Sb1.0", "SphereCheckPlus", "SphereCheckMinus", "AxisCheck", "PowerCheck"];
+    var isBioMode = bioPhases.includes(appState.examPhase);
+
     if(boxOD && boxOG) {
-        if(appState.activeEye === 'OD') { boxOD.classList.add('highlight'); boxOG.classList.remove('highlight'); } 
-        else { boxOD.classList.remove('highlight'); boxOG.classList.add('highlight'); }
+        // 1. Nettoyage préalable
+        boxOD.classList.remove('highlight', 'col-bio-inactive');
+        boxOG.classList.remove('highlight', 'col-bio-inactive');
+
+        if(appState.activeEye === 'OD') {
+            // OD est ACTIF (Cyan Plein)
+            boxOD.classList.add('highlight');
+            
+            // OG est PASSIF : Bio (Cyan Transp) ou Mono (Marron) ?
+            if(isBioMode) boxOG.classList.add('col-bio-inactive');
+            // Sinon on ne met rien, et le CSS par défaut (Marron) s'applique
+        } 
+        else {
+            // OG est ACTIF (Cyan Plein)
+            boxOG.classList.add('highlight');
+            
+            // OD est PASSIF : Bio (Cyan Transp) ou Mono (Marron) ?
+            if(isBioMode) boxOD.classList.add('col-bio-inactive');
+        }
     }
 
     // B. Mise à jour EN-TÊTE GAUCHE (Pilotage)
