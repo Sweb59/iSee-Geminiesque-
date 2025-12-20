@@ -90,15 +90,19 @@
       background: transparent; 
   }
   /* 2-B. Zone Visuels VA (Alignée sur les Lettres : Col 16-21) */
+ /* 2-B. Zone Visuels VA (Alignée sur le Pilotage : Col 16-21) */
   #zoneVisuels {
-      grid-column: 16 / 21; /* Même largeur que les lettres */
-      grid-row: 3 / 5;      /* Lignes 3 et 4 */
+      grid-column: 16 / 21; 
+      /* ON DESCEND POUR ALIGNER AVEC LE PILOTAGE (Lignes 6 à 8) */
+      grid-row: 6 / 8;      
       
       display: flex; 
-      justify-content: center; 
+      /* On colle le contenu EN BAS pour toucher la zone des lettres */
+      justify-content: flex-end; 
       align-items: center;
+      padding-bottom: 5px;
       
-      background: #fff;
+      background: transparent; /* Fond transparent pour l'intégration */
       border-radius: 8px;
   }
 
@@ -234,9 +238,11 @@
       font-size: 1.1rem;
   }
   /* 4. Zone Lettres (DROITE : Colonnes 16-21) */
+  /* 4. Zone Lettres (DROITE : Colonnes 16-21) */
   #zoneLettres {
       grid-column: 16 / 21; 
-      grid-row: 5 / 17;      
+      /* ON DESCEND POUR ALIGNER AVEC LES CARTES DE DONNÉES (Lignes 8 à 18) */
+      grid-row: 8 / 18;      
       
       display: flex; 
       justify-content: center; 
