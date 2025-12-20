@@ -1113,33 +1113,32 @@ input[id^="fronto"] {
 .exam-data-strip .col-bio-inactive span {
     color: #00838F !important; 
 }
-
 /* ========================================================= */
-/* === NOUVEAUX BOUTONS RONDS & ALIGNEMENT (Z-INDEX OK) === */
+/* === BOUTONS RÉPONSES (VERTICALISATION RELANCER) ===       */
 /* ========================================================= */
 
-/* 1. CORRECTION Z-INDEX DU PARENT (CRUCIAL) */
-/* Force la zone bouton complète à passer DEVANT l'animation */
+/* 1. FORCE LE PARENT A PASSER DEVANT L'ANIMATION (CRUCIAL) */
 #zoneBoutons {
     z-index: 500 !important;
     position: relative;
 }
 
-/* 2. Conteneur principal des boutons ronds */
+/* 2. Conteneur principal des boutons */
 #checkPlusZone {
     position: relative;
     width: 100%;
     /* On remonte pour chevaucher l'animation */
-    margin-top: -126px; 
+    margin-top: -128px; 
     pointer-events: auto;
-    z-index: 600 !important; /* Priorité absolue */
+    z-index: 600 !important;
 }
 
+/* Ligne des boutons : Alignement HAUT (flex-start) */
 .decision-row-round {
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 30px; /* Ecart entre les boutons */
+    align-items: flex-start; /* Important pour l'alignement vertical */
+    gap: 30px;
     width: 100%;
     position: relative;
     padding-top: 10px;
@@ -1158,6 +1157,7 @@ input[id^="fronto"] {
     transition: transform 0.2s;
     border: none;
     display: flex; justify-content: center; align-items: center; text-align: center;
+    flex-shrink: 0; /* Empêche le bouton de s'écraser */
 }
 .btn-round:hover { transform: scale(1.05); }
 .btn-round:active { transform: scale(0.95); }
@@ -1168,33 +1168,45 @@ input[id^="fronto"] {
 .btn-round-blue  { background: #E0F7FA; color: #006064; border: 3px solid #04ABC6; }
 .btn-round-outline { background: transparent; color: #00838F; border: 2px solid #04ABC6; }
 
-/* 4. DÉCALAGES PRÉCIS (Ajustés légèrement à droite) */
+/* 4. NOUVEAU : COLONNE VERTICALE (Sphère Testée + Relancer) */
+.btn-col-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px; /* Espace entre le bouton rond et le bouton relancer */
+    width: 90px; /* Fixe la largeur pour ne pas décaler les voisins */
+}
 
-/* TEST PLUS (+0.25) 
-   Décalage : -390px (Bouton sphère testée centré)
-*/
+/* Style du bouton Relancer (Petit, en dessous) */
+.btn-relaunch-under {
+    background: #ECEFF1;
+    color: #546E7A;
+    border: 1px solid #CFD8DC;
+    font-size: 0.75rem;     /* Texte plus petit */
+    padding: 6px 14px;      /* Bouton discret */
+    border-radius: 15px;    /* Forme pilule */
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.btn-relaunch-under:hover {
+    background: #CFD8DC;
+    transform: scale(1.05);
+}
+
+/* 5. DÉCALAGES PRÉCIS (Vos réglages validés) */
+
+/* TEST PLUS (+0.25) : Décalage gauche -400px */
 #decisionsPlus {
-    transform: translateX(-401px);
+    transform: translateX(-400px);
 }
 
-/* TEST MOINS (-0.25)
-   Décalage : -150px (Bouton sphère testée centré)
-*/
+/* TEST MOINS (-0.25) : Décalage gauche -160px */
 #decisionsMinus {
-    transform: translateX(-161px);
+    transform: translateX(-160px);
 }
 
-/* 5. Le bouton Relancer (Écarté) */
-.btn-relaunch-right {
-    position: absolute;
-    right: -150px; 
-    top: 50%; transform: translateY(-50%);
-    
-    background: #ECEFF1; color: #546E7A; border: 1px solid #CFD8DC;
-    padding: 10px 20px; border-radius: 30px; 
-    font-weight: bold; cursor: pointer; font-size: 0.9rem;
-}
-.btn-relaunch-right:hover { background: #CFD8DC; }  
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -1621,7 +1633,8 @@ input[id^="fronto"] {
                     <span class="emoji-icon">🐇</span> Fluide
                 </button>
             </div>
-        </div><div id="checkPlusZone" class="response-area hidden">
+        </div>
+      <div id="checkPlusZone" class="response-area hidden">
     
     <div id="stepPlusWrapper">
         <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
@@ -1636,11 +1649,13 @@ input[id^="fronto"] {
                 Pareil
             </button>
 
-            <button class="btn-round btn-round-blue" onclick="window.decidePlus('worse')">
-                Sphère<br>testée
-            </button>
+            <div class="btn-col-group">
+                <button class="btn-round btn-round-blue" onclick="window.decidePlus('worse')">
+                    Sphère<br>testée
+                </button>
+                <button class="btn-relaunch-under" onclick="window.relaunchPlus()">Relancer</button>
+            </div>
 
-            <button class="btn-relaunch-right" onclick="window.relaunchPlus()">Relancer</button>
         </div>
     </div>
 
@@ -1649,9 +1664,12 @@ input[id^="fronto"] {
         
         <div id="decisionsMinus" class="decision-row-round hidden">
             
-            <button class="btn-round btn-round-blue" onclick="window.decideMinus('worse')">
-                Sphère<br>testée
-            </button>
+            <div class="btn-col-group">
+                <button class="btn-round btn-round-blue" onclick="window.decideMinus('worse')">
+                    Sphère<br>testée
+                </button>
+                <button class="btn-relaunch-under" onclick="window.relaunchFullCheck()">Relancer</button>
+            </div>
 
             <button class="btn-round btn-round-outline" onclick="window.decideMinus('same')">
                 Pareil
@@ -1661,7 +1679,6 @@ input[id^="fronto"] {
                 Préfère<br>(-0.25)
             </button>
 
-            <button class="btn-relaunch-right" onclick="window.relaunchFullCheck()">Relancer</button>
         </div>
     </div>
 
