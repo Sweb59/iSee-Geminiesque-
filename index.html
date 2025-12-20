@@ -239,19 +239,59 @@
   }
   /* 4. Zone Lettres (DROITE : Colonnes 16-21) */
   /* 4. Zone Lettres (DROITE : Colonnes 16-21) */
+  /* 4. Zone Lettres (DROITE) */
   #zoneLettres {
       grid-column: 16 / 21; 
-      /* ON DESCEND POUR ALIGNER AVEC LES CARTES DE DONNÉES (Lignes 8 à 18) */
       grid-row: 8 / 18;      
       
       display: flex; 
-      justify-content: center; 
-      align-items: center;
+      flex-direction: column; /* Empilement vertical des lignes */
+      
+      /* Par défaut, on espace les éléments (Haut / Bas ou Haut / Centre / Bas) */
+      justify-content: space-between; 
+      
+      padding: 20px 0; /* Marge interne haut/bas pour ne pas coller aux bords */
+      
       background: #FAFAFA;
       border-radius: 8px;
       border: 1px solid #EEEEEE;
+      overflow: hidden; /* Empêche le dépassement */
   }
 
+  /* Style d'une ligne de lettres (le conteneur de la ligne) */
+  .va-line-row {
+      width: 90%;       /* Ne prend pas toute la largeur pour laisser de la marge */
+      margin: 0 auto;   /* Centré horizontalement */
+      padding: 5px 0;
+      
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      
+      border-radius: 6px;
+      border: 2px solid transparent; /* Bordure invisible par défaut pour éviter le saut */
+      transition: all 0.2s ease;
+  }
+
+  /* LA LIGNE SÉLECTIONNÉE (Rectangle Cyan) */
+  .va-line-row.line-selected {
+      background-color: rgba(4, 171, 198, 0.15); /* Bleu Cyan transparent */
+      border-color: #04ABC6;                     /* Bordure Cyan */
+      box-shadow: 0 0 10px rgba(4, 171, 198, 0.2);
+  }
+
+  /* Style du texte des lettres */
+ /* Style du texte des lettres */
+  .optotype-text {
+      font-family: 'Montserrat', 'Arial', sans-serif; /* Police Sans-Sérif */
+      font-weight: bold;
+      color: #333;
+      line-height: 1;
+      
+      /* ON FORCE LA TAILLE POUR TOUT LE MONDE */
+      font-size: 1.8rem !important; /* Taille uniforme et lisible pour le praticien */
+      letter-spacing: 3px;
+  }
  /* 5. Zone Boutons (Bas de l'écran - Centrée) */
   #zoneBoutons {
       /* PREND TOUTE LA LARGEUR pour permettre un centrage parfait */
@@ -3241,7 +3281,8 @@ window.updateDisplay = function(message) {
         setHTML('valVA', currentData.va);
         var linesArr = currentData.lines; 
         var txt = linesArr[appState.letterIndex % linesArr.length];
-        setHTML('letterBox', txt);
+        // NOUVEAU : Appel du moteur d'affichage par blocs
+        updateVisualAcuityDisplay(currentData.va, txt);
 
         var count = txt.split(' ').length; 
         var btnHTML = "";
@@ -3270,6 +3311,88 @@ window.updateDisplay = function(message) {
         }
     }
 };
+
+// =========================================================
+// === NOUVEAU MOTEUR D'AFFICHAGE (CORRIGÉ & INTÉGRÉ) ===
+// =========================================================
+
+// Définition des groupes
+const VAGroups = [
+    { values: [0.06], layout: 'center' },
+    { values: [0.08], layout: 'center' },
+    { values: [0.10], layout: 'center' },
+    { values: [0.12, 0.16], layout: 'space-between' },
+    { values: [0.20, 0.25], layout: 'space-between' },
+    { values: [0.32, 0.40, 0.50], layout: 'space-between' },
+    { values: [0.60, 0.80, 1.00], layout: 'space-between' },
+    { values: [1.25, 1.60, 2.00], layout: 'space-between' }
+];
+
+// Fonction principale attachée à window pour être accessible partout
+window.updateVisualAcuityDisplay = function(selectedValue, activeLetters) {
+    const zone = document.getElementById('letterBox');
+    
+    // Configuration du conteneur
+    zone.style.display = 'flex';
+    zone.style.flexDirection = 'column';
+    zone.style.height = '100%';
+    zone.style.width = '100%';
+    zone.innerHTML = ''; 
+    
+    const valFloat = parseFloat(selectedValue);
+    const group = VAGroups.find(g => g.values.includes(valFloat));
+    
+    // Sécurité fallback
+    if (!group) {
+        zone.innerHTML = `<div class="va-line-row line-selected"><span class="optotype-text">${activeLetters}</span></div>`;
+        return;
+    }
+
+    zone.style.justifyContent = (group.layout === 'center') ? 'center' : 'space-between';
+
+    group.values.forEach(va => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'va-line-row';
+        
+        const letterSpan = document.createElement('span');
+        letterSpan.className = 'optotype-text';
+        
+        // --- LOGIQUE D'AFFICHAGE ---
+        if (va === valFloat) {
+            // LIGNE ACTIVE : On affiche les lettres passées par le système (les vraies actives)
+            rowDiv.classList.add('line-selected');
+            letterSpan.innerText = activeLetters; 
+            letterSpan.style.opacity = "1";
+        } else {
+            // LIGNE INACTIVE : On va chercher les VRAIES lettres correspondantes dans la table
+            letterSpan.innerText = window.getRealLettersFromTable(va); 
+            // On grise un peu pour focaliser l'attention sur la ligne active
+            letterSpan.style.opacity = "0.4"; 
+        }
+        
+        rowDiv.appendChild(letterSpan);
+        zone.appendChild(rowDiv);
+    });
+};
+
+// Fonction qui va chercher les lettres exactes dans votre base de données
+window.getRealLettersFromTable = function(targetVA) {
+    if (typeof ACUITY_TABLE === 'undefined') return "---";
+    
+    const entry = ACUITY_TABLE.find(line => line.va === targetVA);
+    
+    if (entry && entry.lines) {
+        // Utilise l'index global pour synchroniser les lignes
+        const idx = (typeof appState !== 'undefined') ? appState.letterIndex : 0;
+        const lineText = entry.lines[idx % entry.lines.length];
+        return lineText;
+    }
+    return "---";
+};
+  
 </script>
+
+  
+  
 </body>
 </html>
