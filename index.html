@@ -976,6 +976,52 @@ input[id^="fronto"] {
     font-size: 1.1rem;
 }  
 
+/* --- BOUTON ALÉATOIRE (SHUFFLE) --- */
+#btnRandomLetters {
+    /* PLACEMENT GRILLE : Juste à droite de zoneLettres (qui finit col 19) */
+    grid-column: 19 / 21; 
+    /* Centré verticalement par rapport à zoneLettres (lignes 9-15) */
+    grid-row: 11 / 13;    
+    
+    /* ESTHÉTIQUE */
+    background-color: #04ABC6; /* Bleu Cyan */
+    border: 3px solid #026070; /* Bleu plus foncé */
+    border-radius: 50%;        /* Rond parfait */
+    
+    width: 60px;
+    height: 60px;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background 0.2s;
+    
+    /* S'assure qu'il est au dessus */
+    z-index: 50;
+    margin: auto; /* Centrage dans sa case de grille */
+}
+
+#btnRandomLetters:hover {
+    transform: scale(1.1) rotate(180deg); /* Petit effet de rotation sympa */
+    background-color: #03889E;
+}
+
+#btnRandomLetters:active {
+    transform: scale(0.95);
+}
+
+#btnRandomLetters svg {
+    width: 30px;
+    height: 30px;
+    fill: none;
+    stroke: white;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+  
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -1346,6 +1392,16 @@ input[id^="fronto"] {
         </div>
     </div>
 
+<button id="btnRandomLetters" onclick="window.forceChangeLetters()" title="Changer les lettres">
+    <svg viewBox="0 0 24 24">
+        <polyline points="16 3 21 3 21 8"></polyline>
+        <line x1="4" y1="20" x2="21" y2="3"></line>
+        <polyline points="21 16 21 21 16 21"></polyline>
+        <line x1="15" y1="15" x2="21" y2="21"></line>
+        <line x1="4" y1="4" x2="9" y2="9"></line>
+    </svg>
+</button>
+  
     <div id="zoneBoutons" class="grid-item">
         <div id="standardButtons" class="response-area hidden">
             <p style="margin-bottom:10px; font-weight:600; color:var(--text-muted); margin-top:0;">Combien de lettres lues ?</p>
@@ -3666,6 +3722,29 @@ window.getRealLettersFromTable = function(targetVA) {
         return lineText;
     }
     return "---";
+};
+
+// --- FONCTION BOUTON ALÉATOIRE (CORRIGÉE) ---
+// --- FONCTION BOUTON ALÉATOIRE (VERSION FINALE AVEC VOIX) ---
+window.forceChangeLetters = function() {
+    // 1. Sécurité
+    if (!appState || !appState.isRunning) return;
+
+    // 2. Logique : changement de lettre et mise à jour affichage
+    appState.letterIndex++;
+    window.updateDisplay("Lettres changées manuellement");
+    
+    // 3. Animation du clic
+    var btn = document.getElementById('btnRandomLetters');
+    if(btn) {
+        btn.style.transform = "scale(0.9)";
+        setTimeout(function(){ 
+            btn.style.transform = ""; // Reset pour le CSS :hover
+        }, 150);
+    }
+
+    // 4. COMMANDE VOCALE AJOUTÉE ICI
+    say("ou plutôt celles-ci.");
 };
   
 </script>
