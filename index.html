@@ -1021,24 +1021,20 @@ input[id^="fronto"] {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-/* --- ANIMATION SCHÉMA SPHERE (VERSION UNIQUE & CORRIGÉE) --- */
+/* ========================================================= */
+/* 1. ANIMATION SCHÉMA SPHERE (VERSION FINALE)               */
+/* ========================================================= */
 
-/* 1. Le Conteneur (Positionnement) */
 #schemaContainer {
     grid-column: 1 / 13; 
-    grid-row: 14 / 17; /* Hauteur remontée */
+    grid-row: 14 / 17; /* Position remontée */
     
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-    position: relative; /* Pour les éléments absolus */
-    background: transparent;
-    z-index: 200; /* Au dessus des boutons */
-    pointer-events: none;
+    display: flex; justify-content: center; align-items: center;
+    position: relative; background: transparent;
+    z-index: 200; pointer-events: none;
 }
 
-/* 2. Style de base des bulles */
+/* Style des bulles */
 .anim-bubble {
     width: 90px; height: 90px;
     border-radius: 50%;
@@ -1049,108 +1045,68 @@ input[id^="fronto"] {
     transition: all 0.3s ease;
 }
 
-/* 3. CERCLE BLEU (BASE) - Fixe au centre */
+/* CERCLE BLEU (BASE) - Fixe au centre */
 .bubble-base {
     background: #E0F7FA; border: 3px solid #04ABC6; color: #006064;
     z-index: 10;
-    
     opacity: 0; transform: scale(0.8);
     transition: opacity 0.5s, transform 0.5s;
 }
 .bubble-base.visible { opacity: 1; transform: scale(1); }
 
-/* --- ANIMATION GAUCHE (VERT / PLUS) --- */
-
-/* Flèche Gauche */
+/* --- GAUCHE (+0.25) --- */
 .arrow-connector {
-    position: absolute;
-    right: 50%; margin-right: 44px; /* Colle au bleu */
-    height: 6px; background-color: #04ABC6;
-    width: 0px; transition: width 0.4s ease-out;
-    z-index: 5;
+    position: absolute; right: 50%; margin-right: 44px;
+    height: 6px; background-color: #04ABC6; width: 0px; 
+    transition: width 0.4s ease-out; z-index: 5;
 }
 .arrow-connector::before {
-    content: ''; position: absolute;
-    left: -8px; top: -5px; width: 0; height: 0;
+    content: ''; position: absolute; left: -8px; top: -5px; width: 0; height: 0;
     border-top: 8px solid transparent; border-bottom: 8px solid transparent; 
-    border-right: 12px solid #04ABC6;
-    opacity: 0; transition: opacity 0.2s;
+    border-right: 12px solid #04ABC6; opacity: 0; transition: opacity 0.2s;
 }
 .arrow-connector.active { width: 100px; }
 .arrow-connector.active::before { opacity: 1; }
 
-/* Bulle Verte */
 .bubble-target {
-    position: absolute;
-    background: #E8F5E9; border: 3px solid #43A047; color: #1B5E20;
-    z-index: 6;
-    right: 50%; margin-right: 45px; 
-    opacity: 0; transform: scale(0.5);
-    transition: all 0.4s ease-out;
+    position: absolute; background: #E8F5E9; border: 3px solid #43A047; color: #1B5E20;
+    z-index: 6; right: 50%; margin-right: 45px; 
+    opacity: 0; transform: scale(0.5); transition: all 0.4s ease-out;
 }
-.bubble-target.visible {
-    opacity: 1;
-    transform: translateX(-110px) scale(1);
-}
+.bubble-target.visible { opacity: 1; transform: translateX(-110px) scale(1); }
 
-/* --- ANIMATION DROITE (ROUGE / MOINS) --- */
-
-/* Flèche Droite */
+/* --- DROITE (-0.25) --- */
 .arrow-connector-right {
-    position: absolute;
-    left: 50%; margin-left: 44px; /* Colle au bleu */
-    height: 6px; background-color: #04ABC6; /* Rouge */
-    width: 0px; transition: width 0.4s ease-out;
-    z-index: 5;
-    /* Centrage vertical strict pour la flèche */
+    position: absolute; left: 50%; margin-left: 44px;
+    height: 6px; background-color: #04ABC6; /* TIGE BLEUE */
+    width: 0px; transition: width 0.4s ease-out; z-index: 5;
     top: 50%; transform: translateY(-50%);
 }
 .arrow-connector-right::before {
-    content: ''; position: absolute;
-    right: -8px; top: -5px; width: 0; height: 0;
+    content: ''; position: absolute; right: -8px; top: -5px; width: 0; height: 0;
     border-top: 8px solid transparent; border-bottom: 8px solid transparent; 
-    border-left: 12px solid #04ABC6;
+    border-left: 12px solid #04ABC6; /* POINTE BLEUE */
     opacity: 0; transition: opacity 0.2s;
 }
 .arrow-connector-right.active { width: 100px; }
 .arrow-connector-right.active::before { opacity: 1; }
 
-/* Bulle Rouge (Celle à corriger) */
 .bubble-target-minus {
-    position: absolute;
-    background: #FFEBEE; border: 3px solid #D32F2F; color: #B71C1C;
-    z-index: 6;
-    
-    left: 50%; margin-left: 45px; 
-    
-    /* --- CORRECTION HAUTEUR APPLIQUÉE --- */
-    top: 54%; /* On force la descente (plus grand que 50%) */
-    /* ------------------------------------ */
-    
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5); /* Centrage sur son point d'origine */
-    transition: all 0.4s ease-out;
+    position: absolute; background: #FFEBEE; border: 3px solid #D32F2F; color: #B71C1C;
+    z-index: 6; left: 50%; margin-left: 45px; top: 54%; 
+    opacity: 0; transform: translate(-50%, -50%) scale(0.5); transition: all 0.4s ease-out;
 }
+.bubble-target-minus.visible { opacity: 1; transform: translate(110px, -50%) scale(1); }
 
-.bubble-target-minus.visible {
-    opacity: 1;
-    /* Déplacement vers la droite */
-    transform: translate(110px, -50%) scale(1);
-}
 
-/* --- STYLE BIO-MONOCULAIRE (Oeil Passif / Transparent) --- */
+/* ========================================================= */
+/* 2. STYLE BIO-MONOCULAIRE (Oeil Passif)                    */
+/* ========================================================= */
 .exam-data-strip .col-bio-inactive {
-    /* Fond Cyan très léger et transparent */
     background: rgba(4, 171, 198, 0.1) !important; 
-    
-    /* Bordure Cyan semi-transparente */
     border-color: rgba(4, 171, 198, 0.4) !important; 
-    
-    transform: scale(1) !important; /* Garde la taille normale */
-    opacity: 0.9;
+    transform: scale(1) !important; opacity: 0.9;
 }
-
-/* Force la couleur du texte en Cyan Foncé pour la lisibilité */
 .exam-data-strip .col-bio-inactive .val-big,
 .exam-data-strip .col-bio-inactive .col-title,
 .exam-data-strip .col-bio-inactive .val-input,
@@ -1158,22 +1114,40 @@ input[id^="fronto"] {
     color: #00838F !important; 
 }
 
-/* --- NOUVEAUX BOUTONS RONDS (VERRES VÉRIFICATEURS) --- */
+/* ========================================================= */
+/* === NOUVEAUX BOUTONS RONDS & ALIGNEMENT (Z-INDEX OK) === */
+/* ========================================================= */
 
-/* Conteneur principal de la ligne de décision */
+/* 1. CORRECTION Z-INDEX DU PARENT (CRUCIAL) */
+/* Force la zone bouton complète à passer DEVANT l'animation */
+#zoneBoutons {
+    z-index: 500 !important;
+    position: relative;
+}
+
+/* 2. Conteneur principal des boutons ronds */
+#checkPlusZone {
+    position: relative;
+    width: 100%;
+    /* On remonte pour chevaucher l'animation */
+    margin-top: -126px; 
+    pointer-events: auto;
+    z-index: 600 !important; /* Priorité absolue */
+}
+
 .decision-row-round {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px; /* Espace entre les boutons centraux */
+    gap: 30px; /* Ecart entre les boutons */
     width: 100%;
     position: relative;
     padding-top: 10px;
 }
 
-/* Style de base des boutons ronds */
+/* 3. Style des Boutons Ronds */
 .btn-round {
-    width: 85px; height: 85px;
+    width: 90px; height: 90px;
     border-radius: 50%;
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
@@ -1183,65 +1157,44 @@ input[id^="fronto"] {
     box-shadow: 0 4px 6px rgba(0,0,0,0.15);
     transition: transform 0.2s;
     border: none;
-    
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+    display: flex; justify-content: center; align-items: center; text-align: center;
 }
-.btn-round:hover { transform: scale(1.1); }
+.btn-round:hover { transform: scale(1.05); }
 .btn-round:active { transform: scale(0.95); }
 
-/* --- VARIANTES DE COULEURS --- */
+/* Couleurs */
+.btn-round-green { background: #43A047; color: white; border: 2px solid #2E7D32; }
+.btn-round-red   { background: #EF5350; color: white; border: 2px solid #C62828; }
+.btn-round-blue  { background: #E0F7FA; color: #006064; border: 3px solid #04ABC6; }
+.btn-round-outline { background: transparent; color: #00838F; border: 2px solid #04ABC6; }
 
-/* 1. VERT (Pour Préfère +0.25) */
-.btn-round-green {
-    background-color: #43A047;
-    color: white;
-    border: 2px solid #2E7D32;
+/* 4. DÉCALAGES PRÉCIS (Ajustés légèrement à droite) */
+
+/* TEST PLUS (+0.25) 
+   Décalage : -390px (Bouton sphère testée centré)
+*/
+#decisionsPlus {
+    transform: translateX(-401px);
 }
 
-/* 2. ROUGE (Pour Préfère -0.25) */
-.btn-round-red {
-    background-color: #EF5350;
-    color: white;
-    border: 2px solid #C62828;
+/* TEST MOINS (-0.25)
+   Décalage : -150px (Bouton sphère testée centré)
+*/
+#decisionsMinus {
+    transform: translateX(-161px);
 }
 
-/* 3. BLEU (Pour Sphère Testée) */
-.btn-round-blue {
-    background-color: #E0F7FA;
-    color: #006064;
-    border: 3px solid #04ABC6;
-}
-
-/* 4. PAREIL (Transparent + Bord Cyan) */
-.btn-round-outline {
-    background-color: transparent;
-    color: #00838F;
-    border: 2px solid #04ABC6;
-}
-
-/* 5. RELANCER (Décalé à droite) */
+/* 5. Le bouton Relancer (Écarté) */
 .btn-relaunch-right {
-    /* On le sort du flux pour le mettre à droite sans gêner le centrage */
     position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    right: -150px; 
+    top: 50%; transform: translateY(-50%);
     
-    /* Style bouton gris classique */
-    background: #ECEFF1;
-    color: #546E7A;
-    border: 1px solid #CFD8DC;
-    padding: 10px 20px;
-    border-radius: 30px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 0.9rem;
+    background: #ECEFF1; color: #546E7A; border: 1px solid #CFD8DC;
+    padding: 10px 20px; border-radius: 30px; 
+    font-weight: bold; cursor: pointer; font-size: 0.9rem;
 }
-.btn-relaunch-right:hover { background: #CFD8DC; }
-  
+.btn-relaunch-right:hover { background: #CFD8DC; }  
 </style>
 </head>
 <body onload="window.startAppSequence()">
