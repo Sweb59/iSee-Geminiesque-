@@ -91,18 +91,22 @@
   }
   /* 2-B. Zone Visuels VA (Alignée sur les Lettres : Col 16-21) */
  /* 2-B. Zone Visuels VA (Alignée sur le Pilotage : Col 16-21) */
+ /* 2-B. Zone Visuels VA (Les deux boutons -- / --) */
   #zoneVisuels {
-      grid-column: 16 / 21; 
-      /* ON DESCEND POUR ALIGNER AVEC LE PILOTAGE (Lignes 6 à 8) */
-      grid-row: 6 / 8;      
+      /* ALIGNEMENT HORIZONTAL : On cale sur la même largeur que #zoneLettres */
+      grid-column: 14 / 19; 
+      
+      /* ALIGNEMENT VERTICAL : On place juste au-dessus (Lignes 5 à 7) */
+      grid-row: 7 / 9;       
       
       display: flex; 
-      /* On colle le contenu EN BAS pour toucher la zone des lettres */
-      justify-content: flex-end; 
-      align-items: center;
+      /* On centre le contenu pour qu'il soit bien au milieu de la colonne */
+      justify-content: center; 
+      align-items: flex-end; /* Collé en bas de la case pour être proche des lettres */
+      
       padding-bottom: 5px;
       
-      background: transparent; /* Fond transparent pour l'intégration */
+      background: transparent; 
       border-radius: 8px;
   }
 
@@ -245,14 +249,12 @@
   /* 4. Zone Lettres (DROITE) - Centrée et Rétrécie */
   /* 4. Zone Lettres (DROITE) - Montée vers le haut */
   /* 4. Zone Lettres (DROITE) - Alignée sous le Pilotage */
+/* 4. Zone Lettres (DROITE) - Descendue d'une ligne */
   #zoneLettres {
-      /* Largeur réduite (inchangée) */
       grid-column: 14 / 19; 
       
-      /* --- DÉPLACEMENT FINAL --- */
-      /* Début : Ligne 8 (Bas du Pilotage / Haut des Cartes) */
-      /* Fin : Ligne 14 (Pour garder une hauteur de 6 unités) */
-      grid-row: 7 / 13;      
+      /* --- NOUVELLE POSITION (+1) --- */
+      grid-row: 9 / 15;      
       
       display: flex; 
       flex-direction: column; 
@@ -260,13 +262,9 @@
       align-items: center;
       
       padding: 5px 0;
-      
       background: #FAFAFA;
       border-radius: 8px;
-      
-      /* Bordure Noire */
       border: 2px solid #000000;
-      
       overflow: hidden; 
   }
   /* Style d'une ligne de lettres (le conteneur de la ligne) */
