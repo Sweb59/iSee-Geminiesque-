@@ -1217,7 +1217,7 @@ input[id^="fronto"] {
     </div>
 
 <div id="zonePilotage" class="grid-item">
-        <div class="phase-badge" style="margin-bottom: 5px;">PHASE : <span id="dispPhase">INIT</span></div>
+        <div class="phase-badge" style="margin-bottom: 5px;"><span id="dispPhase">INIT</span></div>
         
         <div style="display:flex; gap:10px; align-items:center;">
             <button id="btnPilotOD" class="btn-pilot" onclick="window.setEye('OD')">OD</button>
@@ -1937,8 +1937,9 @@ function revealDataSection(profile, inputsEnabled) {
 
     var summaryHTML = `
         <div class="patient-info-block">
-            <span>${nom}</span> 
+            <span style="color:var(--primary);">${nom}</span> 
             <span style="color:var(--primary);">${prenom}</span>
+            
             <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
         </div>
         
@@ -2022,14 +2023,14 @@ window.finishDataEntry = function() {
 
     var summaryHTML = `
         <div class="patient-info-block">
-            <span>${nom}</span> 
+            <span style="color:var(--primary);">${nom}</span> 
             <span style="color:var(--primary);">${prenom}</span>
+            
             <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
         </div>
         <div id="badgeProfilePlace"></div> 
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-
     // Mise à jour badge si déjà connu
     if(appState.initProfile) updateProfileBadge(appState.initProfile);
 
@@ -3347,7 +3348,46 @@ window.updateDisplay = function(message) {
     }
 
     // B. Mise à jour EN-TÊTE GAUCHE (Pilotage)
-    setHTML('dispPhase', appState.examPhase ? appState.examPhase.toUpperCase() : "INIT");
+
+    // --- TRADUCTION DES PHASES ---
+    var affichagePhase = "Démarrage"; // 1. Par défaut (INIT)
+
+    if (appState.examPhase) {
+        switch(appState.examPhase) {
+            case "Sb0.2":            
+                affichagePhase = "Recherche de la Sb0.2"; // 2.
+                break;
+
+            case "Sb0.5":            
+                affichagePhase = "Recherche de la Sb0.5 (T.Q.S.)"; // 3.
+                break;
+
+            case "Sb1.0":            
+                affichagePhase = "Recherche de la Sb1.0"; // 4.
+                break;
+
+            case "SphereCheckPlus":  
+                affichagePhase = "Verres vérificateurs (+0.25)"; // 5.
+                break;
+
+            case "SphereCheckMinus": 
+                affichagePhase = "Verres vérificateurs (-0.25)"; // 6.
+                break;
+
+            case "AxisCheck":        
+                affichagePhase = "Mise au point de l'axe du cylindre"; // 7.
+                break;
+            
+            // Vous pourrez ajouter vos futures phases ici (case "NomDeCode": ...)
+
+            default:                 
+                // Sécurité : affiche le code interne si pas de traduction trouvée
+                affichagePhase = appState.examPhase.toUpperCase();
+        }
+    }
+    
+    setHTML('dispPhase', affichagePhase);
+    // -----------------------------
 
     var modeText = "MONOCULAIRE";
     if (appState.examPhase === "Sb0.5" || (appState.examPhase && appState.examPhase.includes("Check")) || appState.examPhase === "Sb1.0") {
