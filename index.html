@@ -241,25 +241,34 @@
   /* 4. Zone Lettres (DROITE : Colonnes 16-21) */
   /* 4. Zone Lettres (DROITE) */
   /* 4. Zone Lettres (DROITE) - CORRIGÉ POUR CENTRAGE */
+ /* 4. Zone Lettres (DROITE) - MODIFIÉ (Taille, Position, Bordure) */
+  /* 4. Zone Lettres (DROITE) - Centrée et Rétrécie */
+  /* 4. Zone Lettres (DROITE) - Montée vers le haut */
+  /* 4. Zone Lettres (DROITE) - Alignée sous le Pilotage */
   #zoneLettres {
-      grid-column: 16 / 21; 
-      grid-row: 8 / 18;      
+      /* Largeur réduite (inchangée) */
+      grid-column: 14 / 19; 
+      
+      /* --- DÉPLACEMENT FINAL --- */
+      /* Début : Ligne 8 (Bas du Pilotage / Haut des Cartes) */
+      /* Fin : Ligne 14 (Pour garder une hauteur de 6 unités) */
+      grid-row: 7 / 13;      
       
       display: flex; 
       flex-direction: column; 
-      
-      /* C'EST ICI : On centre tout le contenu (le bloc de lettres) au milieu */
       justify-content: center; 
       align-items: center;
       
-      padding: 10px 0;
+      padding: 5px 0;
       
       background: #FAFAFA;
       border-radius: 8px;
-      border: 1px solid #EEEEEE;
+      
+      /* Bordure Noire */
+      border: 2px solid #000000;
+      
       overflow: hidden; 
   }
-
   /* Style d'une ligne de lettres (le conteneur de la ligne) */
   .va-line-row {
       width: 90%;       /* Ne prend pas toute la largeur pour laisser de la marge */
