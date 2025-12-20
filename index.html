@@ -2135,18 +2135,43 @@ function syncModalToDashboard(type) {
         });
     });
 }
-window.setHandedness = function(handEye) {
-    // On stocke la préférence dans l'état global
-    appState.handednessEye = handEye; // 'OD' (Droitier) ou 'OG' (Gaucher)
+// Remplacez tout votre bloc window.setHandedness par celui-ci :
 
-    // On ferme la modale Latéralité
+window.setHandedness = function(handEye) {
+    // 1. On stocke la latéralité choisie
+    appState.handednessEye = handEye; 
+
+    // 2. On ferme la modale Latéralité
     document.getElementById('modalHandedness').classList.add('hidden');
 
-    // On affiche ENFIN le Schober
+    // 3. On affiche le Schober
     document.getElementById('waitingMsg').classList.add('hidden'); 
     document.getElementById('schoberStep').classList.remove('hidden');
-};
 
+    // --- DEBUT MODIFICATION : VERROUILLAGE & VOCAL ---
+    
+    // A. On verrouille immédiatement les boutons Schober (visuel + clic)
+    var schoberBtns = document.querySelectorAll('.btn-schober');
+    schoberBtns.forEach(function(btn) {
+        btn.style.pointerEvents = 'none'; // Désactive le clic
+        btn.style.opacity = '0.4';        // Grise les boutons
+        btn.style.filter = 'grayscale(100%)'; // Optionnel : rend gris pour bien montrer que c'est inactif
+        btn.style.transition = 'all 0.3s';
+    });
+
+    // B. On lance la phrase vocale
+    say("Sur l'écran en face de vous, voyez-vous une croix et un cercle, en même temps ?", function() {
+        
+        // C. CALLBACK : Une fois la phrase terminée, on déverrouille
+        schoberBtns.forEach(function(btn) {
+            btn.style.pointerEvents = 'auto'; // Réactive le clic
+            btn.style.opacity = '1';          // Rétablit l'opacité
+            btn.style.filter = 'none';        // Enlève le gris
+            btn.style.cursor = 'pointer';
+        });
+    });
+    // --- FIN MODIFICATION ---
+};
 function toggleInputs(sectionId, enable) {
     var sec = document.getElementById(sectionId);
     if(sec) {
