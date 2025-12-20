@@ -961,7 +961,7 @@ input[id^="fronto"] {
                 <select id="inRhythm"><option value="0">...</option><option value="1">1x/an</option><option value="2">1x/2ans</option><option value="3">< 1x/2ans</option></select>
             </div>
             <div>
-                <label>Signes de troubles subjectifs par mois</label>
+                <label>Nombres de signes de décompensation de phorie par mois</label>
                 <select id="inSigns"><option value="0">0</option><option value="2">3-4</option><option value="3">> 4</option></select>
             </div>
         </div>
@@ -1835,11 +1835,20 @@ function getAgeScore(age) {
     if (age <= 70) return 1; return 0; 
 }
 window.checkMyopia = function() {
-    var s1 = window.getVal('raOD_sph'); var s2 = window.getVal('raOG_sph');
+    var s1 = window.getVal('raOD_sph'); 
+    var s2 = window.getVal('raOG_sph');
     var btn = document.getElementById('btnProfile1');
-    if (btn) { if (s1 < 0 || s2 < 0) { btn.style.display = 'none'; } else { btn.style.display = 'inline-block'; } }
+    
+    if (btn) { 
+        if (s1 < 0 || s2 < 0) { 
+            // Myopie détectée : On cache le bouton mais ON GARDE SA PLACE
+            btn.style.visibility = 'hidden'; 
+        } else { 
+            // Sinon : On le rend visible
+            btn.style.visibility = 'visible'; 
+        } 
+    }
 };
-
 // --- DATA ---
 var ACUITY_TABLE = [
     { va: 0.04, lines: ["U", "P", "F", "V"] },
