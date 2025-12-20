@@ -2251,18 +2251,38 @@ window.openPositioningModal = function() {
 };
 
 window.startRulesAndIntro = function() {
+    // 1. Fermeture modale / Ouverture écran principal
     document.getElementById('modalPosition').classList.add('hidden');
+    document.getElementById('examDataStrip').classList.remove('hidden');
+    document.getElementById('waitingMsg').classList.add('hidden');
+    document.getElementById('examContent').classList.remove('hidden');
 
-    // Copie RA -> Subj (Affichage sans brouillage)
+    // 2. Récupération des valeurs RA
     var raOD = { s: getVal('raOD_sph'), c: getVal('raOD_cyl'), a: getVal('raOD_axe') };
     var raOG = { s: getVal('raOG_sph'), c: getVal('raOG_cyl'), a: getVal('raOG_axe') };
 
-    // MAJ: Utilisation des nouveaux IDs d'affichage
+    // 3. Injection des valeurs RA dans les cartes Subjectif
     setHTML('disp_subjOD_sph', raOD.s.toFixed(2)); setHTML('disp_subjOG_sph', raOG.s.toFixed(2));
     setHTML('disp_subjOD_cyl', raOD.c.toFixed(2)); setHTML('disp_subjOG_cyl', raOG.c.toFixed(2));
     setHTML('disp_subjOD_axe', normalizeAxis(raOD.a) + "°"); setHTML('disp_subjOG_axe', normalizeAxis(raOG.a) + "°");
     setHTML('disp_subjOD_va', "--"); setHTML('disp_subjOG_va', "--");
 
+    // 4. --- NOUVEAU : FORÇAGE VISUEL (YEUX OUVERTS) ---
+    // On met les deux cartes en Cyan (Sélectionnées)
+    document.getElementById('subjDispOD').classList.add('highlight');
+    document.getElementById('subjDispOG').classList.add('highlight');
+
+    // On active les deux boutons OD/OG en haut
+    var btnOD = document.getElementById('btnPilotOD');
+    var btnOG = document.getElementById('btnPilotOG');
+    if(btnOD) { btnOD.classList.add('active'); btnOD.classList.remove('closed'); }
+    if(btnOG) { btnOG.classList.add('active'); btnOG.classList.remove('closed'); }
+
+    // 5. --- NOUVEAU : NOM DE LA PHASE ---
+    setHTML('dispPhase', "Règles de lecture");
+    // -------------------------------------------------
+
+    // LA SUITE (VOIX) NE CHANGE PAS :
     var introText = "Pour avoir une bonne mesure de votre vision de loin, il faut lire d’une manière naturelle, c’est à dire rapide et spontanée. Si vous ne pouvez pas lire vous le dites tout de suite, et si vous faites une erreur, comme vous avez lu naturellement, elle sera plus facile à corriger ! Mais si vous lisez d’une manière lente et réfléchie, le risque est de masquer vos erreurs et on ne peut pas améliorer une personne qui ne veut pas se tromper ! Donc il faut lire vite, si vous ne pouvez pas vous le dites tout de suite et si vous vous trompez aucune importance !";
 
     say(introText, function() {
