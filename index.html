@@ -59,16 +59,74 @@
   /* --- PLACEMENT DES ÉLÉMENTS (C'EST ICI QUE VOUS MODIFIEZ POUR BOUGER LES BLOCS) --- */
 
   /* 1. Zone Patient (Ligne 1, Toute largeur) */
+  /* 1. Zone Patient (Barre du haut) - MODIFIÉE */
+ /* 1. Zone Patient (Barre du haut) - FONDUE DANS LE DÉCOR */
   #zonePatient {
-      grid-column: 1 / 21;  /* De la col 1 à la fin */
-      grid-row: 1 / 3;      /* Prend 10% de hauteur (lignes 1 à 2) */
-      background: #fff;
-      border: 1px solid #CFD8DC;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px;
-      border-radius: 8px;
+      grid-column: 1 / 21;  
+      grid-row: 1 / 3;      
+      
+      /* FOND CRÈME (Identique au body) */
+      background: #FCF9F2; 
+      
+      /* PLUS DE BORDURE (Pour fondre la zone) */
+      border: none; 
+      
+      border-radius: 0; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      padding: 0 30px;
+      position: relative; 
   }
 
+  /* Style du Chrono (TAILLE RÉDUITE) */
+  #displayChrono {
+      font-weight: 800; 
+      color: var(--primary-deep);
+      
+      /* Taille réduite pour être discret */
+      font-size: 1.3rem; 
+      
+      font-family: 'Montserrat', sans-serif;
+      opacity: 0.8; /* Un peu moins agressif visuellement */
+  }
+
+  /* Style du Nom/Prénom/Age */
+  .patient-info-block {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #37474F;
+      text-transform: uppercase;
+      
+      display: flex;       
+      align-items: baseline; /* Aligne le texte sur la ligne d'écriture */
+      gap: 15px;           /* Espace entre le nom et l'âge */
+  }
+  /* La Pastille de Profil (RONDE et CENTRÉE sur ZoneLettres) */
+  .pat-profile-badge {
+      position: absolute;
+      
+      /* POSITIONNEMENT : 
+         La zone lettres est colonnes 14 à 19. Le centre est environ à 80% de la largeur totale.
+      */
+      left: 80%; 
+      top: 50%;
+      transform: translate(-50%, -50%); /* Centrage parfait sur le point 80% */
+      
+      width: 50px; 
+      height: 50px;
+      border-radius: 50%; /* ROND */
+      
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      
+      color: white;
+      font-weight: 800;
+      font-size: 1.8rem; /* Juste le chiffre en gros */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      border: 2px solid white;
+  }
   /* 2. Infos / Pilotage (Juste en dessous) */
 
  /* 2-A. Zone Pilotage (Alignée sur les Données : Col 1-13) */
@@ -1867,23 +1925,24 @@ function revealDataSection(profile, inputsEnabled) {
     // Fermeture Fenêtre Profil
     document.getElementById('modalProfileCalc').classList.add('hidden');
 
-    // --- CORRECTION : AFFICHAGE LIGNE UNIQUE (SANS ETIQUETTES) ---
+    // --- CORRECTION : AFFICHAGE LIGNE UNIQUE (SANS UID) ---
+    // --- BLOC MODIFIÉ : Affichage final avec Age ---
     var nom = document.getElementById('inName').value || "-";
-    var prenom = document.getElementById('inForename').value || "-";
-    var dob = document.getElementById('inDob').value;
-    var age = dob ? getAgeFromDob(dob) + " ans" : "-";
-    var uid = document.getElementById('inUID').value || "--";
+    var prenom = document.getElementById('inForename').value || "";
     var pColor = getProfileColor(profile);
+    
+    // Calcul de l'âge
+    var dob = document.getElementById('inDob').value;
+    var ageStr = dob ? getAgeFromDob(dob) + " ans" : "";
 
-    // On construit la ligne identique au Schober, avec le badge profil en plus
     var summaryHTML = `
-        <div class="patient-line">
-            <div><span class="pat-name">${nom.toUpperCase()}</span> <span class="pat-forename">${prenom}</span></div>
-            <div style="color:#78909C;">${age}</div>
-            <div><span class="pat-uid" title="UID">${uid}</span></div>
-            <div><span class="pat-profile-badge" style="background:${pColor}">PROFIL ${profile}</span></div>
-            <div id="badgeProfilePlace" style="display:none;"></div> 
+        <div class="patient-info-block">
+            <span>${nom}</span> 
+            <span style="color:var(--primary);">${prenom}</span>
+            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
         </div>
+        
+        <div class="pat-profile-badge" style="background:${pColor}">${profile}</div>
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
     // -------------------------------------------------------------
@@ -1952,20 +2011,22 @@ window.finishDataEntry = function() {
        var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0";
     });
 
-    // --- NOUVEL AFFICHAGE PATIENT (LIGNE HAUTE) ---
+    // --- NOUVEL AFFICHAGE PATIENT (LIGNE HAUTE) ---// --- NOUVEL AFFICHAGE (Barre du haut simplifiée) ---
+   // --- BLOC MODIFIÉ : Récupération Nom + Calcul Age ---
     var nom = document.getElementById('inName').value || "-";
-    var prenom = document.getElementById('inForename').value || "-";
+    var prenom = document.getElementById('inForename').value || "";
+    
+    // Calcul de l'âge
     var dob = document.getElementById('inDob').value;
-    var age = dob ? getAgeFromDob(dob) + " ans" : "-";
-    var uid = document.getElementById('inUID').value || "--";
+    var ageStr = dob ? getAgeFromDob(dob) + " ans" : "";
 
     var summaryHTML = `
-        <div class="patient-line">
-            <div><span class="pat-name">${nom}</span> <span class="pat-forename">${prenom}</span></div>
-            <div style="color:#78909C;">${age}</div>
-            <div><span class="pat-uid" title="UID">${uid}</span></div>
-            <div id="badgeProfilePlace"></div> 
+        <div class="patient-info-block">
+            <span>${nom}</span> 
+            <span style="color:var(--primary);">${prenom}</span>
+            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
         </div>
+        <div id="badgeProfilePlace"></div> 
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
 
@@ -1982,9 +2043,12 @@ window.finishDataEntry = function() {
 };
 
 // Fonction utilitaire pour le badge couleur (A AJOUTER JUSTE APRES)
+// Fonction utilitaire pour le badge (Juste le chiffre rond)
 window.updateProfileBadge = function(p) {
     var color = getProfileColor(p);
-    var html = `<span class="pat-profile-badge" style="background:${color}">PROFIL ${p}</span>`;
+    // On n'écrit plus "PROFIL", juste "p" (le chiffre)
+    var html = `<div class="pat-profile-badge" style="background:${color}">${p}</div>`;
+    
     var el = document.getElementById('badgeProfilePlace');
     if(el) el.innerHTML = html;
 };
