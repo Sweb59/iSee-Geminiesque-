@@ -70,12 +70,35 @@
   }
 
   /* 2. Infos / Pilotage (Juste en dessous) */
-  #zoneInfos {
-      grid-column: 1 / 21; /* Toute largeur */
-      grid-row: 3 / 5;     /* Lignes 3 à 4 */
+
+ /* 2-A. Zone Pilotage (Alignée sur les Données : Col 1-13) */
+ /* 2-A. Zone Pilotage (Alignée sur les Données : Col 1-13) */
+ /* 2-A. Zone Pilotage */
+  #zonePilotage {
+      grid-column: 1 / 13; 
+      /* ON DESCEND LA ZONE : Lignes 6 à 8 */
+      grid-row: 6 / 8;     
+      
+      display: flex; 
+      flex-direction: column; 
+      /* ON COLLE LE CONTENU EN BAS pour toucher les cartes */
+      justify-content: flex-end; 
+      align-items: center;    
+      padding-bottom: 5px;
+      
+      /* Fond transparent pour que ça fasse "partie" du bloc du dessous */
+      background: transparent; 
+  }
+  /* 2-B. Zone Visuels VA (Alignée sur les Lettres : Col 16-21) */
+  #zoneVisuels {
+      grid-column: 16 / 21; /* Même largeur que les lettres */
+      grid-row: 3 / 5;      /* Lignes 3 et 4 */
+      
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      
       background: #fff;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px;
       border-radius: 8px;
   }
 
@@ -84,16 +107,20 @@
 /* 3. Données Techniques (GAUCHE : 75% Largeur) */
 /* 3. Données Techniques (GAUCHE : 60% Largeur) */
 /* 3. Données Techniques (GAUCHE : 60% Largeur) */
+  /* 3. Données Techniques (GAUCHE : 60% Largeur) */
   #examDataStrip {
       grid-column: 1 / 13;  
-      grid-row: 5 / 17;     
+      /* ON COLLE CETTE ZONE JUSTE SOUS LE PILOTAGE (Ligne 8) */
+      grid-row: 8 / 18;     
       
       display: flex;
       flex-direction: row;
       justify-content: center; 
-      align-items: center;
-      gap: 15px; 
       
+      /* C'EST ICI LE SECRET : ON COLLE LES CARTES TOUT EN HAUT DE LEUR ZONE */
+      align-items: flex-start; 
+      
+      gap: 15px; 
       background: transparent;
       overflow: visible;
       padding: 5px;
@@ -937,13 +964,17 @@ input[id^="fronto"] {
         <div id="displayChrono" style="font-weight:bold; color:var(--primary-deep);">00:00</div>
     </div>
 
-    <div id="zoneInfos" class="grid-item">
+<div id="zonePilotage" class="grid-item">
+        <div class="phase-badge" style="margin-bottom: 5px;">PHASE : <span id="dispPhase">INIT</span></div>
+        
         <div style="display:flex; gap:10px; align-items:center;">
-            <div class="phase-badge">PHASE : <span id="dispPhase">INIT</span></div>
             <button id="btnPilotOD" class="btn-pilot" onclick="window.setEye('OD')">OD</button>
             <div id="dispMode" class="btn-mode-display">MONOCULAIRE</div>
             <button id="btnPilotOG" class="btn-pilot" onclick="window.setEye('OG')">OG</button>
         </div>
+    </div>
+
+    <div id="zoneVisuels" class="grid-item">
         <div style="display:flex; gap:10px;">
             <div id="visBoxOD" class="va-box-display" data-eye="OD">--</div>
             <div id="visBoxOG" class="va-box-display" data-eye="OG">--</div>
