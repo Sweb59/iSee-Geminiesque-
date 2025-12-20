@@ -240,22 +240,24 @@
   /* 4. Zone Lettres (DROITE : Colonnes 16-21) */
   /* 4. Zone Lettres (DROITE : Colonnes 16-21) */
   /* 4. Zone Lettres (DROITE) */
+  /* 4. Zone Lettres (DROITE) - CORRIGÉ POUR CENTRAGE */
   #zoneLettres {
       grid-column: 16 / 21; 
       grid-row: 8 / 18;      
       
       display: flex; 
-      flex-direction: column; /* Empilement vertical des lignes */
+      flex-direction: column; 
       
-      /* Par défaut, on espace les éléments (Haut / Bas ou Haut / Centre / Bas) */
-      justify-content: space-between; 
+      /* C'EST ICI : On centre tout le contenu (le bloc de lettres) au milieu */
+      justify-content: center; 
+      align-items: center;
       
-      padding: 20px 0; /* Marge interne haut/bas pour ne pas coller aux bords */
+      padding: 10px 0;
       
       background: #FAFAFA;
       border-radius: 8px;
       border: 1px solid #EEEEEE;
-      overflow: hidden; /* Empêche le dépassement */
+      overflow: hidden; 
   }
 
   /* Style d'une ligne de lettres (le conteneur de la ligne) */
