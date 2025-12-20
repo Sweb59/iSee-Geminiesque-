@@ -1021,6 +1021,122 @@ input[id^="fronto"] {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+/* --- ANIMATION SCHÉMA SPHERE (VERSION UNIQUE & CORRIGÉE) --- */
+
+/* 1. Le Conteneur (Positionnement) */
+#schemaContainer {
+    grid-column: 1 / 13; 
+    grid-row: 14 / 17; /* Hauteur remontée */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    position: relative; /* Pour les éléments absolus */
+    background: transparent;
+    z-index: 200; /* Au dessus des boutons */
+    pointer-events: none;
+}
+
+/* 2. Style de base des bulles */
+.anim-bubble {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    display: flex; justify-content: center; align-items: center; text-align: center;
+    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.9rem; line-height: 1.2;
+    padding: 5px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+/* 3. CERCLE BLEU (BASE) - Fixe au centre */
+.bubble-base {
+    background: #E0F7FA; border: 3px solid #04ABC6; color: #006064;
+    z-index: 10;
+    
+    opacity: 0; transform: scale(0.8);
+    transition: opacity 0.5s, transform 0.5s;
+}
+.bubble-base.visible { opacity: 1; transform: scale(1); }
+
+/* --- ANIMATION GAUCHE (VERT / PLUS) --- */
+
+/* Flèche Gauche */
+.arrow-connector {
+    position: absolute;
+    right: 50%; margin-right: 44px; /* Colle au bleu */
+    height: 6px; background-color: #04ABC6;
+    width: 0px; transition: width 0.4s ease-out;
+    z-index: 5;
+}
+.arrow-connector::before {
+    content: ''; position: absolute;
+    left: -8px; top: -5px; width: 0; height: 0;
+    border-top: 8px solid transparent; border-bottom: 8px solid transparent; 
+    border-right: 12px solid #04ABC6;
+    opacity: 0; transition: opacity 0.2s;
+}
+.arrow-connector.active { width: 100px; }
+.arrow-connector.active::before { opacity: 1; }
+
+/* Bulle Verte */
+.bubble-target {
+    position: absolute;
+    background: #E8F5E9; border: 3px solid #43A047; color: #1B5E20;
+    z-index: 6;
+    right: 50%; margin-right: 45px; 
+    opacity: 0; transform: scale(0.5);
+    transition: all 0.4s ease-out;
+}
+.bubble-target.visible {
+    opacity: 1;
+    transform: translateX(-110px) scale(1);
+}
+
+/* --- ANIMATION DROITE (ROUGE / MOINS) --- */
+
+/* Flèche Droite */
+.arrow-connector-right {
+    position: absolute;
+    left: 50%; margin-left: 44px; /* Colle au bleu */
+    height: 6px; background-color: #04ABC6; /* Rouge */
+    width: 0px; transition: width 0.4s ease-out;
+    z-index: 5;
+    /* Centrage vertical strict pour la flèche */
+    top: 50%; transform: translateY(-50%);
+}
+.arrow-connector-right::before {
+    content: ''; position: absolute;
+    right: -8px; top: -5px; width: 0; height: 0;
+    border-top: 8px solid transparent; border-bottom: 8px solid transparent; 
+    border-left: 12px solid #04ABC6;
+    opacity: 0; transition: opacity 0.2s;
+}
+.arrow-connector-right.active { width: 100px; }
+.arrow-connector-right.active::before { opacity: 1; }
+
+/* Bulle Rouge (Celle à corriger) */
+.bubble-target-minus {
+    position: absolute;
+    background: #FFEBEE; border: 3px solid #D32F2F; color: #B71C1C;
+    z-index: 6;
+    
+    left: 50%; margin-left: 45px; 
+    
+    /* --- CORRECTION HAUTEUR APPLIQUÉE --- */
+    top: 54%; /* On force la descente (plus grand que 50%) */
+    /* ------------------------------------ */
+    
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5); /* Centrage sur son point d'origine */
+    transition: all 0.4s ease-out;
+}
+
+.bubble-target-minus.visible {
+    opacity: 1;
+    /* Déplacement vers la droite */
+    transform: translate(110px, -50%) scale(1);
+}
   
 </style>
 </head>
@@ -1387,8 +1503,22 @@ input[id^="fronto"] {
          
          <div id="dataSection" style="display:none;"></div> 
     </div>
+<div id="schemaContainer">
+    <div id="animTargetCircle" class="anim-bubble bubble-target">
+        Verres<br>(+0.25)
+    </div>
+    <div id="animArrowLine" class="arrow-connector"></div>
 
-    <div id="zoneLettres" class="grid-item">
+    <div id="animBaseCircle" class="anim-bubble bubble-base">
+        Sphère<br>testée
+    </div>
+
+    <div id="animArrowLineMinus" class="arrow-connector-right"></div>
+    <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">
+        Verres<br>(-0.25)
+    </div>
+</div>  
+  <div id="zoneLettres" class="grid-item">
         <div id="waitingMsg" style="text-align:center; color:#B0BEC5;">
             <p style="font-size:1.5rem;">L'examen commencera ici.</p>
         </div>
@@ -2618,6 +2748,7 @@ function validateSb10() {
 }
 
 function finishSb10ForEye() {
+  window.hideBaseCircle(); // <--- AJOUTER CETTE LIGNE
     var eye = appState.activeEye; var maxVa = ACUITY_TABLE[appState.vaIndex].va;
     // Mise à jour de l'affichage dans le panneau droit (disp_)
     setHTML('disp_subj'+eye+'_va', maxVa);
@@ -2634,6 +2765,7 @@ function finishSb10ForEye() {
 }
 
 function initSphereCheckMinus() {
+  window.showBaseCircle(); // <--- AJOUTER CETTE LIGNE
     appState.examPhase = "SphereCheckMinus"; appState.checkStep = "TEST_125_PRE";
 
     // MODIFICATION: Check si safety mode actif
@@ -2657,7 +2789,8 @@ function initSphereCheckMinus() {
 }
 
 function initSphereCheckPlus(skipIntro) {
-    appState.examPhase = "SphereCheckPlus"; appState.baseSphereValue = getTargetEye().sphere;
+  window.showBaseCircle(); // <--- AJOUTER CETTE LIGNE  
+  appState.examPhase = "SphereCheckPlus"; appState.baseSphereValue = getTargetEye().sphere;
     document.getElementById('standardButtons').classList.add('hidden');
     document.getElementById('cadenceButtons').classList.add('hidden');
     document.getElementById('checkPlusZone').classList.remove('hidden');
@@ -2678,80 +2811,108 @@ function initSphereCheckPlus(skipIntro) {
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // 2. Test du +0.25 (3s d'exposition environ - Ratio 2:1)
+// --- FONCTION TEST +0.25 (AVEC NOUVEAU SCHÉMA BULLES) ---
+// --- FONCTION TEST +0.25 (AVEC ANIMATION FLÈCHE GAUCHE) ---
 async function triggerFogCheck() {
-    // Verrouillage de l'interface
+    // 1. Verrouillage
     updateLockUI(true);
     document.getElementById('btnPlus025').disabled = true; 
-
+    
+    // 2. Préparation
     const target = getTargetEye();
-    // On s'assure qu'on part de la base
     target.sphere = appState.baseSphereValue; 
     updateDisplay("Check (+): Référence...");
 
-    // Etape 1 : Référence (Sans le verre)
+    // 3. Récupération des éléments du schéma
+    var arrow = document.getElementById('animArrowLine');
+    var targetBubble = document.getElementById('animTargetCircle');
+
+    // Etape 1 : Référence (Le cercle bleu est déjà là, fixe)
     say("Vous préférez comme ça ?");
-    // MODIFICATION DEMANDÉE : +1s d'attente (2500ms au lieu de 1500ms)
     await wait(2500); 
 
-    // Etape 2 : Ajout du verre +0.25 (Chevauchement Parole/Geste)
+    // Etape 2 : Ajout du verre (La flèche part vers la gauche)
     say("Ou si je fais ça ?");
-    await wait(400); // Petit délai naturel avant l'action
+    await wait(400); 
+    
+    // >>> ANIMATION ON : La flèche grandit, le cercle vert apparait au bout <<<
+    if(arrow) arrow.classList.add('active');
+    if(targetBubble) targetBubble.classList.add('visible');
+    // ---------------------------------------------------------------------
+    
     target.sphere = appState.baseSphereValue + 0.25;
     updateDisplay("Check (+): +0.25 ajouté");
 
-    // TEMPS D'EXPOSITION LONG (Pour le verre positif)
-    // La vidéo montre environ 3 secondes
     await wait(3000); 
 
-    // Etape 3 : Retrait du verre
+    // Etape 3 : Retrait (La flèche se rétracte)
     say("Ou si je reviens ?");
-    await wait(400); // Petit délai naturel
-    target.sphere = appState.baseSphereValue; // Retour base
+    await wait(400);
+
+    // >>> ANIMATION OFF : Le vert et la flèche disparaissent <<<
+    if(targetBubble) targetBubble.classList.remove('visible');
+    if(arrow) arrow.classList.remove('active');
+    // --------------------------------------------------------
+
+    target.sphere = appState.baseSphereValue; 
     updateDisplay("Check (+): Retour Base");
 
-    // Fin de la séquence
+    // 4. Déverrouillage
     updateLockUI(false);
     document.getElementById('decisionsPlus').classList.remove('hidden'); 
     document.getElementById('btnPlus025').disabled = false;
 }
-
-// 3. Test du -0.25 (1.5s d'exposition environ - Ratio 1:2)
+  // 3. Test du -0.25 (1.5s d'exposition environ - Ratio 1:2)
+// --- FONCTION TEST -0.25 (ANIMATION VERS LA DROITE) ---
 async function triggerDefogCheck() {
-    // Verrouillage
+    // 1. Verrouillage
     updateLockUI(true);
     document.getElementById('btnMinus025').disabled = true; 
-
+    
+    // 2. Préparation
     const target = getTargetEye();
     target.sphere = appState.baseSphereValue;
     updateDisplay("Check (-): Référence...");
 
+    // 3. Récupération des éléments du schéma MOINS
+    var arrowMinus = document.getElementById('animArrowLineMinus');
+    var targetBubbleMinus = document.getElementById('animTargetCircleMinus');
+
     // Etape 1 : Référence
     say("Vous préférez comme ça ?");
-    // MODIFICATION DEMANDÉE : +1s d'attente (2500ms au lieu de 1500ms)
     await wait(2500);
 
-    // Etape 2 : Ajout du verre -0.25 (Chevauchement)
+    // Etape 2 : Ajout du verre (Déclenchement Animation Droite)
     say("Ou si je fais ça ?");
     await wait(400);
+    
+    // >>> ANIMATION ON : Flèche droite et Bulle Rouge <<<
+    if(arrowMinus) arrowMinus.classList.add('active');
+    if(targetBubbleMinus) targetBubbleMinus.classList.add('visible');
+    // ---------------------------------------------------
+
     target.sphere = appState.baseSphereValue - 0.25;
     updateDisplay("Check (-): -0.25 ajouté");
 
-    // TEMPS D'EXPOSITION COURT (Pour le verre négatif)
-    // La vidéo montre environ 1.5 secondes (moitié du temps positif)
     await wait(1500); 
 
     // Etape 3 : Retrait
     say("Ou si je reviens ?");
     await wait(400);
-    target.sphere = appState.baseSphereValue; // Retour base
+    
+    // >>> ANIMATION OFF : Disparition <<<
+    if(targetBubbleMinus) targetBubbleMinus.classList.remove('visible');
+    if(arrowMinus) arrowMinus.classList.remove('active');
+    // -----------------------------------
+
+    target.sphere = appState.baseSphereValue; 
     updateDisplay("Check (-): Retour Base");
 
-    // Fin
+    // 4. Déverrouillage
     updateLockUI(false);
     document.getElementById('decisionsMinus').classList.remove('hidden'); 
     document.getElementById('btnMinus025').disabled = false;
 }
-
 window.relaunchPlus = function() {
     if (appState.isSpeaking) return; // LOCK
     document.getElementById('decisionsPlus').classList.add('hidden');
@@ -3774,6 +3935,28 @@ window.forceChangeLetters = function() {
 
     // 4. COMMANDE VOCALE AJOUTÉE ICI
     say("ou plutôt celles-ci.");
+};
+// --- GESTION AFFICHAGE CERCLE BLEU (BASE) ---
+window.showBaseCircle = function() {
+    var base = document.getElementById('animBaseCircle');
+    if(base) base.classList.add('visible');
+};
+
+window.hideBaseCircle = function() {
+    var base = document.getElementById('animBaseCircle');
+    if(base) base.classList.remove('visible');
+    
+    // Nettoyage animation PLUS (Gauche)
+    var arrow = document.getElementById('animArrowLine');
+    var target = document.getElementById('animTargetCircle');
+    if(arrow) arrow.classList.remove('active');
+    if(target) target.classList.remove('visible');
+
+    // Nettoyage animation MOINS (Droite - NOUVEAU)
+    var arrowM = document.getElementById('animArrowLineMinus');
+    var targetM = document.getElementById('animTargetCircleMinus');
+    if(arrowM) arrowM.classList.remove('active');
+    if(targetM) targetM.classList.remove('visible');
 };
   
 </script>
