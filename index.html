@@ -1157,6 +1157,90 @@ input[id^="fronto"] {
 .exam-data-strip .col-bio-inactive span {
     color: #00838F !important; 
 }
+
+/* --- NOUVEAUX BOUTONS RONDS (VERRES VÉRIFICATEURS) --- */
+
+/* Conteneur principal de la ligne de décision */
+.decision-row-round {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px; /* Espace entre les boutons centraux */
+    width: 100%;
+    position: relative;
+    padding-top: 10px;
+}
+
+/* Style de base des boutons ronds */
+.btn-round {
+    width: 85px; height: 85px;
+    border-radius: 50%;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    line-height: 1.1;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    transition: transform 0.2s;
+    border: none;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.btn-round:hover { transform: scale(1.1); }
+.btn-round:active { transform: scale(0.95); }
+
+/* --- VARIANTES DE COULEURS --- */
+
+/* 1. VERT (Pour Préfère +0.25) */
+.btn-round-green {
+    background-color: #43A047;
+    color: white;
+    border: 2px solid #2E7D32;
+}
+
+/* 2. ROUGE (Pour Préfère -0.25) */
+.btn-round-red {
+    background-color: #EF5350;
+    color: white;
+    border: 2px solid #C62828;
+}
+
+/* 3. BLEU (Pour Sphère Testée) */
+.btn-round-blue {
+    background-color: #E0F7FA;
+    color: #006064;
+    border: 3px solid #04ABC6;
+}
+
+/* 4. PAREIL (Transparent + Bord Cyan) */
+.btn-round-outline {
+    background-color: transparent;
+    color: #00838F;
+    border: 2px solid #04ABC6;
+}
+
+/* 5. RELANCER (Décalé à droite) */
+.btn-relaunch-right {
+    /* On le sort du flux pour le mettre à droite sans gêner le centrage */
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    
+    /* Style bouton gris classique */
+    background: #ECEFF1;
+    color: #546E7A;
+    border: 1px solid #CFD8DC;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.btn-relaunch-right:hover { background: #CFD8DC; }
   
 </style>
 </head>
@@ -1584,29 +1668,51 @@ input[id^="fronto"] {
                     <span class="emoji-icon">🐇</span> Fluide
                 </button>
             </div>
+        </div><div id="checkPlusZone" class="response-area hidden">
+    
+    <div id="stepPlusWrapper">
+        <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
+        
+        <div id="decisionsPlus" class="decision-row-round hidden">
+            
+            <button class="btn-round btn-round-green" onclick="window.decidePlus('better')">
+                Préfère<br>(+0.25)
+            </button>
+
+            <button class="btn-round btn-round-outline" onclick="window.decidePlus('same')">
+                Pareil
+            </button>
+
+            <button class="btn-round btn-round-blue" onclick="window.decidePlus('worse')">
+                Sphère<br>testée
+            </button>
+
+            <button class="btn-relaunch-right" onclick="window.relaunchPlus()">Relancer</button>
         </div>
-        <div id="checkPlusZone" class="response-area hidden">
-            <div id="stepPlusWrapper">
-                <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
-                <div id="decisionsPlus" class="decision-row hidden">
-                    <button class="btn-decision btn-blue" onclick="window.decidePlus('better')">Mieux avec le verre</button>
-                    <button class="btn-decision btn-blue" onclick="window.decidePlus('same')">Pareil</button>
-                    <button class="btn-decision btn-orange" onclick="window.decidePlus('worse')">Mieux sans le verre</button>
-                    <div class="spacer-btn"></div>
-                    <button class="btn-decision btn-grey" onclick="window.relaunchPlus()">Relancer</button>
-                </div>
-            </div>
-            <div id="stepMinusWrapper" class="hidden">
-                <button id="btnMinus025" class="btn-timer hidden" onclick="window.triggerDefogCheck()">TESTER -0.25 (1.5s)</button>
-                <div id="decisionsMinus" class="decision-row hidden">
-                    <button class="btn-decision btn-red" onclick="window.decideMinus('better')">Mieux avec le verre</button>
-                    <button class="btn-decision btn-orange" onclick="window.decideMinus('same')">Pareil</button>
-                    <button class="btn-decision btn-orange" onclick="window.decideMinus('worse')">Mieux sans le verre</button>
-                    <div class="spacer-btn"></div>
-                    <button class="btn-decision btn-grey" onclick="window.relaunchFullCheck()">Relancer</button>
-                </div>
-            </div>
+    </div>
+
+    <div id="stepMinusWrapper" class="hidden">
+        <button id="btnMinus025" class="btn-timer hidden" onclick="window.triggerDefogCheck()">TESTER -0.25 (1.5s)</button>
+        
+        <div id="decisionsMinus" class="decision-row-round hidden">
+            
+            <button class="btn-round btn-round-blue" onclick="window.decideMinus('worse')">
+                Sphère<br>testée
+            </button>
+
+            <button class="btn-round btn-round-outline" onclick="window.decideMinus('same')">
+                Pareil
+            </button>
+
+            <button class="btn-round btn-round-red" onclick="window.decideMinus('better')">
+                Préfère<br>(-0.25)
+            </button>
+
+            <button class="btn-relaunch-right" onclick="window.relaunchFullCheck()">Relancer</button>
         </div>
+    </div>
+
+</div>
 
         <div id="axisControls" class="response-area hidden">
             <button id="btnReplayAxis" class="btn-timer hidden" onclick="window.runJccSequence()">RÉPÉTER LA COMPARAISON</button>
