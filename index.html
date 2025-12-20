@@ -404,23 +404,41 @@
       width: 100%;
   }
  /* 5. Zone Boutons (Bas de l'écran - Centrée) */
+  /* 5. Zone Boutons (Bas de l'écran - Remontée) */
+  /* 5. Zone Boutons (Bas de l'écran - Sans bordure) */
   #zoneBoutons {
-      /* PREND TOUTE LA LARGEUR pour permettre un centrage parfait */
       grid-column: 1 / 21;
       
-      /* Tout en bas de la grille */
-      grid-row: 18 / 21;    
+      /* Position remontée (Ligne 17) */
+      grid-row: 17 / 21;     
       
       display: flex; 
-      justify-content: center; /* Centre les boutons horizontalement */
-      align-items: center;
+      justify-content: center; 
+      align-items: flex-start; /* Collé en haut */
+      padding-top: 10px;       
       
       /* COULEUR CRÈME */
       background: #FCF9F2; 
       
-      border-top: 1px solid rgba(0,0,0,0.05); /* Séparation subtile */
+      /* --- MODIFICATION : PLUS DE LIGNE GRISE --- */
+      border-top: none; 
+      /* ---------------------------------------- */
+      
       z-index: 100;
   }
+
+/* --- STYLE DE LA QUESTION "COMBIEN DE LETTRES LUES ?" --- */
+  /* --- STYLE DES QUESTIONS (Lettres lues ET Vitesse) --- */
+  #standardButtons p, #cadenceButtons p {
+      /* On force la même grande taille pour les deux */
+      font-size: 1.6rem !important; 
+      
+      color: #37474F !important; 
+      font-weight: 700 !important;
+      margin-bottom: 15px !important;
+      margin-top: 0 !important; /* Sécurité pour l'alignement */
+  }
+  
   /* --- LE SCHOBER (OVERLAY TOTAL) --- */
   #schoberStep {
       position: fixed;   /* Sort de la grille, se place par rapport à la fenêtre */
@@ -3535,7 +3553,16 @@ window.updateVisualAcuityDisplay = function(selectedValue, activeLetters) {
             // >>> C'EST ICI LE NOUVEAU CODE (L'ÉTIQUETTE) <<<
             const tag = document.createElement('div');
             tag.className = 'va-tag-value'; // Utilise le style CSS ajouté précédemment
-            tag.innerText = va;             // Affiche la valeur (ex: 0.4)
+            // --- MODIFICATION : FORCER LE "1.0" ---
+            // Si le chiffre est un entier (comme 1), on rajoute ".0"
+            if (Number.isInteger(va)) {
+                tag.innerText = va + ".0";
+            } else {
+                tag.innerText = va;
+            }
+            // --------------------------------------
+
+          // Affiche la valeur (ex: 0.4)
             rowDiv.appendChild(tag);        // Ajoute l'étiquette dans la ligne
             // >>> FIN DU NOUVEAU CODE <<<
             
