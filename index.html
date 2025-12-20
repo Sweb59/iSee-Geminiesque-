@@ -82,53 +82,85 @@
   /* 3. Données Techniques (Gauche Verticale ?) - À vous de régler */
   /* 3. Données Techniques (HORIZONTALE : Lignes 5 à 7) */
 /* 3. Données Techniques (GAUCHE : 75% Largeur) */
-/* 3. Données Techniques (GAUCHE : 75% Largeur) */
+/* 3. Données Techniques (GAUCHE : 60% Largeur) */
+/* 3. Données Techniques (GAUCHE : 60% Largeur) */
   #examDataStrip {
-      grid-column: 1 / 16;  /* 3/4 de la largeur */
-      grid-row: 5 / 17;     /* Toute la hauteur centrale */
+      grid-column: 1 / 13;  
+      grid-row: 5 / 17;     
       
       display: flex;
       flex-direction: row;
-      justify-content: space-between;
+      justify-content: center; 
       align-items: center;
-      gap: 5px;
+      gap: 15px; 
       
       background: transparent;
-      overflow: hidden;
+      overflow: visible;
       padding: 5px;
   }
   
-  /* --- STYLE DES CARTES (CONTENEURS) --- */
+  /* --- STYLE GÉNÉRAL DES CARTES (AR / Fronto) --- */
   .exam-data-strip .data-col { 
-      flex: 1; 
-      height: auto; min-height: 200px;
+      flex: 0 0 110px; 
+      height: auto; min-height: 180px;
+      
       display: flex; 
       flex-direction: column; 
       justify-content: center;
-      min-width: 0;
       
-      background: #FFFFFF;
-      /* C'EST ICI : BORDURE BLEU CYAN */
+      /* Couleur par défaut : CRÈME */
+      background: #FCF9F2; 
       border: 2px solid #04ABC6; 
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(4, 171, 198, 0.1); /* Légère ombre cyan */
+      box-shadow: 0 4px 6px rgba(4, 171, 198, 0.1);
   }
 
-  /* --- STYLE DES CELLULES (INPUTS) --- */
-  /* On supprime les bordures des champs à l'intérieur */
+  /* --- SPÉCIFIQUE : Carte Subjectif (Quand elle est INACTIVE) --- */
+  /* Elle prend le style du bouton "FERMÉ" (Marron foncé) */
+  .exam-data-strip .col-active {
+      background: #5D4037 !important; 
+      border-color: #5D4037 !important; 
+  }
+
+  /* Force la couleur du TEXTE à l'intérieur (Beige clair #D7CCC8) */
+  .exam-data-strip .col-active .col-title,
+  .exam-data-strip .col-active .val-input,
+  .exam-data-strip .col-active .val-big,
+  .exam-data-strip .col-active span {
+      color: #D7CCC8 !important;
+      border-bottom-color: rgba(215, 204, 200, 0.3);
+  }
+
+  /* --- SPÉCIFIQUE : Carte Subjectif (Quand elle est ACTIVE/HIGHLIGHT) --- */
+  /* Elle devient Cyan (#04ABC6) avec texte Blanc */
+  .exam-data-strip .col-active.highlight {
+      background: #04ABC6 !important;
+      border-color: #026070 !important;
+      transform: scale(1.05);
+  }
+  
+  /* Force le texte BLANC quand la carte est active */
+  .exam-data-strip .col-active.highlight .col-title,
+  .exam-data-strip .col-active.highlight .val-input,
+  .exam-data-strip .col-active.highlight .val-big {
+      color: #FFFFFF !important;
+  }
+
+  /* Suppression des bordures des inputs pour toutes les cartes */
   .exam-data-strip .data-col input, 
   .exam-data-strip .data-col .val-input {
-      border: none !important;  /* PLUS DE BORDURE */
+      border: none !important;
       background: transparent !important;
-      outline: none; /* Pas de contour au clic */
+      outline: none;
       box-shadow: none;
+      text-align: center;
   }
   
   .center-labels { display: none !important; }
 
-  /* 4. Zone Lettres (DROITE : 25% Largeur) */
+  /* 4. Zone Lettres (DROITE : Colonnes 16-21) */
   #zoneLettres {
-      grid-column: 16 / 21;  /* Le quart restant */
+      grid-column: 16 / 21; 
       grid-row: 5 / 17;      
       
       display: flex; 
@@ -137,7 +169,6 @@
       background: #FAFAFA;
       border-radius: 8px;
       border: 1px solid #EEEEEE;
-      margin-left: 5px;
   }
 
   /* 5. Zone Boutons (Bas Droite) */
