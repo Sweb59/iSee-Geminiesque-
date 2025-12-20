@@ -184,9 +184,55 @@
       box-shadow: none;
       text-align: center;
   }
-  
-  .center-labels { display: none !important; }
+/* --- COLONNE VERTÉBRALE (Style CARTE avec BORDURE) --- */
+  .center-labels {
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      
+      width: 70px;         
+      min-height: 180px;   /* Même hauteur que les cartes voisines */
+      margin: 0 5px;
+      
+      /* 1. FOND CRÈME */
+      background: #FCF9F2;           
+      
+      /* 2. BORDURE CYAN ÉPAISSE (4px) */
+      border: 4px solid #04ABC6;     
+      border-radius: 8px;            
+      
+      /* 3. EFFET DE VOLUME (Ombre) */
+      box-shadow: 0 4px 6px rgba(4, 171, 198, 0.1);
+  }
 
+  /* Espaceur invisible pour aligner S avec la 1ère valeur */
+  .center-labels .col-title {
+      height: 20px; 
+      margin-bottom: 8px;
+      visibility: hidden; 
+  }
+
+  /* Style des Cercles (S, C, A) à l'intérieur */
+  .center-labels .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      width: 40px;
+      height: 40px;
+      
+      margin: 4px 0; /* Espacement vertical */
+      
+      border-radius: 50%;
+      background-color: #FCF9F2; 
+      border: 3px solid #04ABC6; 
+      color: #04ABC6;            
+      
+      font-weight: 800;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.1rem;
+  }
   /* 4. Zone Lettres (DROITE : Colonnes 16-21) */
   #zoneLettres {
       grid-column: 16 / 21; 
@@ -692,6 +738,45 @@ input[id^="fronto"] {
 .modal-overlay {
     z-index: 20000 !important; 
 }  
+
+/* --- SÉCURITÉ AFFICHAGE COLONNE CENTRALE --- */
+.center-labels {
+    display: flex !important; /* Force l'affichage même si caché ailleurs */
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 60px;
+    margin: 0 5px;
+    padding-top: 5px;
+    background: transparent;
+}
+
+.center-labels .col-title {
+    height: 20px;
+    margin-bottom: 8px;
+    visibility: hidden;
+}
+
+.center-labels .label-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    border-radius: 50%;
+    
+    /* VOS COULEURS : Fond Crème, Bordure Cyan 4px */
+    background-color: #FCF9F2;
+    border: 4px solid #04ABC6; 
+    color: #04ABC6;
+    
+    font-weight: 800;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+}  
+
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -991,9 +1076,8 @@ input[id^="fronto"] {
         </div>
     </div>
 
-    <div id="examDataStrip" class="grid-item exam-data-strip hidden">
-         <div id="dataSection" style="display:none;"></div> 
-
+<div id="examDataStrip" class="grid-item exam-data-strip hidden">
+         
          <div class="data-col col-passive">
              <div class="col-title title-ra">AR</div>
              <div class="data-line"><input type="text" id="raOD_sph" class="val-input" readonly></div>
@@ -1016,12 +1100,11 @@ input[id^="fronto"] {
          </div>
 
          <div class="center-labels">
-            <div class="col-title" style="border:none; opacity:0;">&nbsp;</div>
+            <div class="col-title" style="border:none; visibility:hidden; height:20px;">&nbsp;</div>
             <div class="label-row">S</div>
             <div class="label-row">C</div>
             <div class="label-row">A</div>
          </div>
-
          <div id="subjDispOG" class="data-col col-active">
              <div class="col-title title-subj">&nbsp;</div>
              <div class="data-line"><span id="disp_subjOG_sph" class="val-input val-big">--</span></div>
@@ -1042,6 +1125,8 @@ input[id^="fronto"] {
              <div class="data-line"><input type="text" id="raOG_cyl" class="val-input" readonly></div>
              <div class="data-line"><input type="text" id="raOG_axe" class="val-input" readonly></div>
          </div>
+         
+         <div id="dataSection" style="display:none;"></div> 
     </div>
 
     <div id="zoneLettres" class="grid-item">
