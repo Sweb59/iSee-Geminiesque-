@@ -2636,47 +2636,75 @@ window.triggerFinalStart = function() {
 // 4. LANCEMENT TECHNIQUE
 window.launchExamSequence = function() {
     try {
+        // --- 1. RÉCUPÉRATION DES DONNÉES AR ---
         var raOD = { s: getVal('raOD_sph'), c: getVal('raOD_cyl'), a: getVal('raOD_axe') };
         var raOG = { s: getVal('raOG_sph'), c: getVal('raOG_cyl'), a: getVal('raOG_axe') };
 
-        // Normalisation des axes RA
+        // Normalisation des axes
         raOD.a = normalizeAxis(raOD.a);
         raOG.a = normalizeAxis(raOG.a);
 
-        var p = appState.initProfile;
+        // --- 2. DÉFINITION DYNAMIQUE DES RÔLES ---
+        // On utilise l'oeil défini par le Schober/Latéralité
+        var startEye = appState.firstEye; 
+        var otherEye = (startEye === 'OD') ? 'OG' : 'OD';
+        
+        // Pointeurs vers les données AR correspondantes
+        var raStart = (startEye === 'OD') ? raOD : raOG;
+        var raOther = (otherEye === 'OD') ? raOD : raOG;
 
-        // Check Myopie force profil (Redondance de sécurité)
-        if (p === '1' && (raOD.s < 0 || raOG.s < 0)) { p = '2'; setHTML('displayProfileName', '2'); }
+        var p = appState.initProfile;
         appState.profile = p;
 
-        // Calcul Brouillage
+        // --- 3. CALCUL DES SPHÈRES SELON LE PROFIL ---
         if (p === "3" || p === "3+") {
-            var fogOD = (raOD.s < 0) ? 2.00 : 2.25; var fogOG = (raOG.s < 0) ? 2.00 : 2.25;
-            appState.subj.OD = { sphere: raOD.s + fogOD, cyl: raOD.c, axe: raOD.a, va: "--" };
-            appState.subj.OG = { sphere: raOG.s + fogOG, cyl: raOG.c, axe: raOG.a, va: "--" };
-            appState.examPhase = "Sb0.2"; appState.targetVa = 0.06;
+            // PROFIL DIFFICILE : Brouillage fort des deux côtés
+            var fogStart = (raStart.s < 0) ? 2.00 : 2.25;
+            var fogOther = (raOther.s < 0) ? 2.00 : 2.25;
 
-            // LOGIQUE SPECIALE CYLINDRE -0.25 en Profil 3/3+
-            if (appState.subj.OD.cyl === -0.25) {
-                appState.memCyl.OD = { cyl: -0.25, axe: appState.subj.OD.axe };
-                appState.subj.OD.cyl = 0; appState.subj.OD.axe = 0;
+            appState.subj[startEye] = { sphere: raStart.s + fogStart, cyl: raStart.c, axe: raStart.a, va: "--" };
+            appState.subj[otherEye] = { sphere: raOther.s + fogOther, cyl: raOther.c, axe: raOther.a, va: "--" };
+            
+            appState.examPhase = "Sb0.2"; 
+            appState.targetVa = 0.06;
+
+            // Sécurité cylindre -0.25
+            if (appState.subj[startEye].cyl === -0.25) {
+                appState.memCyl[startEye] = { cyl: -0.25, axe: appState.subj[startEye].axe };
+                appState.subj[startEye].cyl = 0; appState.subj[startEye].axe = 0;
             }
-            if (appState.subj.OG.cyl === -0.25) {
-                appState.memCyl.OG = { cyl: -0.25, axe: appState.subj.OG.axe };
-                appState.subj.OG.cyl = 0; appState.subj.OG.axe = 0;
+            if (appState.subj[otherEye].cyl === -0.25) {
+                appState.memCyl[otherEye] = { cyl: -0.25, axe: appState.subj[otherEye].axe };
+                appState.subj[otherEye].cyl = 0; appState.subj[otherEye].axe = 0;
             }
+
         } else if (p === "2") {
-            var fogOD = (raOD.s < 0) ? 0.75 : 1.00; var fogOG = (raOG.s < 0) ? 0.75 : 1.00;
-            appState.subj.OD = { sphere: raOD.s + fogOD, cyl: raOD.c, axe: raOD.a, va: "--" };
-            appState.subj.OG = { sphere: raOG.s + fogOG, cyl: raOG.c, axe: raOG.a, va: "--" };
-            appState.examPhase = "Sb0.5"; appState.targetVa = 0.32;
-        } else {
-            appState.subj.OD = { sphere: raOD.s, cyl: raOD.c, axe: raOD.a, va: "--" };
-            appState.subj.OG = { sphere: raOG.s + 0.75, cyl: raOG.c, axe: raOG.a, va: "--" };
-            appState.saved_sb05 = { OD: raOD.s + 0.75, OG: raOG.s + 0.75 };
-            appState.examPhase = "Sb1.0"; appState.targetVa = 0.50;
+            // PROFIL MOYEN : Brouillage léger (TQS)
+            var fogStart = (raStart.s < 0) ? 0.75 : 1.00;
+            var fogOther = (raOther.s < 0) ? 0.75 : 1.00;
+
+            appState.subj[startEye] = { sphere: raStart.s + fogStart, cyl: raStart.c, axe: raStart.a, va: "--" };
+            appState.subj[otherEye] = { sphere: raOther.s + fogOther, cyl: raOther.c, axe: raOther.a, va: "--" };
+            
+            appState.examPhase = "Sb0.5"; 
+            appState.targetVa = 0.32;
+
+        } else { 
+            // PROFIL 1 (BON) : Oeil de départ à sa valeur AR, oeil passif brouillé
+            appState.subj[startEye] = { sphere: raStart.s, cyl: raStart.c, axe: raStart.a, va: "--" };
+            appState.subj[otherEye] = { sphere: raOther.s + 0.75, cyl: raOther.c, axe: raOther.a, va: "--" };
+            
+            // Sauvegarde pour le Bio-monoculaire ultérieur
+            appState.saved_sb05.OD = raOD.s + 0.75;
+            appState.saved_sb05.OG = raOG.s + 0.75;
+
+            appState.examPhase = "Sb1.0"; 
+            appState.targetVa = 0.50;
         }
 
+        // --- 4. INITIALISATION TECHNIQUE ---
+        appState.isRunning = true;
+        appState.activeEye = startEye; // L'examen commence sur l'oeil choisi
         // Init Exam
         appState.isRunning = true;
 
