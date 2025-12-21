@@ -1188,21 +1188,9 @@ input[id^="fronto"] {
     width: 90px; 
 }
 
-/* --- POSITIONNEMENT DES BOUTONS SUR LE PREMIER TIERS (ZONE DONNÉES) --- */
-/* --- POSITIONNEMENT DES BOUTONS --- */
-#decisionsPlus, #decisionsMinus { 
-    /* SUPPRIMEZ display: flex !important ici */
-    justify-content: flex-start !important;  
-    padding-left: 17.3% !important; 
-    transform: none !important;
-    width: 100% !important;
-    gap: 40px !important;
-}
-
-/* On définit le flex séparément pour qu'il ne se batte pas avec .hidden */
-#decisionsPlus:not(.hidden), #decisionsMinus:not(.hidden) {
-    display: flex !important;
-}
+/* 6. DÉCALAGES PRÉCIS */
+#decisionsPlus { transform: translateX(-401px); }
+#decisionsMinus { transform: translateX(-161px); }
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -1570,7 +1558,7 @@ input[id^="fronto"] {
     </div>
 <div id="schemaContainer">
     <div id="animTargetCircle" class="anim-bubble bubble-target">
-        Verres<br>(+0.25)
+        Verre<br>(+0.25)
     </div>
     <div id="animArrowLine" class="arrow-connector"></div>
 
@@ -1580,7 +1568,7 @@ input[id^="fronto"] {
 
     <div id="animArrowLineMinus" class="arrow-connector-right"></div>
     <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">
-        Verres<br>(-0.25)
+        Verre<br>(-0.25)
     </div>
 </div>  
   <div id="zoneLettres" class="grid-item">
@@ -1611,48 +1599,77 @@ input[id^="fronto"] {
     </svg>
 </button>
   
-    <div id="zoneBoutons" class="grid-item"><div id="standardButtons" class="response-area hidden">
+    <div id="zoneBoutons" class="grid-item">
+        <div id="standardButtons" class="response-area hidden">
             <p style="margin-bottom:10px; font-weight:600; color:var(--text-muted); margin-top:0;">Combien de lettres lues ?</p>
             <div id="btnContainer" class="btn-grid"></div>
         </div>
 
         <div id="cadenceButtons" class="response-area hidden">
             <p style="margin-bottom:10px; font-weight:600;">Vitesse de lecture ?</p>
+            
             <div style="display:flex; justify-content:center; gap:15px;">
                 <button class="btn-action btn-tortue" onclick="window.handleCadence('turtle')">
                     <span class="emoji-icon">🐢</span> Hésitant
                 </button>
+
                 <button class="btn-action btn-lapin" onclick="window.handleCadence('rabbit')">
                     <span class="emoji-icon">🐇</span> Fluide
                 </button>
             </div>
         </div>
+      <div id="checkPlusZone" class="response-area hidden">
+    
+    <div id="stepPlusWrapper">
+        <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
+        
+        <div id="decisionsPlus" class="decision-row-round hidden">
+            <button class="btn-round btn-round-green" onclick="window.decidePlus('better')">
+                Préfère<br>(+0.25)
+            </button>
 
-        <div id="checkPlusZone" class="response-area hidden">
-            <div id="stepPlusWrapper">
-                <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
-                <div id="decisionsPlus" class="decision-row-round hidden">
-                    <button class="btn-round btn-round-green" onclick="window.decidePlus('better')">Préfère<br>(+0.25)</button>
-                    <button class="btn-round btn-round-outline" onclick="window.decidePlus('same')">Pareil</button>
-                    <div class="btn-col-group">
-                        <button class="btn-round btn-round-blue" onclick="window.decidePlus('worse')">Sphère<br>testée</button>
-                        <button class="btn-round btn-round-grey" onclick="window.relaunchPlus()">Retester</button>
-                    </div>
-                </div>
-            </div>
+            <button class="btn-round btn-round-outline" onclick="window.decidePlus('same')">
+                Pareil
+            </button>
 
-            <div id="stepMinusWrapper" class="hidden">
-                <button id="btnMinus025" class="btn-timer hidden" onclick="window.triggerDefogCheck()">TESTER -0.25 (1.5s)</button>
-                <div id="decisionsMinus" class="decision-row-round hidden">
-                    <div class="btn-col-group">
-                        <button class="btn-round btn-round-blue" onclick="window.decideMinus('worse')">Sphère<br>testée</button>
-                        <button class="btn-round btn-round-grey" onclick="window.relaunchFullCheck()">Retester</button>
-                    </div>
-                    <button class="btn-round btn-round-outline" onclick="window.decideMinus('same')">Pareil</button>
-                    <button class="btn-round btn-round-red" onclick="window.decideMinus('better')">Préfère<br>(-0.25)</button>
-                </div>
+            <div class="btn-col-group">
+                <button class="btn-round btn-round-blue" onclick="window.decidePlus('worse')">
+                    Sphère<br>testée
+                </button>
+                
+                <button class="btn-round btn-round-grey" onclick="window.relaunchPlus()">
+                    Retester
+                </button>
             </div>
         </div>
+    </div>
+
+    <div id="stepMinusWrapper" class="hidden">
+        <button id="btnMinus025" class="btn-timer hidden" onclick="window.triggerDefogCheck()">TESTER -0.25 (1.5s)</button>
+        
+        <div id="decisionsMinus" class="decision-row-round hidden">
+            
+            <div class="btn-col-group">
+                <button class="btn-round btn-round-blue" onclick="window.decideMinus('worse')">
+                    Sphère<br>testée
+                </button>
+                
+                <button class="btn-round btn-round-grey" onclick="window.relaunchFullCheck()">
+                    Retester
+                </button>
+            </div>
+
+            <button class="btn-round btn-round-outline" onclick="window.decideMinus('same')">
+                Pareil
+            </button>
+
+            <button class="btn-round btn-round-red" onclick="window.decideMinus('better')">
+                Préfère<br>(-0.25)
+            </button>
+        </div>
+    </div>
+
+</div>
 
         <div id="axisControls" class="response-area hidden">
             <button id="btnReplayAxis" class="btn-timer hidden" onclick="window.runJccSequence()">RÉPÉTER LA COMPARAISON</button>
@@ -1806,20 +1823,9 @@ window.validatePatientID = function() {
     // Ferme Modal ID
     document.getElementById('modalPatientID').classList.add('hidden');
 
-    // Récupération des infos
+    // Remplissage partiel du résumé (Nom/Prénom)
     var nom = document.getElementById('inName').value || "-";
-    var prenom = document.getElementById('inForename').value || "";
-    var ageStr = getAgeFromDob(dob) + " ans";
-
-    // MISE À JOUR DU RÉSUMÉ (Structure finale pour le badge)
-    var summaryHTML = `
-        <div class="patient-info-block">
-            <span style="color:var(--primary);">${nom}</span> 
-            <span style="color:var(--primary);">${prenom}</span>
-            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
-        </div>
-        <div id="badgeProfilePlace"></div> 
-    `;
+    var summaryHTML = `<div class="summary-grid"><div class="summary-row"><span class="summary-lbl">Patient</span><span class="summary-val">${nom.toUpperCase()}</span></div></div>`;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
 
     // Ouvre Modal Choix Méthode (STEP 2)
@@ -2253,12 +2259,33 @@ window.forceProfileAndShowData = function(forcedProfile) {
 
 function revealDataSection(profile, inputsEnabled) {
     appState.initProfile = profile; 
-    
+    setHTML('displayProfileName', profile);
+
     // Fermeture Fenêtre Profil
     document.getElementById('modalProfileCalc').classList.add('hidden');
 
-    // Mise à jour du badge dans l'emplacement dédié
-    window.updateProfileBadge(profile);
+    // --- CORRECTION : AFFICHAGE LIGNE UNIQUE (SANS UID) ---
+    // --- BLOC MODIFIÉ : Affichage final avec Age ---
+    var nom = document.getElementById('inName').value || "-";
+    var prenom = document.getElementById('inForename').value || "";
+    var pColor = getProfileColor(profile);
+    
+    // Calcul de l'âge
+    var dob = document.getElementById('inDob').value;
+    var ageStr = dob ? getAgeFromDob(dob) + " ans" : "";
+
+    var summaryHTML = `
+        <div class="patient-info-block">
+            <span style="color:var(--primary);">${nom}</span> 
+            <span style="color:var(--primary);">${prenom}</span>
+            
+            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
+        </div>
+        
+        <div class="pat-profile-badge" style="background:${pColor}">${profile}</div>
+    `;
+    document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
+    // -------------------------------------------------------------
 
     document.getElementById('dataSection').classList.remove('hidden');
     toggleInputs('dataSection', inputsEnabled);
@@ -2266,6 +2293,7 @@ function revealDataSection(profile, inputsEnabled) {
     // Passage à l'installation
     window.openPositioningModal();
 }
+
 function getProfileColor(p) {
     if(p==='1') return '#26A69A'; if(p==='2') return '#42A5F5'; if(p==='3') return '#FFA726'; return '#EF5350';
 }
@@ -2323,44 +2351,46 @@ window.finishDataEntry = function() {
        var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0";
     });
 
-    // --- MISE À JOUR DU BANDEAU PATIENT ---
+    // --- NOUVEL AFFICHAGE PATIENT (LIGNE HAUTE) ---// --- NOUVEL AFFICHAGE (Barre du haut simplifiée) ---
+   // --- BLOC MODIFIÉ : Récupération Nom + Calcul Age ---
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "";
+    
+    // Calcul de l'âge
     var dob = document.getElementById('inDob').value;
     var ageStr = dob ? getAgeFromDob(dob) + " ans" : "";
 
     var summaryHTML = `
         <div class="patient-info-block">
-            <span style="color:var(--primary);">${nom.toUpperCase()}</span> 
+            <span style="color:var(--primary);">${nom}</span> 
             <span style="color:var(--primary);">${prenom}</span>
-            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none; margin-left:10px;">${ageStr}</span>
+            
+            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
         </div>
         <div id="badgeProfilePlace"></div> 
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-    
-    // Si le profil est déjà connu, on l'affiche
-    if(appState.initProfile) window.updateProfileBadge(appState.initProfile);
+    // Mise à jour badge si déjà connu
+    if(appState.initProfile) updateProfileBadge(appState.initProfile);
 
+    // --- ICI : ON CACHE LA BARRE DE DONNÉES (FLUX DEMANDÉ) ---
+    // On verrouille les inputs mais on garde la classe 'hidden'
     toggleInputs('examDataStrip', false); 
     document.getElementById('examDataStrip').classList.add('hidden');
 
     // Suite du flux
     document.getElementById('modalHandedness').classList.remove('hidden');
 };
+
 // Fonction utilitaire pour le badge couleur (A AJOUTER JUSTE APRES)
 // Fonction utilitaire pour le badge (Juste le chiffre rond)
 window.updateProfileBadge = function(p) {
     var color = getProfileColor(p);
+    // On n'écrit plus "PROFIL", juste "p" (le chiffre)
     var html = `<div class="pat-profile-badge" style="background:${color}">${p}</div>`;
     
     var el = document.getElementById('badgeProfilePlace');
-    // Si l'élément n'existe pas encore, on le cherche dans tout le document
-    if(!el) el = document.querySelector('#badgeProfilePlace'); 
-    
-    if(el) {
-        el.innerHTML = html;
-    }
+    if(el) el.innerHTML = html;
 };
 // UTILITAIRES DE SYNCHRO (MODALE <-> DASHBOARD)
 function syncDashboardToModal(type) {
@@ -2606,75 +2636,72 @@ window.triggerFinalStart = function() {
 // 4. LANCEMENT TECHNIQUE
 window.launchExamSequence = function() {
     try {
-        // --- 1. RÉCUPÉRATION DES DONNÉES AR ---
         var raOD = { s: getVal('raOD_sph'), c: getVal('raOD_cyl'), a: getVal('raOD_axe') };
         var raOG = { s: getVal('raOG_sph'), c: getVal('raOG_cyl'), a: getVal('raOG_axe') };
 
-        // Normalisation des axes
+        // Normalisation des axes RA
         raOD.a = normalizeAxis(raOD.a);
         raOG.a = normalizeAxis(raOG.a);
 
-        // --- 2. DÉFINITION DYNAMIQUE DES RÔLES ---
-        // On utilise l'oeil défini par le Schober/Latéralité
-        var startEye = appState.firstEye; 
-        var otherEye = (startEye === 'OD') ? 'OG' : 'OD';
-        
-        // Pointeurs vers les données AR correspondantes
-        var raStart = (startEye === 'OD') ? raOD : raOG;
-        var raOther = (otherEye === 'OD') ? raOD : raOG;
-
         var p = appState.initProfile;
+
+        // Check Myopie force profil (Redondance de sécurité)
+        if (p === '1' && (raOD.s < 0 || raOG.s < 0)) { p = '2'; setHTML('displayProfileName', '2'); }
         appState.profile = p;
 
-        // --- 3. CALCUL DES SPHÈRES SELON LE PROFIL ---
+        // Calcul Brouillage
         if (p === "3" || p === "3+") {
-            // PROFIL DIFFICILE : Brouillage fort des deux côtés
-            var fogStart = (raStart.s < 0) ? 2.00 : 2.25;
-            var fogOther = (raOther.s < 0) ? 2.00 : 2.25;
+            var fogOD = (raOD.s < 0) ? 2.00 : 2.25; var fogOG = (raOG.s < 0) ? 2.00 : 2.25;
+            appState.subj.OD = { sphere: raOD.s + fogOD, cyl: raOD.c, axe: raOD.a, va: "--" };
+            appState.subj.OG = { sphere: raOG.s + fogOG, cyl: raOG.c, axe: raOG.a, va: "--" };
+            appState.examPhase = "Sb0.2"; appState.targetVa = 0.06;
 
-            appState.subj[startEye] = { sphere: raStart.s + fogStart, cyl: raStart.c, axe: raStart.a, va: "--" };
-            appState.subj[otherEye] = { sphere: raOther.s + fogOther, cyl: raOther.c, axe: raOther.a, va: "--" };
-            
-            appState.examPhase = "Sb0.2"; 
-            appState.targetVa = 0.06;
-
-            // Sécurité cylindre -0.25
-            if (appState.subj[startEye].cyl === -0.25) {
-                appState.memCyl[startEye] = { cyl: -0.25, axe: appState.subj[startEye].axe };
-                appState.subj[startEye].cyl = 0; appState.subj[startEye].axe = 0;
+            // LOGIQUE SPECIALE CYLINDRE -0.25 en Profil 3/3+
+            if (appState.subj.OD.cyl === -0.25) {
+                appState.memCyl.OD = { cyl: -0.25, axe: appState.subj.OD.axe };
+                appState.subj.OD.cyl = 0; appState.subj.OD.axe = 0;
             }
-            if (appState.subj[otherEye].cyl === -0.25) {
-                appState.memCyl[otherEye] = { cyl: -0.25, axe: appState.subj[otherEye].axe };
-                appState.subj[otherEye].cyl = 0; appState.subj[otherEye].axe = 0;
+            if (appState.subj.OG.cyl === -0.25) {
+                appState.memCyl.OG = { cyl: -0.25, axe: appState.subj.OG.axe };
+                appState.subj.OG.cyl = 0; appState.subj.OG.axe = 0;
             }
-
         } else if (p === "2") {
-            // PROFIL MOYEN : Brouillage léger (TQS)
-            var fogStart = (raStart.s < 0) ? 0.75 : 1.00;
-            var fogOther = (raOther.s < 0) ? 0.75 : 1.00;
+            var fogOD = (raOD.s < 0) ? 0.75 : 1.00; var fogOG = (raOG.s < 0) ? 0.75 : 1.00;
+            appState.subj.OD = { sphere: raOD.s + fogOD, cyl: raOD.c, axe: raOD.a, va: "--" };
+            appState.subj.OG = { sphere: raOG.s + fogOG, cyl: raOG.c, axe: raOG.a, va: "--" };
+            appState.examPhase = "Sb0.5"; appState.targetVa = 0.32;
+        } else {
+            // --- CORRECTION LOGIQUE PROFIL 1 ---
+            // On identifie l'oeil de départ (celui choisi par Schober/Latéralité)
+            var startEye = appState.firstEye; 
+            var otherEye = (startEye === 'OD') ? 'OG' : 'OD';
 
-            appState.subj[startEye] = { sphere: raStart.s + fogStart, cyl: raStart.c, axe: raStart.a, va: "--" };
-            appState.subj[otherEye] = { sphere: raOther.s + fogOther, cyl: raOther.c, axe: raOther.a, va: "--" };
-            
-            appState.examPhase = "Sb0.5"; 
-            appState.targetVa = 0.32;
+            // L'oeil examiné (startEye) commence à sa valeur RA nette
+            appState.subj[startEye] = { 
+                sphere: (startEye === 'OD' ? raOD.s : raOG.s), 
+                cyl: (startEye === 'OD' ? raOD.c : raOG.c), 
+                axe: (startEye === 'OD' ? raOD.a : raOG.a), 
+                va: "--" 
+            };
 
-        } else { 
-            // PROFIL 1 (BON) : Oeil de départ à sa valeur AR, oeil passif brouillé
-            appState.subj[startEye] = { sphere: raStart.s, cyl: raStart.c, axe: raStart.a, va: "--" };
-            appState.subj[otherEye] = { sphere: raOther.s + 0.75, cyl: raOther.c, axe: raOther.a, va: "--" };
-            
-            // Sauvegarde pour le Bio-monoculaire ultérieur
-            appState.saved_sb05.OD = raOD.s + 0.75;
-            appState.saved_sb05.OG = raOG.s + 0.75;
+            // L'oeil passif (otherEye) est brouillé immédiatement de +0.75
+            appState.subj[otherEye] = { 
+                sphere: (otherEye === 'OD' ? raOD.s : raOG.s) + 0.75, 
+                cyl: (otherEye === 'OD' ? raOD.c : raOG.c), 
+                axe: (otherEye === 'OD' ? raOD.a : raOG.a), 
+                va: "--" 
+            };
+
+            // On initialise les mémoires de sécurité pour le Bio-Monoculaire
+            appState.saved_sb05 = { 
+                OD: raOD.s + 0.75, 
+                OG: raOG.s + 0.75 
+            };
 
             appState.examPhase = "Sb1.0"; 
             appState.targetVa = 0.50;
         }
 
-        // --- 4. INITIALISATION TECHNIQUE ---
-        appState.isRunning = true;
-        appState.activeEye = startEye; // L'examen commence sur l'oeil choisi
         // Init Exam
         appState.isRunning = true;
 
@@ -2872,33 +2899,20 @@ function initSphereCheckMinus() {
 }
 
 function initSphereCheckPlus(skipIntro) {
-    window.showBaseCircle();  
-    appState.examPhase = "SphereCheckPlus"; 
-    appState.baseSphereValue = getTargetEye().sphere;
-
-    // Masquage strict
+  window.showBaseCircle(); // <--- AJOUTER CETTE LIGNE  
+  appState.examPhase = "SphereCheckPlus"; appState.baseSphereValue = getTargetEye().sphere;
     document.getElementById('standardButtons').classList.add('hidden');
     document.getElementById('cadenceButtons').classList.add('hidden');
-    document.getElementById('decisionsPlus').classList.add('hidden'); 
-    document.getElementById('decisionsMinus').classList.add('hidden'); 
-    document.getElementById('btnPlus025').classList.add('hidden'); 
-    
-    // On affiche la zone parente
     document.getElementById('checkPlusZone').classList.remove('hidden');
     document.getElementById('stepPlusWrapper').classList.remove('hidden');
-
-    if(skipIntro) { 
-        nextLetters(); 
-        window.triggerFogCheck(); 
-    } else { 
-        setTimeout(function() { 
-            say("C'est pas mal, mais on va voir si on peut faire un peu mieux", function() { 
-                nextLetters(); 
-                window.triggerFogCheck(); 
-            }); 
-        }, 500); 
-    }
+    document.getElementById('decisionsPlus').classList.add('hidden');
+    document.getElementById('stepMinusWrapper').classList.add('hidden');
+    document.getElementById('decisionsMinus').classList.add('hidden');
+    document.getElementById('btnMinus025').disabled = true;
+    if(skipIntro) { nextLetters(); window.triggerFogCheck(); } 
+    else { setTimeout(function() { say("C'est pas mal, mais on va voir si on peut faire un peu mieux", function() { nextLetters(); window.triggerFogCheck(); }); }, 500); }
 }
+
 // --------------------------------------------------------------------------
 // --- LOGIQUE ASYNCHRONE ET TIMING PRÉCIS (Basé sur Analyse Vidéo) ---
 // --------------------------------------------------------------------------
@@ -2910,108 +2924,114 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // --- FONCTION TEST +0.25 (AVEC NOUVEAU SCHÉMA BULLES) ---
 // --- FONCTION TEST +0.25 (AVEC ANIMATION FLÈCHE GAUCHE) ---
 async function triggerFogCheck() {
+    // 1. Verrouillage
     updateLockUI(true);
-    // ON CACHE IMMÉDIATEMENT LES BOUTONS AU DÉBUT DU TEST
-    document.getElementById('decisionsPlus').classList.add('hidden');
-    document.getElementById('btnPlus025').classList.add('hidden');
-    
     document.getElementById('btnPlus025').disabled = true; 
+    
+    // 2. Préparation
     const target = getTargetEye();
-    
-    var arrow = document.getElementById('animArrowLine');
-    var targetBubble = document.getElementById('animTargetCircle');
+    target.sphere = appState.baseSphereValue; 
+    updateDisplay("Check (+): Référence...");
 
-    // 1. Référence
-    target.sphere = appState.baseSphereValue; 
-    updateDisplay("Check (+): Référence");
-    say("Vous préférez comme ça ?");
-    await wait(2500); 
+    // 3. Récupération des éléments du schéma
+    var arrow = document.getElementById('animArrowLine');
+    var targetBubble = document.getElementById('animTargetCircle');
 
-    // 2. Ajout du verre (Début Animation)
-    say("Ou si je fais ça ?");
-    await wait(400); 
-    if(arrow) arrow.classList.add('active');
-    if(targetBubble) targetBubble.classList.add('visible');
-    target.sphere = appState.baseSphereValue + 0.25;
-    updateDisplay("Check (+): +0.25");
+    // Etape 1 : Référence (Le cercle bleu est déjà là, fixe)
+    say("Vous préférez comme ça ?");
+    await wait(2500); 
 
-    // TEMPS D'EXPOSITION (3 secondes pour le +0.25)
-    await wait(3000); 
+    // Etape 2 : Ajout du verre (La flèche part vers la gauche)
+    say("Ou si je fais ça ?");
+    await wait(400); 
+    
+    // >>> ANIMATION ON : La flèche grandit, le cercle vert apparait au bout <<<
+    if(arrow) arrow.classList.add('active');
+    if(targetBubble) targetBubble.classList.add('visible');
+    // ---------------------------------------------------------------------
+    
+    target.sphere = appState.baseSphereValue + 0.25;
+    updateDisplay("Check (+): +0.25 ajouté");
 
-    // 3. Retrait visuel (Fin Animation)
-    say("Ou si je reviens ?");
-    if(targetBubble) targetBubble.classList.remove('visible');
-    if(arrow) arrow.classList.remove('active');
-    
-    // ATTENTE FIN ANIMATION RETRAIT (0.4s)
-    await wait(400); 
-    
-    // 4. PAUSE DE 1 SECONDE (Bulle bleue seule encore visible)
-    await wait(1000);
+    await wait(3000); 
 
-    // 5. DISPARITION TOTALE DES BULLES
-    window.hideBaseCircle();
-    target.sphere = appState.baseSphereValue; 
-    updateDisplay("Check (+): Décision");
+    // Etape 3 : Retrait (La flèche se rétracte)
+    say("Ou si je reviens ?");
+    await wait(400);
 
-    // 6. AFFICHAGE DES BOUTONS RÉPONSES
-    updateLockUI(false);
-    document.getElementById('decisionsPlus').classList.remove('hidden'); 
-    document.getElementById('btnPlus025').disabled = false;
-} 
+    // >>> ANIMATION OFF : Le vert et la flèche disparaissent <<<
+    if(targetBubble) targetBubble.classList.remove('visible');
+    if(arrow) arrow.classList.remove('active');
+    // --------------------------------------------------------
+
+    target.sphere = appState.baseSphereValue; 
+    updateDisplay("Check (+): Retour Base");
+  
+  // --- PAUSE AJOUTÉE ICI ---
+    await wait(500); 
+    // -------------------------
+
+    // 4. Déverrouillage
+    updateLockUI(false);
+    document.getElementById('decisionsPlus').classList.remove('hidden'); 
+    document.getElementById('btnPlus025').disabled = false;
+}
   // 3. Test du -0.25 (1.5s d'exposition environ - Ratio 1:2)
 // --- FONCTION TEST -0.25 (ANIMATION VERS LA DROITE) ---
 async function triggerDefogCheck() {
+    // 1. Verrouillage
     updateLockUI(true);
-    // ON CACHE IMMÉDIATEMENT LES BOUTONS AU DÉBUT DU TEST
-    document.getElementById('decisionsMinus').classList.add('hidden');
-    document.getElementById('btnMinus025').classList.add('hidden');
+    document.getElementById('btnMinus025').disabled = true; 
     
-    window.showBaseCircle(); 
-    document.getElementById('btnMinus025').disabled = true;
-    const target = getTargetEye();
-    target.sphere = appState.baseSphereValue;
+    // 2. Préparation
+    const target = getTargetEye();
+    target.sphere = appState.baseSphereValue;
+    updateDisplay("Check (-): Référence...");
 
-    var arrowMinus = document.getElementById('animArrowLineMinus');
-    var targetBubbleMinus = document.getElementById('animTargetCircleMinus');
+    // 3. Récupération des éléments du schéma MOINS
+    var arrowMinus = document.getElementById('animArrowLineMinus');
+    var targetBubbleMinus = document.getElementById('animTargetCircleMinus');
 
-    // Étape 1 : Référence
-    say("Vous préférez comme ça ?");
-    await wait(2500);
+    // Etape 1 : Référence
+    say("Vous préférez comme ça ?");
+    await wait(2500);
 
-    // Étape 2 : Ajout du verre -0.25 + Animation
-    say("Ou si je fais ça ?");
-    await wait(400);
-    if(arrowMinus) arrowMinus.classList.add('active');
-    if(targetBubbleMinus) targetBubbleMinus.classList.add('visible');
+    // Etape 2 : Ajout du verre (Déclenchement Animation Droite)
+    say("Ou si je fais ça ?");
+    await wait(400);
+    
+    // >>> ANIMATION ON : Flèche droite et Bulle Rouge <<<
+    if(arrowMinus) arrowMinus.classList.add('active');
+    if(targetBubbleMinus) targetBubbleMinus.classList.add('visible');
+    // ---------------------------------------------------
 
-    target.sphere = appState.baseSphereValue - 0.25;
-    updateDisplay("Check (-): -0.25 ajouté");
-    await wait(1500); 
+    target.sphere = appState.baseSphereValue - 0.25;
+    updateDisplay("Check (-): -0.25 ajouté");
 
-    // Étape 3 : Retrait + Parole finale
-    say("Ou si je reviens ?");
-    if(targetBubbleMinus) targetBubbleMinus.classList.remove('visible');
-    if(arrowMinus) arrowMinus.classList.remove('active');
+    await wait(1500); 
 
-    // ATTENTE FIN ANIMATION RETRAIT (0.4s)
-    await wait(400);
+    // Etape 3 : Retrait
+    say("Ou si je reviens ?");
+    await wait(400);
+    
+    // >>> ANIMATION OFF : Disparition <<<
+    if(targetBubbleMinus) targetBubbleMinus.classList.remove('visible');
+    if(arrowMinus) arrowMinus.classList.remove('active');
+    // -----------------------------------
 
-    // Étape 4 : Pause de 1 seconde (Bulle bleue seule encore visible)
-    await wait(1000);
+    target.sphere = appState.baseSphereValue; 
+    updateDisplay("Check (-): Retour Base");
 
-    // Étape 5 : Nettoyage des bulles (Disparition totale)
-    window.hideBaseCircle();
-    target.sphere = appState.baseSphereValue; 
-    updateDisplay("Check (-): Décision");
+  // --- PAUSE AJOUTÉE ICI ---
+    await wait(500); 
+    // -------------------------
 
-    // Étape 6 : Affichage des boutons et déverrouillage
-    updateLockUI(false);
-    document.getElementById('decisionsMinus').classList.remove('hidden'); 
-    document.getElementById('btnMinus025').disabled = false;
+    // 4. Déverrouillage
+    updateLockUI(false);
+    document.getElementById('decisionsMinus').classList.remove('hidden'); 
+    document.getElementById('btnMinus025').disabled = false;
 }
-  
-  window.relaunchPlus = function() {
+window.relaunchPlus = function() {
     if (appState.isSpeaking) return; // LOCK
     document.getElementById('decisionsPlus').classList.add('hidden');
 
@@ -3056,14 +3076,11 @@ window.decidePlus = function(choice) {
 }
 
 window.startAutomaticMinusCheck = function() {
-    window.showBaseCircle(); 
-    
-    // ON CACHE LES BOUTONS AVANT L'ANIMATION
-    document.getElementById('decisionsMinus').classList.add('hidden');
-    
     document.getElementById('stepMinusWrapper').classList.remove('hidden');
+    document.getElementById('decisionsMinus').classList.add('hidden');
     window.triggerDefogCheck();
 };
+
 window.relaunchFullCheck = function() { 
     if (appState.isSpeaking) return; // LOCK
 
@@ -4068,17 +4085,16 @@ window.showBaseCircle = function() {
 };
 
 window.hideBaseCircle = function() {
-    // 1. On cache la base bleue
     var base = document.getElementById('animBaseCircle');
     if(base) base.classList.remove('visible');
     
-    // 2. Nettoyage de sécurité pour le test PLUS (Gauche)
+    // Nettoyage animation PLUS (Gauche)
     var arrow = document.getElementById('animArrowLine');
     var target = document.getElementById('animTargetCircle');
     if(arrow) arrow.classList.remove('active');
     if(target) target.classList.remove('visible');
 
-    // 3. Nettoyage de sécurité pour le test MOINS (Droite)
+    // Nettoyage animation MOINS (Droite - NOUVEAU)
     var arrowM = document.getElementById('animArrowLineMinus');
     var targetM = document.getElementById('animTargetCircleMinus');
     if(arrowM) arrowM.classList.remove('active');
@@ -4091,4 +4107,3 @@ window.hideBaseCircle = function() {
   
 </body>
 </html>
-
