@@ -1189,25 +1189,19 @@ input[id^="fronto"] {
 }
 
 /* --- POSITIONNEMENT DES BOUTONS SUR LE PREMIER TIERS (ZONE DONNÉES) --- */
+/* --- POSITIONNEMENT DES BOUTONS --- */
 #decisionsPlus, #decisionsMinus { 
-    display: flex !important;
-    /* On aligne sur le début de l'écran */
-    justify-content: flex-start !important; 
-    /* On décale l'ensemble pour que le bouton central tombe dans la zone Subjectif */
+    /* SUPPRIMEZ display: flex !important ici */
+    justify-content: flex-start !important;  
     padding-left: 17.3% !important; 
     transform: none !important;
     width: 100% !important;
     gap: 40px !important;
 }
 
-/* On maintient la largeur fixe pour que le bouton "Pareil" reste le pivot */
-#decisionsPlus > button, 
-#decisionsPlus > .btn-col-group,
-#decisionsMinus > button, 
-#decisionsMinus > .btn-col-group {
-    width: 90px !important;
-    min-width: 90px !important;
-    flex-shrink: 0 !important;
+/* On définit le flex séparément pour qu'il ne se batte pas avec .hidden */
+#decisionsPlus:not(.hidden), #decisionsMinus:not(.hidden) {
+    display: flex !important;
 }
 </style>
 </head>
@@ -1812,9 +1806,20 @@ window.validatePatientID = function() {
     // Ferme Modal ID
     document.getElementById('modalPatientID').classList.add('hidden');
 
-    // Remplissage partiel du résumé (Nom/Prénom)
+    // Récupération des infos
     var nom = document.getElementById('inName').value || "-";
-    var summaryHTML = `<div class="summary-grid"><div class="summary-row"><span class="summary-lbl">Patient</span><span class="summary-val">${nom.toUpperCase()}</span></div></div>`;
+    var prenom = document.getElementById('inForename').value || "";
+    var ageStr = getAgeFromDob(dob) + " ans";
+
+    // MISE À JOUR DU RÉSUMÉ (Structure finale pour le badge)
+    var summaryHTML = `
+        <div class="patient-info-block">
+            <span style="color:var(--primary);">${nom}</span> 
+            <span style="color:var(--primary);">${prenom}</span>
+            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
+        </div>
+        <div id="badgeProfilePlace"></div> 
+    `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
 
     // Ouvre Modal Choix Méthode (STEP 2)
@@ -2248,33 +2253,12 @@ window.forceProfileAndShowData = function(forcedProfile) {
 
 function revealDataSection(profile, inputsEnabled) {
     appState.initProfile = profile; 
-    setHTML('displayProfileName', profile);
-
+    
     // Fermeture Fenêtre Profil
     document.getElementById('modalProfileCalc').classList.add('hidden');
 
-    // --- CORRECTION : AFFICHAGE LIGNE UNIQUE (SANS UID) ---
-    // --- BLOC MODIFIÉ : Affichage final avec Age ---
-    var nom = document.getElementById('inName').value || "-";
-    var prenom = document.getElementById('inForename').value || "";
-    var pColor = getProfileColor(profile);
-    
-    // Calcul de l'âge
-    var dob = document.getElementById('inDob').value;
-    var ageStr = dob ? getAgeFromDob(dob) + " ans" : "";
-
-    var summaryHTML = `
-        <div class="patient-info-block">
-            <span style="color:var(--primary);">${nom}</span> 
-            <span style="color:var(--primary);">${prenom}</span>
-            
-            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
-        </div>
-        
-        <div class="pat-profile-badge" style="background:${pColor}">${profile}</div>
-    `;
-    document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-    // -------------------------------------------------------------
+    // Mise à jour du badge dans l'emplacement dédié
+    window.updateProfileBadge(profile);
 
     document.getElementById('dataSection').classList.remove('hidden');
     toggleInputs('dataSection', inputsEnabled);
@@ -2282,7 +2266,6 @@ function revealDataSection(profile, inputsEnabled) {
     // Passage à l'installation
     window.openPositioningModal();
 }
-
 function getProfileColor(p) {
     if(p==='1') return '#26A69A'; if(p==='2') return '#42A5F5'; if(p==='3') return '#FFA726'; return '#EF5350';
 }
@@ -2340,46 +2323,44 @@ window.finishDataEntry = function() {
        var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0";
     });
 
-    // --- NOUVEL AFFICHAGE PATIENT (LIGNE HAUTE) ---// --- NOUVEL AFFICHAGE (Barre du haut simplifiée) ---
-   // --- BLOC MODIFIÉ : Récupération Nom + Calcul Age ---
+    // --- MISE À JOUR DU BANDEAU PATIENT ---
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "";
-    
-    // Calcul de l'âge
     var dob = document.getElementById('inDob').value;
     var ageStr = dob ? getAgeFromDob(dob) + " ans" : "";
 
     var summaryHTML = `
         <div class="patient-info-block">
-            <span style="color:var(--primary);">${nom}</span> 
+            <span style="color:var(--primary);">${nom.toUpperCase()}</span> 
             <span style="color:var(--primary);">${prenom}</span>
-            
-            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
+            <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none; margin-left:10px;">${ageStr}</span>
         </div>
         <div id="badgeProfilePlace"></div> 
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-    // Mise à jour badge si déjà connu
-    if(appState.initProfile) updateProfileBadge(appState.initProfile);
+    
+    // Si le profil est déjà connu, on l'affiche
+    if(appState.initProfile) window.updateProfileBadge(appState.initProfile);
 
-    // --- ICI : ON CACHE LA BARRE DE DONNÉES (FLUX DEMANDÉ) ---
-    // On verrouille les inputs mais on garde la classe 'hidden'
     toggleInputs('examDataStrip', false); 
     document.getElementById('examDataStrip').classList.add('hidden');
 
     // Suite du flux
     document.getElementById('modalHandedness').classList.remove('hidden');
 };
-
 // Fonction utilitaire pour le badge couleur (A AJOUTER JUSTE APRES)
 // Fonction utilitaire pour le badge (Juste le chiffre rond)
 window.updateProfileBadge = function(p) {
     var color = getProfileColor(p);
-    // On n'écrit plus "PROFIL", juste "p" (le chiffre)
     var html = `<div class="pat-profile-badge" style="background:${color}">${p}</div>`;
     
     var el = document.getElementById('badgeProfilePlace');
-    if(el) el.innerHTML = html;
+    // Si l'élément n'existe pas encore, on le cherche dans tout le document
+    if(!el) el = document.querySelector('#badgeProfilePlace'); 
+    
+    if(el) {
+        el.innerHTML = html;
+    }
 };
 // UTILITAIRES DE SYNCHRO (MODALE <-> DASHBOARD)
 function syncDashboardToModal(type) {
@@ -2891,20 +2872,33 @@ function initSphereCheckMinus() {
 }
 
 function initSphereCheckPlus(skipIntro) {
-  window.showBaseCircle(); // <--- AJOUTER CETTE LIGNE  
-  appState.examPhase = "SphereCheckPlus"; appState.baseSphereValue = getTargetEye().sphere;
+    window.showBaseCircle();  
+    appState.examPhase = "SphereCheckPlus"; 
+    appState.baseSphereValue = getTargetEye().sphere;
+
+    // Masquage strict
     document.getElementById('standardButtons').classList.add('hidden');
     document.getElementById('cadenceButtons').classList.add('hidden');
+    document.getElementById('decisionsPlus').classList.add('hidden'); 
+    document.getElementById('decisionsMinus').classList.add('hidden'); 
+    document.getElementById('btnPlus025').classList.add('hidden'); 
+    
+    // On affiche la zone parente
     document.getElementById('checkPlusZone').classList.remove('hidden');
     document.getElementById('stepPlusWrapper').classList.remove('hidden');
-    document.getElementById('decisionsPlus').classList.add('hidden');
-    document.getElementById('stepMinusWrapper').classList.add('hidden');
-    document.getElementById('decisionsMinus').classList.add('hidden');
-    document.getElementById('btnMinus025').disabled = true;
-    if(skipIntro) { nextLetters(); window.triggerFogCheck(); } 
-    else { setTimeout(function() { say("C'est pas mal, mais on va voir si on peut faire un peu mieux", function() { nextLetters(); window.triggerFogCheck(); }); }, 500); }
-}
 
+    if(skipIntro) { 
+        nextLetters(); 
+        window.triggerFogCheck(); 
+    } else { 
+        setTimeout(function() { 
+            say("C'est pas mal, mais on va voir si on peut faire un peu mieux", function() { 
+                nextLetters(); 
+                window.triggerFogCheck(); 
+            }); 
+        }, 500); 
+    }
+}
 // --------------------------------------------------------------------------
 // --- LOGIQUE ASYNCHRONE ET TIMING PRÉCIS (Basé sur Analyse Vidéo) ---
 // --------------------------------------------------------------------------
@@ -2916,9 +2910,13 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // --- FONCTION TEST +0.25 (AVEC NOUVEAU SCHÉMA BULLES) ---
 // --- FONCTION TEST +0.25 (AVEC ANIMATION FLÈCHE GAUCHE) ---
 async function triggerFogCheck() {
-    updateLockUI(true);
-    document.getElementById('btnPlus025').disabled = true; 
-    const target = getTargetEye();
+    updateLockUI(true);
+    // ON CACHE IMMÉDIATEMENT LES BOUTONS AU DÉBUT DU TEST
+    document.getElementById('decisionsPlus').classList.add('hidden');
+    document.getElementById('btnPlus025').classList.add('hidden');
+    
+    document.getElementById('btnPlus025').disabled = true; 
+    const target = getTargetEye();
     
     var arrow = document.getElementById('animArrowLine');
     var targetBubble = document.getElementById('animTargetCircle');
@@ -2964,10 +2962,13 @@ async function triggerFogCheck() {
   // 3. Test du -0.25 (1.5s d'exposition environ - Ratio 1:2)
 // --- FONCTION TEST -0.25 (ANIMATION VERS LA DROITE) ---
 async function triggerDefogCheck() {
-    // 1. Verrouillage et préparation
-    updateLockUI(true);
-    window.showBaseCircle(); // <--- FORCE L'AFFICHAGE DE LA BLEUE IMMÉDIATEMENT
-    document.getElementById('btnMinus025').disabled = true; 
+    updateLockUI(true);
+    // ON CACHE IMMÉDIATEMENT LES BOUTONS AU DÉBUT DU TEST
+    document.getElementById('decisionsMinus').classList.add('hidden');
+    document.getElementById('btnMinus025').classList.add('hidden');
+    
+    window.showBaseCircle(); 
+    document.getElementById('btnMinus025').disabled = true;
     const target = getTargetEye();
     target.sphere = appState.baseSphereValue;
 
@@ -3055,12 +3056,14 @@ window.decidePlus = function(choice) {
 }
 
 window.startAutomaticMinusCheck = function() {
-  window.showBaseCircle(); // <--- INDISPENSABLE ICI AUSSI
-    document.getElementById('stepMinusWrapper').classList.remove('hidden');
+    window.showBaseCircle(); 
+    
+    // ON CACHE LES BOUTONS AVANT L'ANIMATION
     document.getElementById('decisionsMinus').classList.add('hidden');
+    
+    document.getElementById('stepMinusWrapper').classList.remove('hidden');
     window.triggerDefogCheck();
 };
-
 window.relaunchFullCheck = function() { 
     if (appState.isSpeaking) return; // LOCK
 
