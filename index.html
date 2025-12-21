@@ -1188,9 +1188,27 @@ input[id^="fronto"] {
     width: 90px; 
 }
 
-/* 6. DÉCALAGES PRÉCIS */
-#decisionsPlus { transform: translateX(-29%); }
-#decisionsMinus { transform: translateX(10%); }
+/* --- POSITIONNEMENT DES BOUTONS SUR LE PREMIER TIERS (ZONE DONNÉES) --- */
+#decisionsPlus, #decisionsMinus { 
+    display: flex !important;
+    /* On aligne sur le début de l'écran */
+    justify-content: flex-start !important; 
+    /* On décale l'ensemble pour que le bouton central tombe dans la zone Subjectif */
+    padding-left: 17.3% !important; 
+    transform: none !important;
+    width: 100% !important;
+    gap: 40px !important;
+}
+
+/* On maintient la largeur fixe pour que le bouton "Pareil" reste le pivot */
+#decisionsPlus > button, 
+#decisionsPlus > .btn-col-group,
+#decisionsMinus > button, 
+#decisionsMinus > .btn-col-group {
+    width: 90px !important;
+    min-width: 90px !important;
+    flex-shrink: 0 !important;
+}
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -1599,77 +1617,48 @@ input[id^="fronto"] {
     </svg>
 </button>
   
-    <div id="zoneBoutons" class="grid-item">
-        <div id="standardButtons" class="response-area hidden">
+    <div id="zoneBoutons" class="grid-item"><div id="standardButtons" class="response-area hidden">
             <p style="margin-bottom:10px; font-weight:600; color:var(--text-muted); margin-top:0;">Combien de lettres lues ?</p>
             <div id="btnContainer" class="btn-grid"></div>
         </div>
 
         <div id="cadenceButtons" class="response-area hidden">
             <p style="margin-bottom:10px; font-weight:600;">Vitesse de lecture ?</p>
-            
             <div style="display:flex; justify-content:center; gap:15px;">
                 <button class="btn-action btn-tortue" onclick="window.handleCadence('turtle')">
                     <span class="emoji-icon">🐢</span> Hésitant
                 </button>
-
                 <button class="btn-action btn-lapin" onclick="window.handleCadence('rabbit')">
                     <span class="emoji-icon">🐇</span> Fluide
                 </button>
             </div>
         </div>
-      <div id="checkPlusZone" class="response-area hidden">
-    
-    <div id="stepPlusWrapper">
-        <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
-        
-        <div id="decisionsPlus" class="decision-row-round hidden">
-            <button class="btn-round btn-round-green" onclick="window.decidePlus('better')">
-                Préfère<br>(+0.25)
-            </button>
 
-            <button class="btn-round btn-round-outline" onclick="window.decidePlus('same')">
-                Pareil
-            </button>
-
-            <div class="btn-col-group">
-                <button class="btn-round btn-round-blue" onclick="window.decidePlus('worse')">
-                    Sphère<br>testée
-                </button>
-                
-                <button class="btn-round btn-round-grey" onclick="window.relaunchPlus()">
-                    Retester
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="stepMinusWrapper" class="hidden">
-        <button id="btnMinus025" class="btn-timer hidden" onclick="window.triggerDefogCheck()">TESTER -0.25 (1.5s)</button>
-        
-        <div id="decisionsMinus" class="decision-row-round hidden">
-            
-            <div class="btn-col-group">
-                <button class="btn-round btn-round-blue" onclick="window.decideMinus('worse')">
-                    Sphère<br>testée
-                </button>
-                
-                <button class="btn-round btn-round-grey" onclick="window.relaunchFullCheck()">
-                    Retester
-                </button>
+        <div id="checkPlusZone" class="response-area hidden">
+            <div id="stepPlusWrapper">
+                <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
+                <div id="decisionsPlus" class="decision-row-round hidden">
+                    <button class="btn-round btn-round-green" onclick="window.decidePlus('better')">Préfère<br>(+0.25)</button>
+                    <button class="btn-round btn-round-outline" onclick="window.decidePlus('same')">Pareil</button>
+                    <div class="btn-col-group">
+                        <button class="btn-round btn-round-blue" onclick="window.decidePlus('worse')">Sphère<br>testée</button>
+                        <button class="btn-round btn-round-grey" onclick="window.relaunchPlus()">Retester</button>
+                    </div>
+                </div>
             </div>
 
-            <button class="btn-round btn-round-outline" onclick="window.decideMinus('same')">
-                Pareil
-            </button>
-
-            <button class="btn-round btn-round-red" onclick="window.decideMinus('better')">
-                Préfère<br>(-0.25)
-            </button>
+            <div id="stepMinusWrapper" class="hidden">
+                <button id="btnMinus025" class="btn-timer hidden" onclick="window.triggerDefogCheck()">TESTER -0.25 (1.5s)</button>
+                <div id="decisionsMinus" class="decision-row-round hidden">
+                    <div class="btn-col-group">
+                        <button class="btn-round btn-round-blue" onclick="window.decideMinus('worse')">Sphère<br>testée</button>
+                        <button class="btn-round btn-round-grey" onclick="window.relaunchFullCheck()">Retester</button>
+                    </div>
+                    <button class="btn-round btn-round-outline" onclick="window.decideMinus('same')">Pareil</button>
+                    <button class="btn-round btn-round-red" onclick="window.decideMinus('better')">Préfère<br>(-0.25)</button>
+                </div>
+            </div>
         </div>
-    </div>
-
-</div>
 
         <div id="axisControls" class="response-area hidden">
             <button id="btnReplayAxis" class="btn-timer hidden" onclick="window.runJccSequence()">RÉPÉTER LA COMPARAISON</button>
@@ -2927,114 +2916,101 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // --- FONCTION TEST +0.25 (AVEC NOUVEAU SCHÉMA BULLES) ---
 // --- FONCTION TEST +0.25 (AVEC ANIMATION FLÈCHE GAUCHE) ---
 async function triggerFogCheck() {
-    // 1. Verrouillage
-    updateLockUI(true);
-    document.getElementById('btnPlus025').disabled = true; 
-    
-    // 2. Préparation
-    const target = getTargetEye();
-    target.sphere = appState.baseSphereValue; 
-    updateDisplay("Check (+): Référence...");
+    updateLockUI(true);
+    document.getElementById('btnPlus025').disabled = true; 
+    const target = getTargetEye();
+    
+    var arrow = document.getElementById('animArrowLine');
+    var targetBubble = document.getElementById('animTargetCircle');
 
-    // 3. Récupération des éléments du schéma
-    var arrow = document.getElementById('animArrowLine');
-    var targetBubble = document.getElementById('animTargetCircle');
+    // 1. Référence
+    target.sphere = appState.baseSphereValue; 
+    updateDisplay("Check (+): Référence");
+    say("Vous préférez comme ça ?");
+    await wait(2500); 
 
-    // Etape 1 : Référence (Le cercle bleu est déjà là, fixe)
-    say("Vous préférez comme ça ?");
-    await wait(2500); 
+    // 2. Ajout du verre (Début Animation)
+    say("Ou si je fais ça ?");
+    await wait(400); 
+    if(arrow) arrow.classList.add('active');
+    if(targetBubble) targetBubble.classList.add('visible');
+    target.sphere = appState.baseSphereValue + 0.25;
+    updateDisplay("Check (+): +0.25");
 
-    // Etape 2 : Ajout du verre (La flèche part vers la gauche)
-    say("Ou si je fais ça ?");
-    await wait(400); 
-    
-    // >>> ANIMATION ON : La flèche grandit, le cercle vert apparait au bout <<<
-    if(arrow) arrow.classList.add('active');
-    if(targetBubble) targetBubble.classList.add('visible');
-    // ---------------------------------------------------------------------
-    
-    target.sphere = appState.baseSphereValue + 0.25;
-    updateDisplay("Check (+): +0.25 ajouté");
+    // TEMPS D'EXPOSITION (3 secondes pour le +0.25)
+    await wait(3000); 
 
-    await wait(3000); 
+    // 3. Retrait visuel (Fin Animation)
+    say("Ou si je reviens ?");
+    if(targetBubble) targetBubble.classList.remove('visible');
+    if(arrow) arrow.classList.remove('active');
+    
+    // ATTENTE FIN ANIMATION RETRAIT (0.4s)
+    await wait(400); 
+    
+    // 4. PAUSE DE 1 SECONDE (Bulle bleue seule encore visible)
+    await wait(1000);
 
-    // Etape 3 : Retrait (La flèche se rétracte)
-    say("Ou si je reviens ?");
-    await wait(400);
+    // 5. DISPARITION TOTALE DES BULLES
+    window.hideBaseCircle();
+    target.sphere = appState.baseSphereValue; 
+    updateDisplay("Check (+): Décision");
 
-    // >>> ANIMATION OFF : Le vert et la flèche disparaissent <<<
-    if(targetBubble) targetBubble.classList.remove('visible');
-    if(arrow) arrow.classList.remove('active');
-    // --------------------------------------------------------
-
-    target.sphere = appState.baseSphereValue; 
-    updateDisplay("Check (+): Retour Base");
-  
-  // --- PAUSE AJOUTÉE ICI ---
-    await wait(500); 
-    // -------------------------
-
-    // 4. Déverrouillage
-    updateLockUI(false);
-    document.getElementById('decisionsPlus').classList.remove('hidden'); 
-    document.getElementById('btnPlus025').disabled = false;
-}
+    // 6. AFFICHAGE DES BOUTONS RÉPONSES
+    updateLockUI(false);
+    document.getElementById('decisionsPlus').classList.remove('hidden'); 
+    document.getElementById('btnPlus025').disabled = false;
+} 
   // 3. Test du -0.25 (1.5s d'exposition environ - Ratio 1:2)
 // --- FONCTION TEST -0.25 (ANIMATION VERS LA DROITE) ---
 async function triggerDefogCheck() {
-    // 1. Verrouillage
-    updateLockUI(true);
-    document.getElementById('btnMinus025').disabled = true; 
-    
-    // 2. Préparation
-    const target = getTargetEye();
-    target.sphere = appState.baseSphereValue;
-    updateDisplay("Check (-): Référence...");
+    // 1. Verrouillage et préparation
+    updateLockUI(true);
+    window.showBaseCircle(); // <--- FORCE L'AFFICHAGE DE LA BLEUE IMMÉDIATEMENT
+    document.getElementById('btnMinus025').disabled = true; 
+    const target = getTargetEye();
+    target.sphere = appState.baseSphereValue;
 
-    // 3. Récupération des éléments du schéma MOINS
-    var arrowMinus = document.getElementById('animArrowLineMinus');
-    var targetBubbleMinus = document.getElementById('animTargetCircleMinus');
+    var arrowMinus = document.getElementById('animArrowLineMinus');
+    var targetBubbleMinus = document.getElementById('animTargetCircleMinus');
 
-    // Etape 1 : Référence
-    say("Vous préférez comme ça ?");
-    await wait(2500);
+    // Étape 1 : Référence
+    say("Vous préférez comme ça ?");
+    await wait(2500);
 
-    // Etape 2 : Ajout du verre (Déclenchement Animation Droite)
-    say("Ou si je fais ça ?");
-    await wait(400);
-    
-    // >>> ANIMATION ON : Flèche droite et Bulle Rouge <<<
-    if(arrowMinus) arrowMinus.classList.add('active');
-    if(targetBubbleMinus) targetBubbleMinus.classList.add('visible');
-    // ---------------------------------------------------
+    // Étape 2 : Ajout du verre -0.25 + Animation
+    say("Ou si je fais ça ?");
+    await wait(400);
+    if(arrowMinus) arrowMinus.classList.add('active');
+    if(targetBubbleMinus) targetBubbleMinus.classList.add('visible');
 
-    target.sphere = appState.baseSphereValue - 0.25;
-    updateDisplay("Check (-): -0.25 ajouté");
+    target.sphere = appState.baseSphereValue - 0.25;
+    updateDisplay("Check (-): -0.25 ajouté");
+    await wait(1500); 
 
-    await wait(1500); 
+    // Étape 3 : Retrait + Parole finale
+    say("Ou si je reviens ?");
+    if(targetBubbleMinus) targetBubbleMinus.classList.remove('visible');
+    if(arrowMinus) arrowMinus.classList.remove('active');
 
-    // Etape 3 : Retrait
-    say("Ou si je reviens ?");
-    await wait(400);
-    
-    // >>> ANIMATION OFF : Disparition <<<
-    if(targetBubbleMinus) targetBubbleMinus.classList.remove('visible');
-    if(arrowMinus) arrowMinus.classList.remove('active');
-    // -----------------------------------
+    // ATTENTE FIN ANIMATION RETRAIT (0.4s)
+    await wait(400);
 
-    target.sphere = appState.baseSphereValue; 
-    updateDisplay("Check (-): Retour Base");
+    // Étape 4 : Pause de 1 seconde (Bulle bleue seule encore visible)
+    await wait(1000);
 
-  // --- PAUSE AJOUTÉE ICI ---
-    await wait(500); 
-    // -------------------------
+    // Étape 5 : Nettoyage des bulles (Disparition totale)
+    window.hideBaseCircle();
+    target.sphere = appState.baseSphereValue; 
+    updateDisplay("Check (-): Décision");
 
-    // 4. Déverrouillage
-    updateLockUI(false);
-    document.getElementById('decisionsMinus').classList.remove('hidden'); 
-    document.getElementById('btnMinus025').disabled = false;
+    // Étape 6 : Affichage des boutons et déverrouillage
+    updateLockUI(false);
+    document.getElementById('decisionsMinus').classList.remove('hidden'); 
+    document.getElementById('btnMinus025').disabled = false;
 }
-window.relaunchPlus = function() {
+  
+  window.relaunchPlus = function() {
     if (appState.isSpeaking) return; // LOCK
     document.getElementById('decisionsPlus').classList.add('hidden');
 
@@ -3079,6 +3055,7 @@ window.decidePlus = function(choice) {
 }
 
 window.startAutomaticMinusCheck = function() {
+  window.showBaseCircle(); // <--- INDISPENSABLE ICI AUSSI
     document.getElementById('stepMinusWrapper').classList.remove('hidden');
     document.getElementById('decisionsMinus').classList.add('hidden');
     window.triggerDefogCheck();
@@ -4088,16 +4065,17 @@ window.showBaseCircle = function() {
 };
 
 window.hideBaseCircle = function() {
+    // 1. On cache la base bleue
     var base = document.getElementById('animBaseCircle');
     if(base) base.classList.remove('visible');
     
-    // Nettoyage animation PLUS (Gauche)
+    // 2. Nettoyage de sécurité pour le test PLUS (Gauche)
     var arrow = document.getElementById('animArrowLine');
     var target = document.getElementById('animTargetCircle');
     if(arrow) arrow.classList.remove('active');
     if(target) target.classList.remove('visible');
 
-    // Nettoyage animation MOINS (Droite - NOUVEAU)
+    // 3. Nettoyage de sécurité pour le test MOINS (Droite)
     var arrowM = document.getElementById('animArrowLineMinus');
     var targetM = document.getElementById('animTargetCircleMinus');
     if(arrowM) arrowM.classList.remove('active');
@@ -4110,3 +4088,4 @@ window.hideBaseCircle = function() {
   
 </body>
 </html>
+
