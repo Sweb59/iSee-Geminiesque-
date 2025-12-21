@@ -2671,10 +2671,35 @@ window.launchExamSequence = function() {
             appState.subj.OG = { sphere: raOG.s + fogOG, cyl: raOG.c, axe: raOG.a, va: "--" };
             appState.examPhase = "Sb0.5"; appState.targetVa = 0.32;
         } else {
-            appState.subj.OD = { sphere: raOD.s, cyl: raOD.c, axe: raOD.a, va: "--" };
-            appState.subj.OG = { sphere: raOG.s + 0.75, cyl: raOG.c, axe: raOG.a, va: "--" };
-            appState.saved_sb05 = { OD: raOD.s + 0.75, OG: raOG.s + 0.75 };
-            appState.examPhase = "Sb1.0"; appState.targetVa = 0.50;
+            // --- CORRECTION LOGIQUE PROFIL 1 ---
+            // On identifie l'oeil de départ (celui choisi par Schober/Latéralité)
+            var startEye = appState.firstEye; 
+            var otherEye = (startEye === 'OD') ? 'OG' : 'OD';
+
+            // L'oeil examiné (startEye) commence à sa valeur RA nette
+            appState.subj[startEye] = { 
+                sphere: (startEye === 'OD' ? raOD.s : raOG.s), 
+                cyl: (startEye === 'OD' ? raOD.c : raOG.c), 
+                axe: (startEye === 'OD' ? raOD.a : raOG.a), 
+                va: "--" 
+            };
+
+            // L'oeil passif (otherEye) est brouillé immédiatement de +0.75
+            appState.subj[otherEye] = { 
+                sphere: (otherEye === 'OD' ? raOD.s : raOG.s) + 0.75, 
+                cyl: (otherEye === 'OD' ? raOD.c : raOG.c), 
+                axe: (otherEye === 'OD' ? raOD.a : raOG.a), 
+                va: "--" 
+            };
+
+            // On initialise les mémoires de sécurité pour le Bio-Monoculaire
+            appState.saved_sb05 = { 
+                OD: raOD.s + 0.75, 
+                OG: raOG.s + 0.75 
+            };
+
+            appState.examPhase = "Sb1.0"; 
+            appState.targetVa = 0.50;
         }
 
         // Init Exam
