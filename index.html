@@ -1833,17 +1833,7 @@ window.validatePatientID = function() {
 };
 // --- CLOCK & CHRONO ---
 window.initClock = function() {
-    setInterval(function() {
-        var now = new Date();
-        // Date format: "Dimanche 14 Décembre"
-        var options = { weekday: 'long', day: 'numeric', month: 'long' };
-        var dateStr = now.toLocaleDateString('fr-FR', options);
-        document.getElementById('displayDate').innerText = dateStr;
-
-        // Time format: "14:30"
-        var timeStr = now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-        document.getElementById('displayTime').innerText = timeStr;
-    }, 1000);
+    // Supprimé car les IDs displayDate et displayTime n'existent pas dans le HTML
 };
 
 var chronoInterval = null;
@@ -2217,8 +2207,8 @@ var appState = {
     sb10_line_defog: 0, 
     safety_mode: false,
     safety_mem_letters: 0,
-    hasRestartedSb10: false, // Flag anti-boucle
-    // ----------------------------------
+    hasRestartedSb10: false,    
+    pendingSb02SecondEye: false, // Nouveau : indique si O2 doit encore faire sa Sb0.2
     handednessEye: 'OD', // Valeur par défaut
     pendingSchober: null, // Stockage temporaire du choix Schober
 
@@ -2738,23 +2728,73 @@ function getTargetEye() { return (appState.activeEye === 'OD') ? appState.subj.O
 
 function validateSb02() {
     var eye = appState.activeEye;
-    if (eye === 'OD') appState.sb02_OD_ok = true; else appState.sb02_OG_ok = true;
-    say("On va de l'autre côté.", function() {
-        if (appState.sb02_OD_ok && appState.sb02_OG_ok) { 
-            // TOUT LE MONDE A FINI SB0.2 -> PASSAGE A SB0.5
-            initSb05(); 
-        } 
-        else {
-            var nextEye = (eye === 'OD') ? 'OG' : 'OD'; appState.activeEye = nextEye;
-            appState.defoggedInZone = false; appState.vaIndex = appState.startVaIndex;
-            appState.letterIndex = 0; updateDisplay("Recherche Sb0.2 (" + nextEye + ")");
+    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
-            // AJOUT: Relance vocale après changement d'œil
+    // 1. On marque la Sb0.2 comme acquise pour l'œil actuel
+    if (eye === 'OD') appState.sb02_OD_ok = true; else appState.sb02_OG_ok = true;
+
+    // 2. CAS DU SUCCÈS À 0.25 (Saut immédiat vers Sb0.5)
+    if (currentVA === 0.25) {
+        if (eye === 'OD') appState.seen025_OD = true; else appState.seen025_OG = true;
+        
+        // Si c'est le PREMIER œil qui réussit, on active le flag de rattrapage pour plus tard
+        if (eye === appState.firstEye) {
+            appState.pendingSb02SecondEye = true;
+        }
+
+        say("Très bien, vous voyez parfaitement. On continue sur cet œil.", function() {
+            // On reste sur le MÊME œil (celui qui vient de lire 0.25) et on passe en Sb0.5
+            appState.examPhase = "Sb0.5";
+            appState.tqs_attempted_06 = false;
+            appState.count06_validations = 0;
+            appState.tqsFogCount = 0;
+            setVaToIndexClosest(0.32); 
+            
+            updateDisplay("Saut vers Sb0.5 (" + eye + ") - Pas de débrouillage");
+            say(window.getRandomPrompt());
+        });
+        return; // On sort ici pour ne pas exécuter la suite (pas de changement d'œil)
+    }
+
+    // 3. CAS NORMAL (Validation classique à 0.20 ou 0.25 après débrouillage)
+    if (appState.pendingSb02SecondEye && eye === appState.firstEye) {
+        // Si on a fini la Sb0.2 du premier œil normalement, on saute quand même en Sb0.5
+        // (Note : ce cas arrive si le premier oeil n'a PAS lu 0.25 mais que vous voulez forcer le flux)
+        // Mais selon vos règles, on va normalement à l'autre oeil.
+    }
+
+    say("On va de l'autre côté.", function() {
+        // Si les deux yeux ont fini leur Sb0.2, on lance la phase Sb0.5 globale
+        if (appState.sb02_OD_ok && appState.sb02_OG_ok) { 
+            initSb05(); 
+        } else {
+            // Sinon, on bascule normalement sur le second œil pour sa Sb0.2
+            var nextEye = (eye === 'OD') ? 'OG' : 'OD';
+            appState.activeEye = nextEye;
+            appState.defoggedInZone = false;
+            appState.vaIndex = appState.startVaIndex;
+            appState.letterIndex = 0;
+            updateDisplay("Recherche Sb0.2 (" + nextEye + ")");
             say(window.getRandomPrompt());
         }
     });
 }
 
+    // Flux normal de transition vers l'autre oeil
+    say("On va de l'autre côté.", function() {
+        if (appState.sb02_OD_ok && appState.sb02_OG_ok) { 
+            initSb05(); 
+        } else {
+            var nextEye = (eye === 'OD') ? 'OG' : 'OD';
+            appState.activeEye = nextEye;
+            appState.defoggedInZone = false;
+            appState.vaIndex = appState.startVaIndex;
+            appState.letterIndex = 0;
+            updateDisplay("Recherche Sb0.2 (" + nextEye + ")");
+            say(window.getRandomPrompt());
+        }
+    });
+}
 function initSb05() {
     // ALERT REMOVED FOR FLUID TRANSITION
     // alert("Début Recherche Sb0.5 (T.Q.S).\nRetour au premier œil (" + appState.firstEye + ").");
@@ -2807,29 +2847,48 @@ function validateSb05() {
     var eye = appState.activeEye;
     if (eye === 'OD') appState.sb05_OD_ok = true; else appState.sb05_OG_ok = true;
 
-    // Sauvegarde de la Sb0.5 trouvée
+    // Sauvegarde
     if(eye === 'OD') appState.saved_sb05.OD = appState.subj.OD.sphere; 
     else appState.saved_sb05.OG = appState.subj.OG.sphere;
 
-    say("On va de l'autre côté.", function() {
-        if (appState.sb05_OD_ok && appState.sb05_OG_ok) { 
-            initSb10(); 
-        } 
-        else {
-            var nextEye = (eye === 'OD') ? 'OG' : 'OD'; 
+    // Logique de transition
+    if (appState.pendingSb02SecondEye) {
+        // On doit retourner faire la Sb0.2 du second oeil
+        appState.pendingSb02SecondEye = false; 
+        var nextEye = (eye === 'OD') ? 'OG' : 'OD';
+        
+        say("Parfait pour cet œil. Maintenant, je m'occupe de l'autre.", function() {
             appState.activeEye = nextEye;
-            // Pas de recalcul de sphère ici (déjà fait en global), juste reset variables TQS
-            appState.count06_validations = 0; 
-            appState.tqs_attempted_06 = false;
-            appState.tqsFogCount = 0;
+            appState.examPhase = "Sb0.2"; // Retour en Sb0.2
+            appState.vaIndex = appState.startVaIndex; // On remet l'acuité de départ (0.06)
+            appState.letterIndex = 0;
+            appState.defoggedInZone = false;
+            
+            // On applique le brouillage initial Sb0.2 sur O2
+            var raSph = (nextEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
+            var fog = (raSph < 0) ? 2.00 : 2.25;
+            appState.subj[nextEye].sphere = raSph + fog;
 
-            setVaToIndexClosest(0.32); 
-            updateDisplay("Sb0.5 (" + nextEye + ") : Départ 0.3");
-
-            // AJOUT: Relance vocale après changement d'œil
+            updateDisplay("Rattrapage Sb0.2 (" + nextEye + ")");
             say(window.getRandomPrompt());
-        }
-    });
+        });
+    } else {
+        // Flux normal
+        say("On va de l'autre côté.", function() {
+            if (appState.sb05_OD_ok && appState.sb05_OG_ok) { 
+                initSb10(); 
+            } else {
+                var nextEye = (eye === 'OD') ? 'OG' : 'OD'; 
+                appState.activeEye = nextEye;
+                appState.count06_validations = 0; 
+                appState.tqs_attempted_06 = false;
+                appState.tqsFogCount = 0;
+                setVaToIndexClosest(0.32); 
+                updateDisplay("Sb0.5 (" + nextEye + ") : Départ 0.3");
+                say(window.getRandomPrompt());
+            }
+        });
+    }
 }
 
 function initSb10() {
