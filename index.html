@@ -1113,38 +1113,38 @@ input[id^="fronto"] {
 .exam-data-strip .col-bio-inactive span {
     color: #00838F !important; 
 }
+
 /* ========================================================= */
-/* === BOUTONS RÉPONSES (VERTICALISATION RELANCER) ===       */
+/* === NOUVEAUX BOUTONS & STYLE RETESTER (FINAL) ===         */
 /* ========================================================= */
 
-/* 1. FORCE LE PARENT A PASSER DEVANT L'ANIMATION (CRUCIAL) */
+/* 1. Z-INDEX PARENT (CRUCIAL) */
 #zoneBoutons {
     z-index: 500 !important;
     position: relative;
 }
 
-/* 2. Conteneur principal des boutons */
+/* 2. Conteneur principal (Hauteur ajustée -85px) */
 #checkPlusZone {
     position: relative;
     width: 100%;
-    /* On remonte pour chevaucher l'animation */
-    margin-top: -128px; 
+    margin-top: -127px; 
     pointer-events: auto;
     z-index: 600 !important;
 }
 
-/* Ligne des boutons : Alignement HAUT (flex-start) */
+/* Ligne des boutons (Alignement haut) */
 .decision-row-round {
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Important pour l'alignement vertical */
+    align-items: flex-start; 
     gap: 30px;
     width: 100%;
     position: relative;
     padding-top: 10px;
 }
 
-/* 3. Style des Boutons Ronds */
+/* 3. Style des Boutons Ronds (Base 90px) */
 .btn-round {
     width: 90px; height: 90px;
     border-radius: 50%;
@@ -1157,56 +1157,40 @@ input[id^="fronto"] {
     transition: transform 0.2s;
     border: none;
     display: flex; justify-content: center; align-items: center; text-align: center;
-    flex-shrink: 0; /* Empêche le bouton de s'écraser */
+    flex-shrink: 0;
 }
 .btn-round:hover { transform: scale(1.05); }
 .btn-round:active { transform: scale(0.95); }
 
-/* Couleurs */
+/* --- COULEURS --- */
 .btn-round-green { background: #43A047; color: white; border: 2px solid #2E7D32; }
 .btn-round-red   { background: #EF5350; color: white; border: 2px solid #C62828; }
 .btn-round-blue  { background: #E0F7FA; color: #006064; border: 3px solid #04ABC6; }
 .btn-round-outline { background: transparent; color: #00838F; border: 2px solid #04ABC6; }
 
-/* 4. NOUVEAU : COLONNE VERTICALE (Sphère Testée + Relancer) */
+/* 4. NOUVEAU STYLE : BOUTON RETESTER (Rond et Gris) */
+.btn-round-grey { 
+    background: #ECEFF1; 
+    color: #546E7A; 
+    border: 2px solid #CFD8DC; 
+}
+.btn-round-grey:hover { background: #CFD8DC; }
+
+/* 5. COLONNE VERTICALE (ESPACEMENT) */
 .btn-col-group {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px; /* Espace entre le bouton rond et le bouton relancer */
-    width: 90px; /* Fixe la largeur pour ne pas décaler les voisins */
+    
+    /* Espace vertical entre le bouton bleu et Retester */
+    gap: 25px; 
+    
+    width: 90px; 
 }
 
-/* Style du bouton Relancer (Petit, en dessous) */
-.btn-relaunch-under {
-    background: #ECEFF1;
-    color: #546E7A;
-    border: 1px solid #CFD8DC;
-    font-size: 0.75rem;     /* Texte plus petit */
-    padding: 6px 14px;      /* Bouton discret */
-    border-radius: 15px;    /* Forme pilule */
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-}
-.btn-relaunch-under:hover {
-    background: #CFD8DC;
-    transform: scale(1.05);
-}
-
-/* 5. DÉCALAGES PRÉCIS (Vos réglages validés) */
-
-/* TEST PLUS (+0.25) : Décalage gauche -400px */
-#decisionsPlus {
-    transform: translateX(-400px);
-}
-
-/* TEST MOINS (-0.25) : Décalage gauche -160px */
-#decisionsMinus {
-    transform: translateX(-160px);
-}
-
+/* 6. DÉCALAGES PRÉCIS */
+#decisionsPlus { transform: translateX(-401px); }
+#decisionsMinus { transform: translateX(-161px); }
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -1574,7 +1558,7 @@ input[id^="fronto"] {
     </div>
 <div id="schemaContainer">
     <div id="animTargetCircle" class="anim-bubble bubble-target">
-        Verres<br>(+0.25)
+        Verre<br>(+0.25)
     </div>
     <div id="animArrowLine" class="arrow-connector"></div>
 
@@ -1584,7 +1568,7 @@ input[id^="fronto"] {
 
     <div id="animArrowLineMinus" class="arrow-connector-right"></div>
     <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">
-        Verres<br>(-0.25)
+        Verre<br>(-0.25)
     </div>
 </div>  
   <div id="zoneLettres" class="grid-item">
@@ -1640,7 +1624,6 @@ input[id^="fronto"] {
         <button id="btnPlus025" class="btn-timer hidden" onclick="window.triggerFogCheck()">TESTER +0.25 (3s)</button>
         
         <div id="decisionsPlus" class="decision-row-round hidden">
-            
             <button class="btn-round btn-round-green" onclick="window.decidePlus('better')">
                 Préfère<br>(+0.25)
             </button>
@@ -1653,9 +1636,11 @@ input[id^="fronto"] {
                 <button class="btn-round btn-round-blue" onclick="window.decidePlus('worse')">
                     Sphère<br>testée
                 </button>
-                <button class="btn-relaunch-under" onclick="window.relaunchPlus()">Relancer</button>
+                
+                <button class="btn-round btn-round-grey" onclick="window.relaunchPlus()">
+                    Retester
+                </button>
             </div>
-
         </div>
     </div>
 
@@ -1668,7 +1653,10 @@ input[id^="fronto"] {
                 <button class="btn-round btn-round-blue" onclick="window.decideMinus('worse')">
                     Sphère<br>testée
                 </button>
-                <button class="btn-relaunch-under" onclick="window.relaunchFullCheck()">Relancer</button>
+                
+                <button class="btn-round btn-round-grey" onclick="window.relaunchFullCheck()">
+                    Retester
+                </button>
             </div>
 
             <button class="btn-round btn-round-outline" onclick="window.decideMinus('same')">
@@ -1678,7 +1666,6 @@ input[id^="fronto"] {
             <button class="btn-round btn-round-red" onclick="window.decideMinus('better')">
                 Préfère<br>(-0.25)
             </button>
-
         </div>
     </div>
 
@@ -2954,6 +2941,10 @@ async function triggerFogCheck() {
 
     target.sphere = appState.baseSphereValue; 
     updateDisplay("Check (+): Retour Base");
+  
+  // --- PAUSE AJOUTÉE ICI ---
+    await wait(500); 
+    // -------------------------
 
     // 4. Déverrouillage
     updateLockUI(false);
@@ -3005,6 +2996,10 @@ async function triggerDefogCheck() {
 
     target.sphere = appState.baseSphereValue; 
     updateDisplay("Check (-): Retour Base");
+
+  // --- PAUSE AJOUTÉE ICI ---
+    await wait(500); 
+    // -------------------------
 
     // 4. Déverrouillage
     updateLockUI(false);
