@@ -3025,36 +3025,51 @@ await wait(1000);
 };
 
 window.decidePlus = function(choice) {
-    if (appState.isSpeaking) return; // LOCK
+    if (appState.isSpeaking) return;
 
-    // NOTE IMPORTANTE: Pas de nextLetters() ici car on enchaine sur le test suivant
-    // ou on valide. Le changement de lettres se fait APRES la décision si on relance.
-
-    // --- SÉCURITÉ SB1.0 (Mode Vérification) ---
-    if (appState.safety_mode) {
-        if (choice === 'better' || choice === 'same') {
-            document.getElementById('modalIncoherent').classList.remove('hidden');
-            return;
-        }
-        // Cas 2 : Le patient préfère la Base (Reject +0.25) -> Confirme la limite
-    }
-    // ------------------------------------------
+    const target = getTargetEye();
+    const currentSph = target.sphere;
+    const raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
+    
+    // Récupération de l'état de lecture actuel pour le check 1.0 Fluid
+    const currentVA = ACUITY_TABLE[appState.vaIndex].va;
+    const lastScore = appState.lastResponseCount || 0; // On s'assure d'avoir le score
+    const lastCadence = appState.lastCadenceUsed || 'rabbit';
 
     if (choice === 'better' || choice === 'same') {
-        // Le patient aime le +0.25 -> On l'adopte et on recommence
-        // C'est une NOUVELLE itération -> Changement de lettres
         nextLetters();
-
-        var target = getTargetEye(); target.sphere = appState.baseSphereValue + 0.25; 
+        target.sphere = appState.baseSphereValue + 0.25; 
         updateDisplay("Accepté (+0.25) -> On recommence le test"); 
         setTimeout(function() { initSphereCheckPlus(); }, 500);
     } else {
-        // Le patient n'aime pas -> On passe au test du moins
-        // PAS DE CHANGEMENT DE LETTRES (Même test, étape suivante)
-        document.getElementById('stepPlusWrapper').classList.add('hidden'); 
-        document.getElementById('decisionsPlus').classList.add('hidden');
-        updateDisplay("Rejet du (+) -> Transition immédiate...");
-        say("Attention, je vais dans l'autre sens.", function() { window.startAutomaticMinusCheck(); });
+        // --- CAS : REJET DU +0.25 ---
+        
+        // CONDITION A : RA Positif/Nul ET Sphère 0
+        const isRaPositiveAtZero = (raSph >= 0 && currentSph === 0);
+        
+        // CONDITION B : Acuité 1.0 parfaite (5 lettres + Lapin)
+        const isAcuityPerfect = (currentVA >= 1.0 && lastScore === 5 && lastCadence === 'rabbit');
+
+        if (isRaPositiveAtZero || isAcuityPerfect) {
+            updateDisplay("Validation : " + (isAcuityPerfect ? "Acuité Max atteinte" : "Limite RA atteinte"));
+            document.getElementById('checkPlusZone').classList.add('hidden');
+            say("Très bien, nous restons sur cette valeur.", function() {
+                finishSb10ForEye(); 
+            });
+        } 
+        else {
+            // On autorise le passage au MOINS
+            document.getElementById('stepPlusWrapper').classList.add('hidden'); 
+            document.getElementById('decisionsPlus').classList.add('hidden');
+            updateDisplay("Rejet (+) -> Test du Quart Concave (-0.25)");
+            
+            // On mémorise le score actuel AVANT le -0.25 pour calculer le gain plus tard
+            appState.scoreBeforeMinus = lastScore; 
+            
+            say("Attention, je vais dans l'autre sens.", function() { 
+                window.startAutomaticMinusCheck(); 
+            });
+        }
     }
 }
 
@@ -3075,52 +3090,34 @@ window.relaunchFullCheck = function() {
 
 window.decideMinus = function(choice) {
     if (appState.isSpeaking) return; // LOCK
+    
+    // On cache immédiatement la zone de test des verres
+    document.getElementById('checkPlusZone').classList.add('hidden');
 
-    // Fin du test -> Changement de lettres pour la suite (ou validation)
-    nextLetters();
-
-    // --- MODIFICATION SÉCURITÉ SB1.0 ---
     if (choice === 'better') {
-        // Le patient veut débrouiller
-        var target = getTargetEye(); target.sphere = appState.baseSphereValue - 0.25; 
-
-        // Si on est en mode Sécurité (Safety Re-check)
-        if (appState.safety_mode) {
-            updateDisplay("Sécurité: Débrouillage accepté. Relire la ligne précédente.");
-            appState.examPhase = "Sb1.0";
-
-            // ACTION IMMEDIATE : Changement de lettres + Vocal
-            // nextLetters() déjà appelé au début de la fonction
-            say("Très bien, essayez de me lire cette ligne maintenant."); 
-
-            document.getElementById('checkPlusZone').classList.add('hidden'); 
-            document.getElementById('standardButtons').classList.remove('hidden');
-            return;
-        }
-
-        alert("On enlève 0.25 et on recommence le test complet.");
-        initSphereCheckPlus(); 
+        // Le patient dit que c'est "mieux" avec le -0.25
+        // On applique la puissance mais on reste sur la ligne pour vérifier le gain
+        var target = getTargetEye();
+        target.sphere = appState.baseSphereValue - 0.25;
+        
+        // On repasse en mode lecture standard
+        document.getElementById('standardButtons').classList.remove('hidden');
+        appState.examPhase = "Sb1.0"; // Retour phase lecture
+        appState.isCheckingGain = true; // Flag pour dire qu'on attend un gain de 3
+        
+        updateDisplay("Vérification du gain (+3 lettres requises)");
+        nextLetters();
+        say("D'accord. Relisez-moi cette ligne s'il vous plaît.");
     } else {
-        // Le patient n'aime pas le débrouillage (Prefer Base)
-
-        // --- SÉCURITÉ : RETOUR ARRIÈRE ---
-        if (appState.safety_mode) {
-             var revertAmount = appState.sb10_line_defog * 0.25;
-             getTargetEye().sphere += revertAmount;
-             updateDisplay("Retour Sphère Initiale Ligne: " + getTargetEye().sphere.toFixed(2));
-             alert("Sécurité : Les débrouillages précédents sur cette ligne n'ont pas aidé. On annule tout et on valide.");
-             document.getElementById('checkPlusZone').classList.add('hidden'); 
-             document.getElementById('standardButtons').classList.remove('hidden');
-             finishSb10ForEye();
-             return;
-        }
-        // ---------------------------------
-
-        document.getElementById('checkPlusZone').classList.add('hidden'); document.getElementById('standardButtons').classList.remove('hidden');
-        alert("Sphère Validée !"); finishSb10ForEye();
+        // Le patient dit "Pareil" ou "Moins bien" (Sphère testée)
+        // On reste sur la sphère de base et on termine
+        var target = getTargetEye();
+        target.sphere = appState.baseSphereValue; 
+        
+        updateDisplay("Rejet du -0.25 -> Validation");
+        finishSb10ForEye();
     }
 }
-
 // Fonction de restart pour la modale Incohérent
 window.restartSb10 = function() {
     document.getElementById('modalIncoherent').classList.add('hidden');
@@ -3144,6 +3141,7 @@ window.restartSb10 = function() {
 window.handleResponse = function(lettersRead) {
     if (appState.isSpeaking) return; // LOCK
 
+  appState.lastResponseCount = lettersRead;
     // 1. Feedback Choice
     var wordsLow = ["Ok", "D'accord", "Bien"];
     var wordsHigh = ["Ok", "Bien", "Très bien", "Parfait", "D'accord"];
@@ -3197,6 +3195,7 @@ window.handleResponse = function(lettersRead) {
 window.handleCadence = function(type) {
     if (appState.isSpeaking) return; // LOCK
 
+  appState.lastCadenceUsed = type;
     // 1. Snapshot de la phase AVANT logique
     var phaseBefore = appState.examPhase;
 
@@ -3219,6 +3218,23 @@ window.handleCadence = function(type) {
 
 // --- LOGIQUE PRINCIPALE AVEC MESSAGES HARMONISÉS ---
 function processLogic(lettersRead, cadence) {
+    // --- AJOUT DE LA RÈGLE DU GAIN ---
+    if (appState.isCheckingGain) {
+        appState.isCheckingGain = false; // Reset flag
+        if (lettersRead >= 3) {
+            alert("Gain validé !");
+            finishSb10ForEye();
+        } else {
+            alert("Gain insuffisant. Retour à la sphère précédente.");
+            getTargetEye().sphere += 0.25; // On annule le -0.25
+            finishSb10ForEye();
+        }
+        return;
+    }
+    // ---------------------------------
+    
+    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
+    // ... reste de la fonction
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
     var currentTxt = ACUITY_TABLE[appState.vaIndex].lines[appState.letterIndex % 8]; if(!currentTxt) currentTxt = ACUITY_TABLE[appState.vaIndex].lines[0];
     var totalLetters = currentTxt.split(' ').length; var isSmallLine = totalLetters < 5;
