@@ -2924,114 +2924,97 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // --- FONCTION TEST +0.25 (AVEC NOUVEAU SCHÉMA BULLES) ---
 // --- FONCTION TEST +0.25 (AVEC ANIMATION FLÈCHE GAUCHE) ---
 async function triggerFogCheck() {
-    // 1. Verrouillage
     updateLockUI(true);
     document.getElementById('btnPlus025').disabled = true; 
     
-    // 2. Préparation
+    // S'assurer que le bouton bleu est bien là au début
+    window.showBaseCircle(); 
+    
     const target = getTargetEye();
     target.sphere = appState.baseSphereValue; 
     updateDisplay("Check (+): Référence...");
 
-    // 3. Récupération des éléments du schéma
     var arrow = document.getElementById('animArrowLine');
     var targetBubble = document.getElementById('animTargetCircle');
 
-    // Etape 1 : Référence (Le cercle bleu est déjà là, fixe)
     say("Vous préférez comme ça ?");
     await wait(2500); 
 
-    // Etape 2 : Ajout du verre (La flèche part vers la gauche)
     say("Ou si je fais ça ?");
     await wait(400); 
     
-    // >>> ANIMATION ON : La flèche grandit, le cercle vert apparait au bout <<<
     if(arrow) arrow.classList.add('active');
     if(targetBubble) targetBubble.classList.add('visible');
-    // ---------------------------------------------------------------------
     
     target.sphere = appState.baseSphereValue + 0.25;
     updateDisplay("Check (+): +0.25 ajouté");
 
     await wait(3000); 
 
-    // Etape 3 : Retrait (La flèche se rétracte)
     say("Ou si je reviens ?");
     await wait(400);
 
-    // >>> ANIMATION OFF : Le vert et la flèche disparaissent <<<
-    if(targetBubble) targetBubble.classList.remove('visible');
-    if(arrow) arrow.classList.remove('active');
-    // --------------------------------------------------------
 
     target.sphere = appState.baseSphereValue; 
     updateDisplay("Check (+): Retour Base");
+await wait(1000); 
+   // >>> DISPARITION DU BOUTON ET DES BULLES ICI <<<
+    window.hideBaseCircle(); 
   
-  // --- PAUSE AJOUTÉE ICI ---
-    await wait(500); 
-    // -------------------------
+    await wait(1000); 
 
-    // 4. Déverrouillage
     updateLockUI(false);
     document.getElementById('decisionsPlus').classList.remove('hidden'); 
     document.getElementById('btnPlus025').disabled = false;
 }
+  
   // 3. Test du -0.25 (1.5s d'exposition environ - Ratio 1:2)
 // --- FONCTION TEST -0.25 (ANIMATION VERS LA DROITE) ---
 async function triggerDefogCheck() {
-    // 1. Verrouillage
     updateLockUI(true);
     document.getElementById('btnMinus025').disabled = true; 
     
-    // 2. Préparation
+    // S'assurer que le bouton bleu est bien là au début
+    window.showBaseCircle();
+
     const target = getTargetEye();
     target.sphere = appState.baseSphereValue;
     updateDisplay("Check (-): Référence...");
 
-    // 3. Récupération des éléments du schéma MOINS
     var arrowMinus = document.getElementById('animArrowLineMinus');
     var targetBubbleMinus = document.getElementById('animTargetCircleMinus');
 
-    // Etape 1 : Référence
     say("Vous préférez comme ça ?");
     await wait(2500);
 
-    // Etape 2 : Ajout du verre (Déclenchement Animation Droite)
     say("Ou si je fais ça ?");
     await wait(400);
     
-    // >>> ANIMATION ON : Flèche droite et Bulle Rouge <<<
     if(arrowMinus) arrowMinus.classList.add('active');
     if(targetBubbleMinus) targetBubbleMinus.classList.add('visible');
-    // ---------------------------------------------------
 
     target.sphere = appState.baseSphereValue - 0.25;
     updateDisplay("Check (-): -0.25 ajouté");
 
     await wait(1500); 
 
-    // Etape 3 : Retrait
     say("Ou si je reviens ?");
     await wait(400);
-    
-    // >>> ANIMATION OFF : Disparition <<<
-    if(targetBubbleMinus) targetBubbleMinus.classList.remove('visible');
-    if(arrowMinus) arrowMinus.classList.remove('active');
-    // -----------------------------------
 
     target.sphere = appState.baseSphereValue; 
     updateDisplay("Check (-): Retour Base");
+await wait(1000); 
+  // >>> DISPARITION DU BOUTON ET DES BULLES ICI <<<
+    window.hideBaseCircle();
 
-  // --- PAUSE AJOUTÉE ICI ---
-    await wait(500); 
-    // -------------------------
+    await wait(1000); 
 
-    // 4. Déverrouillage
     updateLockUI(false);
     document.getElementById('decisionsMinus').classList.remove('hidden'); 
     document.getElementById('btnMinus025').disabled = false;
 }
-window.relaunchPlus = function() {
+  
+  window.relaunchPlus = function() {
     if (appState.isSpeaking) return; // LOCK
     document.getElementById('decisionsPlus').classList.add('hidden');
 
