@@ -868,11 +868,61 @@ input[id^="fronto"] {
   .modal-text { font-size: 1.2rem; line-height: 1.5; margin-bottom: 25px; color: var(--text-main); }
 
   /* Visual JCC */
-  .jcc-container { display: flex; justify-content: center; gap: 50px; margin-bottom: 30px; }
-  .jcc-visual { width: 100px; height: 100px; border-radius: 50%; border: 6px solid #CFD8DC; display: flex; align-items: center; justify-content: center; opacity: 0.3; }
-  .jcc-visual.active { opacity: 1; border-color: var(--primary); transform: scale(1.1); box-shadow: 0 0 20px var(--primary-border); }
-  .jcc-label { position: absolute; font-weight: bold; font-size: 1.8rem; color: var(--text-main); }
-  .arrow-svg { width: 70px; height: 70px; }
+  /* --- NOUVEAU STYLE AXE (JCC) ALIGNÉ SUR LES BULLES --- */
+
+/* Conteneur pour centrer les cercles 1 et 2 dans le schéma */
+#schemaContainer .jcc-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    gap: 120px; /* Écarte les cercles pour laisser respirer le centre */
+    width: 100%;
+    pointer-events: none; /* L'animation ne doit pas gêner les clics */
+    z-index: 300;
+}
+
+/* Style "Bulle" identique au test de sphère */
+.jcc-visual {
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 5px solid #CFD8DC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    position: relative;
+    opacity: 0.15; /* Très discret par défaut */
+}
+
+/* Quand l'assistant dit "Position 1" ou "Position 2" */
+.jcc-visual.active {
+    opacity: 1;
+    transform: scale(1.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(4, 171, 198, 0.4);
+}
+
+/* Chiffres 1 et 2 au centre des cercles */
+.jcc-label {
+    position: absolute;
+    font-weight: 800;
+    font-size: 1.8rem;
+    color: var(--text-main);
+    z-index: 2;
+}
+
+/* Taille des flèches rotatives */
+.arrow-svg { 
+    width: 75px; 
+    height: 75px; 
+    opacity: 0.8;
+}
 
   /* INPUTS MODAL */
   .modal-input-grid {
@@ -1193,21 +1243,6 @@ input[id^="fronto"] {
 #decisionsMinus { transform: translateX(-161px); }
 
 /* --- AJOUT POUR LA VISIBILITÉ DE L'AXE --- */
-#axisControls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin-top: 20px; /* Espace pour ne pas chevaucher les lettres */
-}
-
-#axisDecisions {
-    display: flex; /* Enlève le display:none par défaut */
-    gap: 20px;
-    justify-content: center;
-    margin-top: 15px;
-}
 
 /* On s'assure que les boutons de l'axe sont bien visibles */
 #axisDecisions .btn-decision {
@@ -1597,7 +1632,23 @@ input[id^="fronto"] {
     <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">
         Verre<br>(-0.25)
     </div>
-</div>  
+
+    <div id="jccVisuals" class="jcc-container hidden">
+        <div id="visPos1" class="jcc-visual">
+            <span class="jcc-label">1</span>
+            <svg class="arrow-svg" viewBox="0 0 100 100">
+                <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#116dff" stroke-width="6" marker-end="url(#arrowhead)" />
+            </svg>
+        </div>
+
+        <div id="visPos2" class="jcc-visual">
+            <span class="jcc-label">2</span>
+            <svg class="arrow-svg" viewBox="0 0 100 100">
+                <path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#fd7e14" stroke-width="6" marker-end="url(#arrowhead2)" />
+            </svg>
+        </div>
+    </div> </div> ```
+
   <div id="zoneLettres" class="grid-item">
         <div id="waitingMsg" style="text-align:center; color:#B0BEC5;">
             <p style="font-size:1.5rem;">L'examen commencera ici.</p>
@@ -1608,10 +1659,7 @@ input[id^="fronto"] {
             <div id="systemMsg" class="message-box">En attente...</div>
 
             <div id="axisZone" class="response-area hidden">
-                <div id="jccVisuals" class="jcc-container hidden">
-                    <div id="visPos1" class="jcc-visual"><span class="jcc-label">1</span><svg class="arrow-svg" viewBox="0 0 100 100"><path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#116dff" stroke-width="6" marker-end="url(#arrowhead)" /></svg></div>
-                    <div id="visPos2" class="jcc-visual"><span class="jcc-label">2</span><svg class="arrow-svg" viewBox="0 0 100 100"><path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#fd7e14" stroke-width="6" marker-end="url(#arrowhead2)" /></svg></div>
-                </div>
+                
             </div>
         </div>
     </div>
@@ -3810,6 +3858,7 @@ window.initAxisCheck = function() {
 };
 window.runJccSequence = function() {
     if (appState.isSpeaking) return; // LOCK
+  window.hideBaseCircle();
     var p1 = document.getElementById('visPos1'); var p2 = document.getElementById('visPos2');
     document.getElementById('axisDecisions').classList.add('hidden'); document.getElementById('btnReplayAxis').classList.add('hidden');
     say("Vous préférez lire les lettres dans la position une ?", function() {
