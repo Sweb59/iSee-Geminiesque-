@@ -1191,6 +1191,33 @@ input[id^="fronto"] {
 /* 6. DÉCALAGES PRÉCIS */
 #decisionsPlus { transform: translateX(-401px); }
 #decisionsMinus { transform: translateX(-161px); }
+
+/* --- AJOUT POUR LA VISIBILITÉ DE L'AXE --- */
+#axisControls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 20px; /* Espace pour ne pas chevaucher les lettres */
+}
+
+#axisDecisions {
+    display: flex; /* Enlève le display:none par défaut */
+    gap: 20px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+/* On s'assure que les boutons de l'axe sont bien visibles */
+#axisDecisions .btn-decision {
+    min-width: 120px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}  
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -3749,21 +3776,38 @@ function updateDisplay(message) {
 
 // --- AXE ---
 window.initAxisCheck = function() {
-    appState.examPhase = "AxisCheck"; var target = getTargetEye(); var raAxis = (appState.activeEye === 'OD') ? getVal('raOD_axe') : getVal('raOG_axe');
-    appState.startAxisRA = raAxis; var cyl = Math.abs(target.cyl); appState.cylHigh = (cyl >= 4.50);
+    appState.examPhase = "AxisCheck"; 
+    var target = getTargetEye(); 
+    var raAxis = (appState.activeEye === 'OD') ? getVal('raOD_axe') : getVal('raOG_axe');
+    appState.startAxisRA = raAxis; 
+    var cyl = Math.abs(target.cyl); 
+    appState.cylHigh = (cyl >= 4.50);
+
     if (cyl < 2.50) appState.axisStep = 20; else appState.axisStep = 10; 
     appState.axisDirectionHistory = [];
-    document.getElementById('jccVisuals').classList.remove('hidden'); document.getElementById('visPos1').classList.remove('active'); document.getElementById('visPos2').classList.remove('active');
-    document.getElementById('axisDecisions').classList.add('hidden'); document.getElementById('btnReplayAxis').classList.add('hidden'); 
+
+    // --- CORRECTION : ON ACTIVE LES ZONES D'AFFICHAGE ---
+    document.getElementById('axisZone').classList.remove('hidden');     // AJOUT
+    document.getElementById('axisControls').classList.remove('hidden'); // AJOUT
+    document.getElementById('standardButtons').classList.add('hidden'); // AJOUT (pour cacher les chiffres 0-5)
+    
+    document.getElementById('jccVisuals').classList.remove('hidden'); 
+    document.getElementById('visPos1').classList.remove('active'); 
+    document.getElementById('visPos2').classList.remove('active');
+    
+    document.getElementById('axisDecisions').classList.add('hidden'); 
+    document.getElementById('btnReplayAxis').classList.add('hidden'); 
+    
     updateDisplay("Axe: Init CXJ. Cyl=" + cyl.toFixed(2));
-    if (appState.cylHigh) { alert("Cylindre Fort détecté. Méthode comparative (RA vs RA+5 / RA-5)."); } 
-    else { 
-        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer. Vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faudra lire toutes les lettres dans votre tête. Je ferai pareil, comme cela nous serons plus au moins synchronisés.", function() {
+
+    if (appState.cylHigh) { 
+        alert("Cylindre Fort détecté. Méthode comparative (RA vs RA+5 / RA-5)."); 
+    } else { 
+        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer. Vous me direz avec quelle position vous préférez lire les lettres.", function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
     }
 };
-
 window.runJccSequence = function() {
     if (appState.isSpeaking) return; // LOCK
     var p1 = document.getElementById('visPos1'); var p2 = document.getElementById('visPos2');
