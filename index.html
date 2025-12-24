@@ -1245,14 +1245,68 @@ input[id^="fronto"] {
 /* --- AJOUT POUR LA VISIBILITÉ DE L'AXE --- */
 
 /* On s'assure que les boutons de l'axe sont bien visibles */
+/* --- STYLE FINAL DES BOUTONS DE RÉPONSE AXE (JCC) --- */
+
+#axisDecisions {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
 #axisDecisions .btn-decision {
-    min-width: 120px;
-    height: 50px;
+    /* Dimensions forcées pour un cercle parfait */
+    width: 95px !important;
+    height: 95px !important;
+    min-width: 95px !important; /* Écrase le min-width de 120px précédent */
+    border-radius: 50% !important;
+    
+    /* Apparence style "Bulle" */
+    background: #FFFFFF !important;
+    border: 5px solid #CFD8DC !important;
+    padding: 0 !important; /* Très important pour ne pas décentrer le texte */
+    
+    /* Typographie */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    cursor: pointer;
+    
+    /* Alignement du texte */
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}  
+    text-align: center;
+    line-height: 1.2;
+    text-transform: uppercase;
+    
+    /* Animation et Ombre */
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Couleurs des bordures et texte pour correspondre aux flèches JCC */
+#axisDecisions .btn-blue { 
+    border-color: #116dff !important; 
+    color: #116dff !important; 
+}
+#axisDecisions .btn-orange { 
+    border-color: #fd7e14 !important; 
+    color: #fd7e14 !important; 
+}
+#axisDecisions .btn-green { 
+    border-color: #43A047 !important; 
+    color: #43A047 !important; 
+}
+
+/* Effet au survol */
+#axisDecisions .btn-decision:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    background: #F5F5F5 !important;
+}
+  
 </style>
 </head>
 <body onload="window.startAppSequence()">
