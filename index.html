@@ -1247,66 +1247,67 @@ input[id^="fronto"] {
 /* On s'assure que les boutons de l'axe sont bien visibles */
 /* --- STYLE FINAL DES BOUTONS DE RÉPONSE AXE (JCC) --- */
 
-#axisDecisions {
+/* --- BOUTONS RÉPONSE AXE (JCC) REPOSITIONNÉS ET RÉDUITS --- */
+#axisControls {
     display: flex;
-    gap: 30px;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
     margin-top: 20px;
 }
 
+#axisDecisions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+/* Style des 3 boutons de choix (Mieux 1, Mieux 2, Pareil) */
 #axisDecisions .btn-decision {
-    /* Dimensions forcées pour un cercle parfait */
-    width: 95px !important;
-    height: 95px !important;
-    min-width: 95px !important; /* Écrase le min-width de 120px précédent */
+    width: 80px !important;
+    height: 80px !important;
+    min-width: 80px !important;
     border-radius: 50% !important;
-    
-    /* Apparence style "Bulle" */
     background: #FFFFFF !important;
-    border: 5px solid #CFD8DC !important;
-    padding: 0 !important; /* Très important pour ne pas décentrer le texte */
-    
-    /* Typographie */
     font-family: 'Montserrat', sans-serif;
     font-weight: 800;
-    font-size: 0.85rem;
-    color: var(--text-main);
-    cursor: pointer;
-    
-    /* Alignement du texte */
+    font-size: 0.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     line-height: 1.2;
     text-transform: uppercase;
-    
-    /* Animation et Ombre */
     transition: all 0.2s ease;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* Couleurs des bordures et texte pour correspondre aux flèches JCC */
-#axisDecisions .btn-blue { 
-    border-color: #116dff !important; 
-    color: #116dff !important; 
-}
-#axisDecisions .btn-orange { 
-    border-color: #fd7e14 !important; 
-    color: #fd7e14 !important; 
-}
-#axisDecisions .btn-green { 
-    border-color: #43A047 !important; 
-    color: #43A047 !important; 
+/* Style spécifique du bouton RÉPÉTER (RETESTER) */
+#btnReplayAxis {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50% !important;
+    background: #ECEFF1 !important; /* Gris clair comme les autres retester */
+    color: #546E7A !important;
+    border: 2px solid #CFD8DC !important;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
 }
 
-/* Effet au survol */
-#axisDecisions .btn-decision:hover {
+#axisDecisions .btn-blue { border: 4px solid #116dff !important; color: #116dff !important; }
+#axisDecisions .btn-orange { border: 4px solid #fd7e14 !important; color: #fd7e14 !important; }
+#axisDecisions .btn-green { border: 4px solid #43A047 !important; color: #43A047 !important; }
+
+#axisDecisions .btn-decision:hover, #btnReplayAxis:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-    background: #F5F5F5 !important;
-}
-  
+}  
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -1671,37 +1672,33 @@ input[id^="fronto"] {
          </div>
          
          <div id="dataSection" style="display:none;"></div> 
-    </div>
-<div id="schemaContainer">
-    <div id="animTargetCircle" class="anim-bubble bubble-target">
-        Verre<br>(+0.25)
-    </div>
+    </div><div id="schemaContainer">
+    <div id="animTargetCircle" class="anim-bubble bubble-target">Verre<br>(+0.25)</div>
     <div id="animArrowLine" class="arrow-connector"></div>
-
-    <div id="animBaseCircle" class="anim-bubble bubble-base">
-        Sphère<br>testée
-    </div>
-
+    <div id="animBaseCircle" class="anim-bubble bubble-base">Sphère<br>testée</div>
     <div id="animArrowLineMinus" class="arrow-connector-right"></div>
-    <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">
-        Verre<br>(-0.25)
-    </div>
+    <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">Verre<br>(-0.25)</div>
 
     <div id="jccVisuals" class="jcc-container hidden">
-        <div id="visPos1" class="jcc-visual">
-            <span class="jcc-label">1</span>
-            <svg class="arrow-svg" viewBox="0 0 100 100">
-                <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#116dff" stroke-width="6" marker-end="url(#arrowhead)" />
-            </svg>
+        <div id="visPos1" class="jcc-visual"><span class="jcc-label">1</span>
+            <svg class="arrow-svg" viewBox="0 0 100 100"><path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#116dff" stroke-width="6" /></svg>
         </div>
+        <div id="visPos2" class="jcc-visual"><span class="jcc-label">2</span>
+            <svg class="arrow-svg" viewBox="0 0 100 100"><path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#fd7e14" stroke-width="6" /></svg>
+        </div>
+    </div>
 
-        <div id="visPos2" class="jcc-visual">
-            <span class="jcc-label">2</span>
-            <svg class="arrow-svg" viewBox="0 0 100 100">
-                <path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#fd7e14" stroke-width="6" marker-end="url(#arrowhead2)" />
-            </svg>
+    <div id="axisControls" class="response-area hidden" style="position: absolute; bottom: -120px; width: 100%; pointer-events: auto;">
+        <div id="axisDecisions" class="decision-row hidden">
+            <button class="btn-decision btn-blue" onclick="window.handleJccChoice('pos1')">Mieux 1</button>
+            <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
+                <button class="btn-decision btn-green" onclick="window.handleJccChoice('same')">Pareil</button>
+                <button id="btnReplayAxis" class="hidden" onclick="window.runJccSequence()">Retester</button>
+            </div>
+            <button class="btn-decision btn-orange" onclick="window.handleJccChoice('pos2')">Mieux 2</button>
         </div>
-    </div> </div> ```
+    </div>
+</div>
 
   <div id="zoneLettres" class="grid-item">
         <div id="waitingMsg" style="text-align:center; color:#B0BEC5;">
@@ -1800,16 +1797,7 @@ input[id^="fronto"] {
 
 </div>
 
-        <div id="axisControls" class="response-area hidden">
-            <button id="btnReplayAxis" class="btn-timer hidden" onclick="window.runJccSequence()">RÉPÉTER LA COMPARAISON</button>
-            <div id="axisDecisions" class="decision-row hidden">
-                <button class="btn-decision btn-blue" onclick="window.handleJccChoice('pos1')">Mieux 1</button>
-                <button class="btn-decision btn-orange" onclick="window.handleJccChoice('pos2')">Mieux 2</button>
-                <button class="btn-decision btn-green" onclick="window.handleJccChoice('same')">Pareil</button>
-            </div>
-        </div>
-    </div>
-
+        
     <div id="schoberStep" class="hidden">
         <div style="max-width:800px; width:100%; background:white; padding:20px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
             <div class="step-instruction">
