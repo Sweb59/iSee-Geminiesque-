@@ -2857,21 +2857,53 @@ function validateSb10() {
     if (sphere < 0) { initSphereCheckMinus(); } else { initSphereCheckPlus(); }
 }
 
-function finishSb10ForEye() {
-  window.hideBaseCircle(); // <--- AJOUTER CETTE LIGNE
-    var eye = appState.activeEye; var maxVa = ACUITY_TABLE[appState.vaIndex].va;
-    // Mise à jour de l'affichage dans le panneau droit (disp_)
-    setHTML('disp_subj'+eye+'_va', maxVa);
+window.finishSb10ForEye = function() {
+    window.hideBaseCircle();
+    var eye = appState.activeEye;
+    var target = getTargetEye();
+    var maxVa = ACUITY_TABLE[appState.vaIndex].va;
+    
+    // Mise à jour de la VA
+    setHTML('disp_subj' + eye + '_va', maxVa);
 
-    if (eye === 'OD') appState.saved_sb10.OD = appState.subj.OD.sphere; else appState.saved_sb10.OG = appState.subj.OG.sphere;
-    if (eye === 'OD') appState.sb10_OD_ok = true; else appState.sb10_OG_ok = true;
+    // Sauvegarde de la sphère finale
+    if (eye === 'OD') appState.saved_sb10.OD = target.sphere; 
+    else appState.saved_sb10.OG = target.sphere;
+    
+    if (eye === 'OD') appState.sb10_OD_ok = true; 
+    else appState.sb10_OG_ok = true;
 
-    alert("Sphère Validée (" + eye + "). Début Recherche AXE.");
-    document.getElementById('checkPlusZone').classList.add('hidden');
-    document.getElementById('standardButtons').classList.add('hidden');
-    document.getElementById('cadenceButtons').classList.add('hidden');
-    document.getElementById('axisZone').classList.remove('hidden');
-    initAxisCheck();
+    // --- RÈGLE 1 : SÉCURITÉ CYLINDRE NUL ---
+    var puissanceCyl = Math.abs(target.cyl);
+
+    if (puissanceCyl === 0) {
+        console.log("Cylindre nul détecté. Saut de la mise au point de l'astigmatisme.");
+        // On informe et on passe à la suite (œil suivant ou fin)
+        say("La vision est nette ainsi. Nous avons terminé pour cet oeil.", function() {
+            finalizeEyeProcedure(eye); 
+        });
+    } else {
+        // CAS STANDARD : Cylindre présent -> On lance l'Axe
+        document.getElementById('checkPlusZone').classList.add('hidden');
+        document.getElementById('standardButtons').classList.add('hidden');
+        document.getElementById('cadenceButtons').classList.add('hidden');
+        document.getElementById('axisZone').classList.remove('hidden');
+        initAxisCheck();
+    }
+};
+
+// Fonction utilitaire pour gérer la fin d'un oeil et la bascule
+function finalizeEyeProcedure(eye) {
+    var otherEye = (eye === appState.firstEye) ? (eye === 'OD' ? 'OG' : 'OD') : null;
+
+    if (otherEye && !appState.isMonocularExam) {
+        appState.activeEye = otherEye;
+        // On relance la logique pour le 2ème oeil
+        initSb10(); 
+    } else {
+        say("L'examen monoculaire est terminé.");
+        // Ici viendra plus tard la phase binoculaire finale
+    }
 }
 
 function initSphereCheckMinus() {
