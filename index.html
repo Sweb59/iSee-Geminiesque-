@@ -2729,7 +2729,7 @@ window.launchExamSequence = function() {
         document.getElementById('examDataStrip').classList.remove('hidden');
         updateDisplay("Profil " + appState.profile + ". Phase " + appState.examPhase + " (OD)");
 
-        say("Lisez moi s'il vous plait les lettres que vous voyez sur l'écran au fond de la pièce");
+        say("Lisez moi s'il vous plait les lettres que vous voyez sur l'écran devant vous.");
     } catch(e) { alert("Erreur Lancement: " + e); }
 };
 
@@ -2843,15 +2843,22 @@ function initSb10() {
 }
 
 function applySb10Logic() {
-    var sphere = getTargetEye().sphere; var eye = appState.activeEye; var otherEye = (eye === 'OD') ? 'OG' : 'OD';
-    appState.subj[otherEye].sphere = appState.saved_sb05[otherEye]; 
-    setVaToIndexClosest(0.50);
-    if (sphere < 0) {
-        if(eye==='OD') appState.subj.OD.sphere -= 0.50; else appState.subj.OG.sphere -= 0.50;
-        updateDisplay("Sb1.0: Négatif -> Débrouille -0.50 -> Ligne 0.5");
-    } else { updateDisplay("Sb1.0: Positif -> Ligne 0.5"); }
-}
+    var eye = appState.activeEye; 
+    var otherEye = (eye === 'OD') ? 'OG' : 'OD';
+    var target = getTargetEye(); // Récupère l'œil actuellement actif
 
+    // On s'assure que l'œil passif est bien au brouillage Sb0.5 sauvegardé
+    appState.subj[otherEye].sphere = appState.saved_sb05[otherEye]; 
+    
+    setVaToIndexClosest(0.50);
+
+    if (target.sphere < 0) {
+        target.sphere -= 0.50;
+        updateDisplay("Sb1.0: Négatif -> Débrouille -0.50 -> Ligne 0.5 (" + eye + ")");
+    } else { 
+        updateDisplay("Sb1.0: Positif -> Ligne 0.5 (" + eye + ")"); 
+    }
+}
 function validateSb10() {
     var sphere = getTargetEye().sphere;
     if (sphere < 0) { initSphereCheckMinus(); } else { initSphereCheckPlus(); }
@@ -2863,13 +2870,15 @@ window.finishSb10ForEye = function() {
     var target = getTargetEye();
     var maxVa = ACUITY_TABLE[appState.vaIndex].va;
     
-    // Mise à jour de la VA
+    // Mise à jour de la VA dans l'état et l'affichage
+    appState.subj[eye].va = maxVa;
     setHTML('disp_subj' + eye + '_va', maxVa);
 
     // Sauvegarde de la sphère finale
     if (eye === 'OD') appState.saved_sb10.OD = target.sphere; 
     else appState.saved_sb10.OG = target.sphere;
     
+    // Marquer l'œil actuel comme terminé pour la phase Sb10
     if (eye === 'OD') appState.sb10_OD_ok = true; 
     else appState.sb10_OG_ok = true;
 
@@ -2877,10 +2886,10 @@ window.finishSb10ForEye = function() {
     var puissanceCyl = Math.abs(target.cyl);
 
     if (puissanceCyl === 0) {
-        console.log("Cylindre nul détecté. Saut de la mise au point de l'astigmatisme.");
-        // On informe et on passe à la suite (œil suivant ou fin)
-        say("La vision est nette ainsi. Nous avons terminé pour cet oeil.", function() {
-            finalizeEyeProcedure(eye); 
+        console.log("Cylindre nul détecté. Passage à l'œil suivant ou fin.");
+        say("D'accord, on continue.", function() {
+            // APPEL DE LA CORRECTION ICI
+            window.proceedToNextStepAfterEye(eye); 
         });
     } else {
         // CAS STANDARD : Cylindre présent -> On lance l'Axe
@@ -2893,20 +2902,34 @@ window.finishSb10ForEye = function() {
 };
 
 // Fonction utilitaire pour gérer la fin d'un oeil et la bascule
-function finalizeEyeProcedure(eye) {
-    var otherEye = (eye === appState.firstEye) ? (eye === 'OD' ? 'OG' : 'OD') : null;
+window.proceedToNextStepAfterEye = function(completedEye) {
+    var otherEye = (completedEye === 'OD') ? 'OG' : 'OD';
+    var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
-    if (otherEye && !appState.isMonocularExam) {
+    if (!appState.isMonocularExam && !isOtherEyeDone) {
+        // Changement d'œil
         appState.activeEye = otherEye;
-        // On relance la logique pour le 2ème oeil
-        initSb10(); 
+        
+        // Reset des sécurités pour le second œil
+        appState.sb10_line_defog = 0;
+        appState.safety_mode = false;
+        
+        // On relance UNIQUEMENT la logique Sb1.0, pas tout l'examen
+        appState.examPhase = "Sb1.0";
+        applySb10Logic(); 
+        
+        updateDisplay("Passage au second œil : " + otherEye);
     } else {
-        say("L'examen monoculaire est terminé.");
-        // Ici viendra plus tard la phase binoculaire finale
+        // Fin d'examen
+        say("Ok, passons à la suite.");
+        updateDisplay("Examen Terminé");
+        
+        document.getElementById('standardButtons').classList.add('hidden');
+        document.getElementById('examContent').classList.add('hidden');
+        document.getElementById('waitingMsg').classList.remove('hidden');
+        setHTML('waitingMsg', '<p style="font-size:1.5rem; color:var(--primary);">Examen terminé avec succès.</p>');
     }
-}
-
-function initSphereCheckMinus() {
+};function initSphereCheckMinus() {
   window.showBaseCircle(); // <--- AJOUTER CETTE LIGNE
     appState.examPhase = "SphereCheckMinus"; appState.checkStep = "TEST_125_PRE";
 
@@ -2942,7 +2965,7 @@ function initSphereCheckPlus(skipIntro) {
     document.getElementById('decisionsMinus').classList.add('hidden');
     document.getElementById('btnMinus025').disabled = true;
     if(skipIntro) { nextLetters(); window.triggerFogCheck(); } 
-    else { setTimeout(function() { say("C'est pas mal, mais on va voir si on peut faire un peu mieux", function() { nextLetters(); window.triggerFogCheck(); }); }, 500); }
+    else { setTimeout(function() { say("C'est pas mal, mais on va essayer de faire un peu mieux", function() { nextLetters(); window.triggerFogCheck(); }); }, 500); }
 }
 
 // --------------------------------------------------------------------------
@@ -3085,7 +3108,7 @@ window.decidePlus = function(choice) {
         if (isRaPositiveAtZero || isAcuityPerfect) {
             updateDisplay("Validation : " + (isAcuityPerfect ? "Acuité Max atteinte" : "Limite RA atteinte"));
             document.getElementById('checkPlusZone').classList.add('hidden');
-            say("Très bien, nous restons sur cette valeur.", function() {
+            say("Ok, on continue.", function() {
                 finishSb10ForEye(); 
             });
         } 
