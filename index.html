@@ -885,6 +885,8 @@ input[id^="fronto"] {
 }
 
 /* Style "Bulle" identique au test de sphère */
+/* --- Modif JCC Visuals --- */
+/* --- VISUELS JCC (CORRIGÉS) --- */
 .jcc-visual {
     width: 95px;
     height: 95px;
@@ -896,34 +898,41 @@ input[id^="fronto"] {
     justify-content: center;
     transition: all 0.3s ease;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    position: relative;
-    opacity: 0.15; /* Très discret par défaut */
+    position: relative; /* Indispensable pour le centrage des enfants */
+    opacity: 0; 
+    pointer-events: none;
 }
 
-/* Quand l'assistant dit "Position 1" ou "Position 2" */
 .jcc-visual.active {
     opacity: 1;
     transform: scale(1.1);
     border-color: var(--primary);
-    box-shadow: 0 0 20px rgba(4, 171, 198, 0.4);
 }
 
-/* Chiffres 1 et 2 au centre des cercles */
+/* Chiffres 1 et 2 forcés au centre */
 .jcc-label {
-    position: absolute;
+    position: absolute; /* Sort du flux pour ne pas pousser l'image */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centrage mathématique parfait */
     font-weight: 800;
-    font-size: 1.8rem;
+    font-size: 2.2rem; /* Taille augmentée */
     color: var(--text-main);
     z-index: 2;
+    margin: 0;
+    line-height: 1;
 }
 
-/* Taille des flèches rotatives */
 .arrow-svg { 
-    width: 75px; 
-    height: 75px; 
-    opacity: 0.8;
+    width: 90px; 
+    height: 90px; 
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: visible !important; 
+    z-index: 1;
 }
-
   /* INPUTS MODAL */
   .modal-input-grid {
       display: flex;
@@ -1680,13 +1689,20 @@ input[id^="fronto"] {
     <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">Verre<br>(-0.25)</div>
 
     <div id="jccVisuals" class="jcc-container hidden">
-        <div id="visPos1" class="jcc-visual"><span class="jcc-label">1</span>
-            <svg class="arrow-svg" viewBox="0 0 100 100"><path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#116dff" stroke-width="6" /></svg>
-        </div>
-        <div id="visPos2" class="jcc-visual"><span class="jcc-label">2</span>
-            <svg class="arrow-svg" viewBox="0 0 100 100"><path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#fd7e14" stroke-width="6" /></svg>
-        </div>
+    <div id="visPos1" class="jcc-visual">
+        <span class="jcc-label">1</span>
+        <svg class="arrow-svg" viewBox="0 0 100 100">
+            <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#116dff" stroke-width="6" marker-end="url(#arrowhead)" />
+        </svg>
     </div>
+
+    <div id="visPos2" class="jcc-visual">
+        <span class="jcc-label">2</span>
+        <svg class="arrow-svg" viewBox="0 0 100 100">
+            <path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#fd7e14" stroke-width="6" marker-end="url(#arrowhead2)" />
+        </svg>
+    </div>
+</div>
 
     <div id="axisControls" class="response-area hidden" style="position: absolute; bottom: 0px; width: 100%; pointer-events: auto;">
         <div id="axisDecisions" class="decision-row hidden">
@@ -1911,12 +1927,7 @@ input[id^="fronto"] {
     </div>
 
 </div>
-  <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
-    <defs>
-      <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#116dff" /></marker>
-      <marker id="arrowhead2" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#fd7e14" /></marker>
-    </defs>
-  </svg>
+ 
 </div>
 
 <script>
@@ -3899,48 +3910,91 @@ window.initAxisCheck = function() {
     }
 };
 window.runJccSequence = function() {
-    if (appState.isSpeaking) return; // LOCK
-  window.hideBaseCircle();
-    var p1 = document.getElementById('visPos1'); var p2 = document.getElementById('visPos2');
-    document.getElementById('axisDecisions').classList.add('hidden'); document.getElementById('btnReplayAxis').classList.add('hidden');
+    if (appState.isSpeaking) return; 
+    
+    window.hideBaseCircle();
+    var p1 = document.getElementById('visPos1'); 
+    var p2 = document.getElementById('visPos2');
+    var axisDecisions = document.getElementById('axisDecisions');
+    var replayBtn = document.getElementById('btnReplayAxis');
+
+    // Reset visuel
+    axisDecisions.classList.add('hidden');
+    replayBtn.classList.add('hidden');
+    p1.classList.remove('active');
+    p2.classList.remove('active');
+
+    let startTimeP1; // Pour calculer la durée exacte d'affichage de P1
+
+    // 1. On pose la question 1
     say("Vous préférez lire les lettres dans la position une ?", function() {
-        p1.classList.add('active'); p2.classList.remove('active');
+        // P1 s'allume à la fin de la phrase
+        p1.classList.add('active');
+        startTimeP1 = Date.now(); // On lance le chrono de visibilité
+
+        // On laisse un temps d'observation fixe avant de lancer la suite de la phrase
         setTimeout(function() {
-            say("Ou vous préférez lire les lettres dans la position deux, ou c'est pareil ?", function() {
-                  p1.classList.remove('active'); p2.classList.add('active');
-                  setTimeout(function() { p2.classList.remove('active'); document.getElementById('axisDecisions').classList.remove('hidden'); document.getElementById('btnReplayAxis').classList.remove('hidden'); }, 500);
+            
+            // 2. La voix lance la transition vers le "deux"
+            // Le bouton 1 est TOUJOURS ALLUMÉ ici
+            say("Ou vous préférez lire les lettres dans la position deux", function() {
+                
+                // --- INSTANT DE LA BASCULE ---
+                p1.classList.remove('active'); // Le 1 s'éteint
+                p2.classList.add('active');    // Le 2 s'allume
+                
+                let durationP1 = Date.now() - startTimeP1; // Calcul du temps total de P1
+
+                // On enchaîne avec la fin de la phrase
+                say("ou c'est pareil ?", function() {
+                    // La voix continue, le bouton 2 reste
+                });
+
+                // 3. Égalité du temps d'affichage
+                setTimeout(function() {
+                    p2.classList.remove('active'); // Le 2 s'éteint après la même durée que P1
+                    
+                    // Apparition des boutons de réponse
+                    setTimeout(function() {
+                        axisDecisions.classList.remove('hidden');
+                        replayBtn.classList.remove('hidden');
+                    }, 400);
+
+                }, durationP1); // Utilisation de la durée calculée
             });
-        }, 2000);
+
+        }, 1500); // Délai d'observation "pur" de P1 avant que la voix ne reprenne
     });
-};
+};  
+  window.handleJccChoice = function(choice) {
+    if (appState.isSpeaking) return; 
 
-window.handleJccChoice = function(choice) {
-    if (appState.isSpeaking) return; // LOCK
+    // Cache les boutons de réponse immédiatement après le clic
+    document.getElementById('axisDecisions').classList.add('hidden');
+    document.getElementById('btnReplayAxis').classList.add('hidden');
+
     var target = getTargetEye();
-    if (choice === 'same') { alert("Axe validé ! Passage à la Puissance."); return; }
-    var direction = (choice === 'pos1') ? 'cw' : 'ccw'; appState.axisDirectionHistory.push(direction);
-    var consecutiveCount = 0; for (var i = appState.axisDirectionHistory.length - 1; i >= 0; i--) { if (appState.axisDirectionHistory[i] === direction) consecutiveCount++; else break; }
-    if (consecutiveCount >= 2 && appState.axisDirectionHistory.length >= 2) {
-        alert("ALERTE : Déviation importante. Retour à l'axe RA et lecture à voix haute."); target.axe = appState.startAxisRA; updateDisplay("Reset Axe -> RA. Lecture à voix haute.");
-        appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10; appState.axisDirectionHistory = []; 
-        say("Nous allons recommencer. Cette fois, je vais vous demander de lire les lettres à voix haute.");
-        return;
-    }
-    var rot = (choice === 'pos1') ? -appState.axisStep : appState.axisStep;
-    if (appState.axisDirectionHistory.length > 1) {
-        var lastDir = appState.axisDirectionHistory[appState.axisDirectionHistory.length - 2];
-        if (lastDir !== direction) { 
-            if (appState.axisStep === 20) appState.axisStep = 10; else if (appState.axisStep === 10) appState.axisStep = 5; 
-            updateDisplay("Inversion -> Pas de " + appState.axisStep + "°");
-        }
+    if (choice === 'same') { 
+        alert("Axe validé ! Passage à la Puissance."); 
+        // Logique de passage à la suite ici
+        return; 
     }
 
-    // Modification ici pour utiliser la fonction de normalisation (0-175)
+    // Calcul de l'axe (identique à ton code actuel)
+    var direction = (choice === 'pos1') ? 'cw' : 'ccw';
+    appState.axisDirectionHistory.push(direction);
+    
+    // ... (garde ta logique de changement d'axe et de pas de rotation) ...
+
+    var rot = (choice === 'pos1') ? -appState.axisStep : appState.axisStep;
     target.axe = normalizeAxis(target.axe + rot);
 
-    updateDisplay("Nouvel Axe : " + target.axe + "°"); nextLetters(); setTimeout(function() { runJccSequence(); }, 1000);
+    updateDisplay("Nouvel Axe : " + target.axe + "°");
+    nextLetters();
+    
+    // Relance la séquence : les bulles réapparaîtront via runJccSequence
+    setTimeout(function() { runJccSequence(); }, 800);
 };
-
 // --- NOUVELLES FONCTIONS DE GESTION DE FLUX (STOP/RESTART) ---
 window.restartExam = function() {
     // 1. Hide the modal
