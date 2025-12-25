@@ -3213,11 +3213,7 @@ window.decidePlus = function(choice) {
     const target = getTargetEye();
     const currentSph = target.sphere;
     const raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
-    
-    // Récupération de l'état de lecture actuel pour le check 1.0 Fluid
-    const currentVA = ACUITY_TABLE[appState.vaIndex].va;
-    const lastScore = appState.lastResponseCount || 0; // On s'assure d'avoir le score
-    const lastCadence = appState.lastCadenceUsed || 'rabbit';
+    const lastScore = appState.lastResponseCount || 0;
 
     if (choice === 'better' || choice === 'same') {
         nextLetters();
@@ -3226,27 +3222,25 @@ window.decidePlus = function(choice) {
         setTimeout(function() { initSphereCheckPlus(); }, 500);
     } else {
         // --- CAS : REJET DU +0.25 ---
-        
-        // CONDITION A : RA Positif/Nul ET Sphère 0
-        const isRaPositiveAtZero = (raSph >= 0 && currentSph === 0);
-        
-        // CONDITION B : Acuité 1.0 parfaite (5 lettres + Lapin)
-        const isAcuityPerfect = (currentVA >= 1.0 && lastScore === 5 && lastCadence === 'rabbit');
 
-        if (isRaPositiveAtZero || isAcuityPerfect) {
-            updateDisplay("Validation : " + (isAcuityPerfect ? "Acuité Max atteinte" : "Limite RA atteinte"));
+        // CONDITION 1 : Sécurité absolue (RA positif et on est déjà à 0.00)
+        // On ne veut pas passer en négatif pour un hypermétrope connu.
+        const isRaPositiveAtZero = (raSph >= 0 && currentSph <= 0);
+
+        if (isRaPositiveAtZero) {
+            updateDisplay("Validation : Limite RA (0.00) atteinte pour hypermétrope");
             document.getElementById('checkPlusZone').classList.add('hidden');
             say("Ok, on continue.", function() {
                 finishSb10ForEye(); 
             });
         } 
         else {
-            // On autorise le passage au MOINS
+            // DANS TOUS LES AUTRES CAS : On teste le MOINS (-0.25)
+            // Même si l'acuité est à 1.0, on tente de voir si le -0.25 débloque la 12.5
             document.getElementById('stepPlusWrapper').classList.add('hidden'); 
             document.getElementById('decisionsPlus').classList.add('hidden');
             updateDisplay("Rejet (+) -> Test du Quart Concave (-0.25)");
             
-            // On mémorise le score actuel AVANT le -0.25 pour calculer le gain plus tard
             appState.scoreBeforeMinus = lastScore; 
             
             say("Attention, je vais dans l'autre sens.", function() { 
@@ -3255,7 +3249,6 @@ window.decidePlus = function(choice) {
         }
     }
 }
-
 window.startAutomaticMinusCheck = function() {
     document.getElementById('stepMinusWrapper').classList.remove('hidden');
     document.getElementById('decisionsMinus').classList.add('hidden');
