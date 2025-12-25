@@ -2346,6 +2346,13 @@ var appState = {
     safety_mode: false,
     safety_mem_letters: 0,
     hasRestartedSb10: false, // Flag anti-boucle
+    
+    // --- ÉTATS POUR LE TEST DE GAIN (QUART CONCAVE) ---
+    scoreN_SansVerre: 0,        // Score initial sur ligne N (ex: 10/10)
+    scoreNPlus1_SansVerre: 0,   // Score sur ligne N+1 sans le -0.25
+    scoreNPlus1_AvecVerre: 0,   // Score sur ligne N+1 avec le -0.25
+    isCheckingGain: false,      // Flag d'activation du test de gain
+    
     // ----------------------------------
     handednessEye: 'OD', // Valeur par défaut
     pendingSchober: null, // Stockage temporaire du choix Schober
@@ -3213,7 +3220,6 @@ window.decidePlus = function(choice) {
     const target = getTargetEye();
     const currentSph = target.sphere;
     const raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
-    const lastScore = appState.lastResponseCount || 0;
 
     if (choice === 'better' || choice === 'same') {
         nextLetters();
@@ -3222,34 +3228,31 @@ window.decidePlus = function(choice) {
         setTimeout(function() { initSphereCheckPlus(); }, 500);
     } else {
         // --- CAS : REJET DU +0.25 ---
-
-        // CONDITION 1 : Sécurité absolue (RA positif et on est déjà à 0.00)
-        // On ne veut pas passer en négatif pour un hypermétrope connu.
         const isRaPositiveAtZero = (raSph >= 0 && currentSph <= 0);
 
         if (isRaPositiveAtZero) {
-            updateDisplay("Validation : Limite RA (0.00) atteinte pour hypermétrope");
-            document.getElementById('checkPlusZone').classList.add('hidden');
+            updateDisplay("Validation : Limite 0.00 atteinte");
+            if(document.getElementById('checkPlusZone')) document.getElementById('checkPlusZone').classList.add('hidden');
             say("Ok, on continue.", function() {
                 finishSb10ForEye(); 
             });
         } 
         else {
-            // DANS TOUS LES AUTRES CAS : On teste le MOINS (-0.25)
-            // Même si l'acuité est à 1.0, on tente de voir si le -0.25 débloque la 12.5
+            // CORRECTIF : On prépare le terrain pour le MOINS
             document.getElementById('stepPlusWrapper').classList.add('hidden'); 
-            document.getElementById('decisionsPlus').classList.add('hidden');
-            updateDisplay("Rejet (+) -> Test du Quart Concave (-0.25)");
+            document.getElementById('stepMinusWrapper').classList.remove('hidden');
+            document.getElementById('decisionsMinus').classList.add('hidden');
             
-            appState.scoreBeforeMinus = lastScore; 
+            updateDisplay("Rejet (+) -> Présentation du Quart Concave (-0.25)");
             
             say("Attention, je vais dans l'autre sens.", function() { 
-                window.startAutomaticMinusCheck(); 
+                // On lance l'animation visuelle du verre de -0.25
+                window.triggerDefogCheck(); 
             });
         }
     }
-}
-window.startAutomaticMinusCheck = function() {
+}  
+  window.startAutomaticMinusCheck = function() {
     document.getElementById('stepMinusWrapper').classList.remove('hidden');
     document.getElementById('decisionsMinus').classList.add('hidden');
     window.triggerDefogCheck();
@@ -3265,55 +3268,35 @@ window.relaunchFullCheck = function() {
 };
 
 window.decideMinus = function(choice) {
-    if (appState.isSpeaking) return; // LOCK
-    
-    // On cache immédiatement la zone de test des verres
-    document.getElementById('checkPlusZone').classList.add('hidden');
+    if (appState.isSpeaking) return;
 
     if (choice === 'better') {
-        // Le patient dit que c'est "mieux" avec le -0.25
-        // On applique la puissance mais on reste sur la ligne pour vérifier le gain
-        var target = getTargetEye();
-        target.sphere = appState.baseSphereValue - 0.25;
-        
-        // On repasse en mode lecture standard
-        document.getElementById('standardButtons').classList.remove('hidden');
-        appState.examPhase = "Sb1.0"; // Retour phase lecture
-        appState.isCheckingGain = true; // Flag pour dire qu'on attend un gain de 3
-        
-        updateDisplay("Vérification du gain (+3 lettres requises)");
-        nextLetters();
-        say("D'accord. Relisez-moi cette ligne s'il vous plaît.");
+        // Initialisation de la mémoire Swéb
+        appState.scoreN_SansVerre = appState.lastResponseCount || 0;
+        appState.isCheckingGain = true;
+
+        if (goNextLine()) {
+            appState.examPhase = "Vérification de Swéb"; // Phase Étape 1
+            nextLetters(); 
+            updateDisplay("Vérification de Swéb (Mesure de base)");
+            document.getElementById('checkPlusZone').classList.add('hidden');
+            document.getElementById('standardButtons').classList.remove('hidden');
+            say("D'accord. Sans changer le verre pour l'instant, lisez-moi cette nouvelle ligne s'il vous plaît.");
+        } else {
+            appState.examPhase = "Vérification de Swéb";
+            nextLetters();
+            document.getElementById('checkPlusZone').classList.add('hidden');
+            document.getElementById('standardButtons').classList.remove('hidden');
+            say("D'accord. Relisez ces lettres s'il vous plaît.");
+        }
     } else {
-        // Le patient dit "Pareil" ou "Moins bien" (Sphère testée)
-        // On reste sur la sphère de base et on termine
+        updateDisplay("Rejet du -0.25. Retour base.");
         var target = getTargetEye();
         target.sphere = appState.baseSphereValue; 
-        
-        updateDisplay("Rejet du -0.25 -> Validation");
-        finishSb10ForEye();
+        document.getElementById('checkPlusZone').classList.add('hidden');
+        say("Très bien, on reste comme cela.", function() { finishSb10ForEye(); });
     }
-}
-// Fonction de restart pour la modale Incohérent
-window.restartSb10 = function() {
-    document.getElementById('modalIncoherent').classList.add('hidden');
-    document.getElementById('checkPlusZone').classList.add('hidden');
-    document.getElementById('standardButtons').classList.remove('hidden');
-
-    // --- CORRECTION MAJEURE : RETOUR +0.50 ---
-    var target = getTargetEye();
-    target.sphere += 0.50;
-    updateDisplay("Relance Sb1.0 (+0.50) suite incohérence");
-    // ----------------------------------------
-
-    // Reset specific Sb1.0 counters
-    appState.sb10_line_defog = 0;
-    appState.safety_mode = false;
-    appState.hasRestartedSb10 = true; // NEW FLAG
-    // Relaunch phase
-    initSb10();
 };
-
 window.handleResponse = function(lettersRead) {
     if (appState.isSpeaking) return; // LOCK
 
@@ -3395,18 +3378,7 @@ window.handleCadence = function(type) {
 // --- LOGIQUE PRINCIPALE AVEC MESSAGES HARMONISÉS ---
 function processLogic(lettersRead, cadence) {
     // --- AJOUT DE LA RÈGLE DU GAIN ---
-    if (appState.isCheckingGain) {
-        appState.isCheckingGain = false; // Reset flag
-        if (lettersRead >= 3) {
-            alert("Gain validé !");
-            finishSb10ForEye();
-        } else {
-            alert("Gain insuffisant. Retour à la sphère précédente.");
-            getTargetEye().sphere += 0.25; // On annule le -0.25
-            finishSb10ForEye();
-        }
-        return;
-    }
+    
     // ---------------------------------
     
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
@@ -3416,7 +3388,74 @@ function processLogic(lettersRead, cadence) {
     var totalLetters = currentTxt.split(' ').length; var isSmallLine = totalLetters < 5;
     var isPassed = false;
 
-    // RÈGLE SPÉCIFIQUE SB0.2
+  // =========================================================
+// =========================================================
+// =========================================================
+// LOGIQUE EXPERTE : VÉRIFICATION DE SWÉB (SÉCURISÉE)
+// =========================================================
+
+// CAS 1 : On vient de saisir le score SANS le verre sur 12.5
+if (appState.examPhase === "Vérification de Swéb") {
+    appState.scoreNPlus1_SansVerre = lettersRead; 
+    
+    // ACTION : On applique le verre de test
+    var target = getTargetEye();
+    target.sphere = appState.baseSphereValue - 0.25; 
+    
+    // TRANSITION : On change de phase immédiatement pour le prochain clic
+    appState.examPhase = "Vérification de Swéb_AVEC_VERRE";
+    
+    nextLetters(); 
+    updateDisplay("Vérification de Swéb (Test avec -0.25)");
+    say("Bien. Et maintenant avec ce nouveau verre, relisez cette ligne s'il vous plaît.");
+    return; // STOP : On attend le clic suivant
+}
+
+// CAS 2 : On vient de saisir le score AVEC le verre sur 12.5
+if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
+    appState.scoreNPlus1_AvecVerre = lettersRead;
+    var gainSurNPlus1 = appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre;
+    
+    if (gainSurNPlus1 >= 3) {
+        // SUCCÈS IMMÉDIAT
+        appState.isCheckingGain = false;
+        appState.examPhase = "Sb1.0";
+        say("C'est parfait, on garde ce verre.");
+        finishSb10ForEye();
+    } 
+    else if (appState.scoreN_SansVerre < 5) {
+        // CAS AMBIGU : On redescend à la ligne 10/10 (N)
+        setVaToIndexClosest(1.0); 
+        appState.examPhase = "Vérification de Swéb_CUMUL_FINAL";
+        nextLetters();
+        updateDisplay("Vérification de Swéb (Gain cumulé sur 10/10)");
+        say("D'accord. Regardez maintenant la ligne juste au-dessus, et lisez-moi les lettres.");
+    }
+    else {
+        // ÉCHEC : Pas de gain et déjà au max sur la ligne précédente
+        revertMinusLens();
+    }
+    return; // STOP : On attend le clic ou la fin
+}
+
+// CAS 3 : On vient de saisir le score de cumul sur 10/10
+if (appState.examPhase === "Vérification de Swéb_CUMUL_FINAL") {
+    var gainSurN = lettersRead - appState.scoreN_SansVerre;
+    var gainSurNPlus1 = appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre;
+    var gainTotal = gainSurN + gainSurNPlus1;
+    
+    if (gainTotal >= 3) {
+        // SUCCÈS CUMULÉ
+        appState.isCheckingGain = false;
+        appState.examPhase = "Sb1.0";
+        say("Très bien, ce verre améliore globalement votre vision.");
+        finishSb10ForEye();
+    } else {
+        // ÉCHEC CUMULÉ
+        revertMinusLens();
+    }
+    return; // STOP
+}    // RÈGLE SPÉCIFIQUE SB0.2
     if (appState.examPhase === "Sb0.2") {
         if (cadence === 'rabbit') {
             if (isSmallLine) {
@@ -3792,7 +3831,24 @@ function handleSb10Safety(currentSphere, score) {
         }
     }
 }
-
+// Fonction de secours pour annuler le verre de test en cas d'échec de gain
+function revertMinusLens() {
+    var target = getTargetEye();
+    // On remet la sphère initiale (celle d'avant le test du -0.25)
+    target.sphere = appState.baseSphereValue; 
+    
+    appState.isCheckingGain = false;
+    appState.examPhase = "Sb1.0";
+    
+    // On s'assure que l'affichage revient sur la ligne de référence 10/10
+    setVaToIndexClosest(1.0); 
+    
+    updateDisplay("Gain insuffisant : retour à la base");
+    say("Ce n'est pas mieux finalement, on revient à la position précédente.");
+    
+    // On valide définitivement l'œil pour passer à la suite
+    finishSb10ForEye();
+}
 function changeSphereAndRetest(delta) { var target = getTargetEye(); target.sphere += delta; nextLetters(); }
 function nextLetters() { appState.letterIndex++; }
 function goNextLine() {
@@ -4092,15 +4148,19 @@ window.updateDisplay = function(message) {
                 break;
 
             case "SphereCheckPlus":  
-                affichagePhase = "Verres vérificateurs (+0.25)"; // 5.
+                affichagePhase = "Verres vérificateurs"; // 5.
                 break;
 
             case "SphereCheckMinus": 
-                affichagePhase = "Verres vérificateurs (-0.25)"; // 6.
+                affichagePhase = "Verres vérificateurs"; // 6.
                 break;
 
             case "AxisCheck":        
                 affichagePhase = "Mise au point de l'axe du cylindre"; // 7.
+                break;
+            
+            case "Vérification de Swéb":
+                affichagePhase = "Vérification de Swéb"; // Le texte sera affiché tel quel
                 break;
             
             // Vous pourrez ajouter vos futures phases ici (case "NomDeCode": ...)
