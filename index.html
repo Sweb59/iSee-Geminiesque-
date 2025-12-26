@@ -4098,36 +4098,39 @@ window.updateDisplay = function(message) {
     setHTML('disp_subjOG_sph', appState.subj.OG.sphere.toFixed(2)); setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
     setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°"); setHTML('disp_subjOG_va', appState.subj.OG.va);
 
-    // --- GESTION VISUELLE BIO-MONOCULAIRE ---
+    // --- GESTION VISUELLE BIO-MONOCULAIRE & SWÉB ---
     var boxOD = document.getElementById('subjDispOD'); 
     var boxOG = document.getElementById('subjDispOG');
     
-    // Liste des phases où les deux yeux sont ouverts (Bio-Mono)
-    var bioPhases = ["Sb1.0", "SphereCheckPlus", "SphereCheckMinus", "AxisCheck", "PowerCheck"];
-    var isBioMode = bioPhases.includes(appState.examPhase);
+    // Détection si on est dans une phase où les deux yeux sont ouverts
+    // On vérifie si la phase contient "Check", "Swéb" ou est Sb1.0/Sb0.5
+    var isBioMode = (
+        appState.examPhase === "Sb0.5" ||
+        appState.examPhase === "Sb1.0" || 
+        (appState.examPhase && appState.examPhase.includes("Check")) || 
+        (appState.examPhase && appState.examPhase.includes("Swéb"))
+    );
 
     if(boxOD && boxOG) {
-        // 1. Nettoyage préalable
+        // 1. Reset des styles
         boxOD.classList.remove('highlight', 'col-bio-inactive');
         boxOG.classList.remove('highlight', 'col-bio-inactive');
 
         if(appState.activeEye === 'OD') {
-            // OD est ACTIF (Cyan Plein)
-            boxOD.classList.add('highlight');
+            // Oeil examiné (Actif)
+            boxOD.classList.add('highlight'); 
             
-            // OG est PASSIF : Bio (Cyan Transp) ou Mono (Marron) ?
-            if(isBioMode) boxOG.classList.add('col-bio-inactive');
-            // Sinon on ne met rien, et le CSS par défaut (Marron) s'applique
+            // Oeil opposé (Passif) : Cyan transparent si Bio, sinon Marron par défaut
+            if(isBioMode) boxOG.classList.add('col-bio-inactive'); 
         } 
         else {
-            // OG est ACTIF (Cyan Plein)
-            boxOG.classList.add('highlight');
+            // Oeil examiné (Actif)
+            boxOG.classList.add('highlight'); 
             
-            // OD est PASSIF : Bio (Cyan Transp) ou Mono (Marron) ?
+            // Oeil opposé (Passif) : Cyan transparent si Bio, sinon Marron par défaut
             if(isBioMode) boxOD.classList.add('col-bio-inactive');
         }
     }
-
     // B. Mise à jour EN-TÊTE GAUCHE (Pilotage)
 
     // --- TRADUCTION DES PHASES ---
@@ -4175,27 +4178,44 @@ window.updateDisplay = function(message) {
     // -----------------------------
 
     var modeText = "MONOCULAIRE";
-    if (appState.examPhase === "Sb0.5" || (appState.examPhase && appState.examPhase.includes("Check")) || appState.examPhase === "Sb1.0") {
+    // On vérifie si la phase est Sb0.5, Sb1.0, contient "Check" ou contient "Swéb"
+    if (appState.examPhase === "Sb0.5" || 
+        appState.examPhase === "Sb1.0" || 
+        (appState.examPhase && appState.examPhase.includes("Check")) || 
+        (appState.examPhase && appState.examPhase.includes("Swéb"))) { // <--- Ajout Swéb ici
+        
         modeText = "BIO-MONOCULAIRE";
     }
     setHTML('dispMode', modeText);
 
-    // Boutons Pilotage OD/OG (Couleurs et état)
+    // --- GESTION DES BOUTONS PILOTAGE (OD/OG) ---
     var btnPilotOD = document.getElementById('btnPilotOD'); 
     var btnPilotOG = document.getElementById('btnPilotOG');
 
     if (btnPilotOD && btnPilotOG) {
-        var isMono = (appState.examPhase === "Sb0.2");
-        btnPilotOD.className = 'btn-pilot'; btnPilotOG.className = 'btn-pilot'; // Reset
+        // On définit le mode occlusion (Gris foncé) UNIQUEMENT en Sb0.2 ou Mono pur
+        var isOcclusionMode = (appState.examPhase === "Sb0.2" || appState.isMonocularExam);
+        
+        // Reset des classes
+        btnPilotOD.className = 'btn-pilot'; 
+        btnPilotOG.className = 'btn-pilot';
 
         if (appState.activeEye === 'OD') {
-            btnPilotOD.classList.add('active'); // Bleu (Actif)
-            if (isMono) btnPilotOG.classList.add('closed'); // Gris foncé
-            else btnPilotOG.classList.add('open'); // Blanc
+            btnPilotOD.classList.add('active'); // Oeil testé en Bleu
+            
+            if (isOcclusionMode) {
+                btnPilotOG.classList.add('closed'); // Oeil opposé en Gris (fermé)
+            } else {
+                btnPilotOG.classList.add('open');   // Oeil opposé en Blanc (ouvert/brouillé)
+            }
         } else {
-            btnPilotOG.classList.add('active'); // Bleu
-            if (isMono) btnPilotOD.classList.add('closed'); // Gris foncé
-            else btnPilotOD.classList.add('open'); // Blanc
+            btnPilotOG.classList.add('active'); // Oeil testé en Bleu
+            
+            if (isOcclusionMode) {
+                btnPilotOD.classList.add('closed'); // Oeil opposé en Gris (fermé)
+            } else {
+                btnPilotOD.classList.add('open');   // Oeil opposé en Blanc (ouvert/brouillé)
+            }
         }
     }
 
