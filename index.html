@@ -3286,7 +3286,7 @@ window.decideMinus = function(choice) {
             updateDisplay("Vérification de Swéb (Mesure de base)");
             document.getElementById('checkPlusZone').classList.add('hidden');
             document.getElementById('standardButtons').classList.remove('hidden');
-            say("D'accord. Sans changer le verre pour l'instant, lisez-moi cette nouvelle ligne s'il vous plaît.");
+            say("D'accord. Mais il faut me le prouver. Lisez-moi cette nouvelle ligne s'il vous plaît.");
         } else {
             appState.examPhase = "Vérification de Swéb";
             nextLetters();
@@ -3308,7 +3308,7 @@ window.decideMinus = function(choice) {
         // 3. Fermeture de l'interface de test
         if(document.getElementById('checkPlusZone')) document.getElementById('checkPlusZone').classList.add('hidden');
         
-        say("Très bien, on reste comme cela.", function() {
+        say("Très bien, continuons.", function() {
             finishSb10ForEye(); 
         });
     }
