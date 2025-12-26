@@ -3222,9 +3222,14 @@ window.decidePlus = function(choice) {
     const raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
 
     if (choice === 'better' || choice === 'same') {
+        // LE PATIENT ACCEPTE LE PLUS : On annule toute velléité de test Swéb (-0.25)
+        appState.isCheckingGain = false; 
+        
         nextLetters();
         target.sphere = appState.baseSphereValue + 0.25; 
-        updateDisplay("Accepté (+0.25) -> On recommence le test"); 
+        updateDisplay("Accepté (+0.25) -> On recommence le test de brouillage"); 
+        
+        // On relance le test du +0.25 sur la nouvelle base
         setTimeout(function() { initSphereCheckPlus(); }, 500);
     } else {
         // --- CAS : REJET DU +0.25 ---
@@ -3290,11 +3295,22 @@ window.decideMinus = function(choice) {
             say("D'accord. Relisez ces lettres s'il vous plaît.");
         }
     } else {
-        updateDisplay("Rejet du -0.25. Retour base.");
+        // --- CAS : REJET DU -0.25 (PAREIL OU MOINS BIEN) ---
+        // 1. Verrouillage : On s'assure que le mode gain est désactivé
+        appState.isCheckingGain = false;
+
+        // 2. Retour à la sphère qui a validé le 10/10 initial
         var target = getTargetEye();
         target.sphere = appState.baseSphereValue; 
-        document.getElementById('checkPlusZone').classList.add('hidden');
-        say("Très bien, on reste comme cela.", function() { finishSb10ForEye(); });
+        
+        updateDisplay("Rejet du -0.25. Validation de la base.");
+
+        // 3. Fermeture de l'interface de test
+        if(document.getElementById('checkPlusZone')) document.getElementById('checkPlusZone').classList.add('hidden');
+        
+        say("Très bien, on reste comme cela.", function() {
+            finishSb10ForEye(); 
+        });
     }
 };
 window.handleResponse = function(lettersRead) {
