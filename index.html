@@ -2994,11 +2994,27 @@ function applySb10Logic() {
         updateDisplay("Sb1.0: Positif -> Ligne 0.5 (" + eye + ")"); 
     }
 }
-function validateSb10() {
-    var sphere = getTargetEye().sphere;
-    if (sphere < 0) { initSphereCheckMinus(); } else { initSphereCheckPlus(); }
-}
+window.validateSb10 = function() {
+    var target = getTargetEye();
+    // On récupère le nombre de lettres lues juste avant le clic sur le bouton
+    var lettersRead = appState.lastResponseCount; 
 
+    if (target.sphere < 0) {
+        // --- NOUVEAU FLUX SPHÈRE NÉGATIVE (MYOPE) ---
+        // Si 5/5 lu de façon fluide (Lapin)
+        if (lettersRead === 5 && appState.lastCadenceUsed === 'rabbit') {
+            say("C'est parfait, on continue.", function() {
+                finishSb10ForEye();
+            });
+        } else {
+            // Moins de 5 lettres ou lecture hésitante (Tortue)
+            initQuartConcaveMyope();
+        }
+    } else {
+        // --- CAS SPHÈRE POSITIVE ---
+        initSphereCheckPlus();
+    }
+};
 window.finishSb10ForEye = function() {
     window.hideBaseCircle();
     var eye = appState.activeEye;
@@ -3064,7 +3080,9 @@ window.proceedToNextStepAfterEye = function(completedEye) {
         document.getElementById('waitingMsg').classList.remove('hidden');
         setHTML('waitingMsg', '<p style="font-size:1.5rem; color:var(--primary);">Examen terminé avec succès.</p>');
     }
-};function initSphereCheckMinus() {
+};
+  
+  function initSphereCheckMinus() {
   window.showBaseCircle(); // <--- AJOUTER CETTE LIGNE
     appState.examPhase = "SphereCheckMinus"; appState.checkStep = "TEST_125_PRE";
 
@@ -3102,7 +3120,31 @@ function initSphereCheckPlus(skipIntro) {
     if(skipIntro) { nextLetters(); window.triggerFogCheck(); } 
     else { setTimeout(function() { say("C'est pas mal, mais on va essayer de faire un peu mieux", function() { nextLetters(); window.triggerFogCheck(); }); }, 500); }
 }
+  window.initQuartConcaveMyope = function() {
+    // 1. VERROUILLAGE DE LA PHASE (PRIORITÉ ABSOLUE)
+    appState.examPhase = "QuartConcaveMyope"; 
 
+    // 2. Initialisation des données
+    window.showBaseCircle(); 
+    appState.baseSphereValue = getTargetEye().sphere;
+
+    // 3. Configuration de l'interface
+    document.getElementById('standardButtons').classList.add('hidden');
+    document.getElementById('cadenceButtons').classList.add('hidden');
+    document.getElementById('checkPlusZone').classList.remove('hidden');
+    
+    document.getElementById('stepPlusWrapper').classList.add('hidden');
+    document.getElementById('stepMinusWrapper').classList.remove('hidden');
+    document.getElementById('decisionsMinus').classList.add('hidden');
+
+    // 4. Lancement vocal et animation
+    setTimeout(function() {
+        say("On va essayer d'améliorer encore un peu la netteté.", function() {
+            nextLetters(); 
+            window.triggerDefogCheck(); 
+        });
+    }, 500);
+};
 // --------------------------------------------------------------------------
 // --- LOGIQUE ASYNCHRONE ET TIMING PRÉCIS (Basé sur Analyse Vidéo) ---
 // --------------------------------------------------------------------------
@@ -4153,40 +4195,30 @@ window.updateDisplay = function(message) {
     var affichagePhase = "Démarrage"; // 1. Par défaut (INIT)
 
     if (appState.examPhase) {
+        // --- TRADUCTION DES PHASES BLINDÉE ---
         switch(appState.examPhase) {
-            case "Sb0.2":            
-                affichagePhase = "Recherche de la Sb0.2"; // 2.
-                break;
-
-            case "Sb0.5":            
-                affichagePhase = "Recherche de la Sb0.5 (T.Q.S.)"; // 3.
-                break;
-
-            case "Sb1.0":            
-                affichagePhase = "Recherche de la Sb1.0"; // 4.
-                break;
-
-            case "SphereCheckPlus":  
-                affichagePhase = "Verres vérificateurs"; // 5.
+            case "Sb0.2":            affichagePhase = "Recherche de la Sb0.2"; break;
+            case "Sb0.5":            affichagePhase = "Recherche de la Sb0.5 (T.Q.S.)"; break;
+            case "Sb1.0":            affichagePhase = "Recherche de la Sb1.0"; break;
+            
+            case "QuartConcaveMyope":
+                affichagePhase = "Test du Quart Concave";
                 break;
 
             case "SphereCheckMinus": 
-                affichagePhase = "Verres vérificateurs"; // 6.
+                // SÉCURITÉ : Si on est sur un myope (sphère < 0), on force le bon nom 
+                // même si la variable interne s'est emmêlée les pinceaux.
+                if (appState.subj[appState.activeEye].sphere < 0) {
+                    affichagePhase = "Test du Quart Concave";
+                } else {
+                    affichagePhase = "Verres vérificateurs (-0.25)";
+                }
                 break;
 
-            case "AxisCheck":        
-                affichagePhase = "Mise au point de l'axe du cylindre"; // 7.
-                break;
-            
-            case "Vérification de Swéb":
-                affichagePhase = "Vérification de Swéb"; // Le texte sera affiché tel quel
-                break;
-            
-            // Vous pourrez ajouter vos futures phases ici (case "NomDeCode": ...)
-
-            default:                 
-                // Sécurité : affiche le code interne si pas de traduction trouvée
-                affichagePhase = appState.examPhase.toUpperCase();
+            case "SphereCheckPlus":  affichagePhase = "Verres vérificateurs (+0.25)"; break;
+            case "AxisCheck":        affichagePhase = "Mise au point de l'axe du cylindre"; break;
+            case "Vérification de Swéb": affichagePhase = "Vérification de Swéb"; break;
+            default:                 affichagePhase = appState.examPhase ? appState.examPhase.toUpperCase() : "INIT";
         }
     }
     
