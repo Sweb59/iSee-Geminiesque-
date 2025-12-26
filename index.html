@@ -2996,22 +2996,29 @@ function applySb10Logic() {
 }
 window.validateSb10 = function() {
     var target = getTargetEye();
-    // On récupère le nombre de lettres lues juste avant le clic sur le bouton
     var lettersRead = appState.lastResponseCount; 
+    var cadence = appState.lastCadenceUsed;
 
     if (target.sphere < 0) {
-        // --- NOUVEAU FLUX SPHÈRE NÉGATIVE (MYOPE) ---
-        // Si 5/5 lu de façon fluide (Lapin)
-        if (lettersRead === 5 && appState.lastCadenceUsed === 'rabbit') {
+        // --- CAS SPHÈRE NÉGATIVE (MYOPE) ---
+        
+        // 1. Validation Finale : 5/5 Rapide
+        if (lettersRead === 5 && cadence === 'rabbit') {
             say("C'est parfait, on continue.", function() {
                 finishSb10ForEye();
             });
-        } else {
-            // Moins de 5 lettres ou lecture hésitante (Tortue)
+        } 
+        // 2. Recherche de performance (Swéb exigé) : 3 Lapin, 4 Lapin, 4 Tortue ou 5 Tortue
+        else if ((lettersRead >= 3 && cadence === 'rabbit') || (lettersRead >= 4)) {
             initQuartConcaveMyope();
         }
+        // 3. Insuffisance de puissance : 0, 1, 2, ou 3 Tortue
+        // On renvoie vers processLogic pour un -0.25 direct (débrouillage)
+        else {
+            processLogic(lettersRead, cadence);
+        }
     } else {
-        // --- CAS SPHÈRE POSITIVE ---
+        // --- CAS SPHÈRE POSITIVE (HYPERMÉTROPE / BROUILLÉ) ---
         initSphereCheckPlus();
     }
 };
@@ -4162,11 +4169,11 @@ window.updateDisplay = function(message) {
     
     // Détection si on est dans une phase où les deux yeux sont ouverts
     // On vérifie si la phase contient "Check", "Swéb" ou est Sb1.0/Sb0.5
-    var isBioMode = (
-        appState.examPhase === "Sb0.5" ||
+  var isBioMode = (
         appState.examPhase === "Sb1.0" || 
         (appState.examPhase && appState.examPhase.includes("Check")) || 
-        (appState.examPhase && appState.examPhase.includes("Swéb"))
+        (appState.examPhase && appState.examPhase.includes("Swéb")) ||
+        appState.examPhase === "QuartConcaveMyope"
     );
 
     if(boxOD && boxOG) {
@@ -4226,11 +4233,11 @@ window.updateDisplay = function(message) {
     // -----------------------------
 
     var modeText = "MONOCULAIRE";
-    // On vérifie si la phase est Sb0.5, Sb1.0, contient "Check" ou contient "Swéb"
-    if (appState.examPhase === "Sb0.5" || 
-        appState.examPhase === "Sb1.0" || 
+    // Le mode BIO ne commence qu'à partir de la Sb1.0
+    if (appState.examPhase === "Sb1.0" || 
         (appState.examPhase && appState.examPhase.includes("Check")) || 
-        (appState.examPhase && appState.examPhase.includes("Swéb"))) { // <--- Ajout Swéb ici
+        (appState.examPhase && appState.examPhase.includes("Swéb")) ||
+        appState.examPhase === "QuartConcaveMyope") { 
         
         modeText = "BIO-MONOCULAIRE";
     }
@@ -4242,7 +4249,8 @@ window.updateDisplay = function(message) {
 
     if (btnPilotOD && btnPilotOG) {
         // On définit le mode occlusion (Gris foncé) UNIQUEMENT en Sb0.2 ou Mono pur
-        var isOcclusionMode = (appState.examPhase === "Sb0.2" || appState.isMonocularExam);
+        // L'occlusion (oeil fermé) est active en Sb0.2 ET en Sb0.5
+      var isOcclusionMode = (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5" || appState.isMonocularExam);
         
         // Reset des classes
         btnPilotOD.className = 'btn-pilot'; 
