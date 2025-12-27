@@ -3000,15 +3000,53 @@ window.validateSb10 = function() {
     var cadence = appState.lastCadenceUsed;
 
     if (target.sphere < 0) {
-        // --- CAS SPHÈRE NÉGATIVE (MYOPE) ---
+        // === CAS SPHÈRE NÉGATIVE (MYOPE) ===
         
-        // 1. Validation Finale : 5/5 Rapide
+        // 1. SUCCÈS TOTAL : 5 lettres ET Lapin
         if (lettersRead === 5 && cadence === 'rabbit') {
+            // CORRECTION BUG #4 : On gère le cylindre nul ICI, pas dans finishSb10ForEye
+            var puissanceCyl = Math.abs(target.cyl);
+            
+            if (puissanceCyl === 0) {
+                // CAS A : Cylindre Nul → Validation immédiate + Passage suite
+                console.log("Myope sans astigmatisme : Validation immédiate (5/5)");
+                
+                var eye = appState.activeEye;
+                var maxVa = ACUITY_TABLE[appState.vaIndex].va;
+                
+                // Mise à jour de la VA
+                appState.subj[eye].va = maxVa;
+                setHTML('disp_subj' + eye + '_va', maxVa);
+                
+                // Sauvegarde de la sphère finale
+                if (eye === 'OD') appState.saved_sb10.OD = target.sphere; 
+                else appState.saved_sb10.OG = target.sphere;
+                
+                // Marquer l'œil terminé
+                if (eye === 'OD') appState.sb10_OD_ok = true; 
+                else appState.sb10_OG_ok = true;
+                
+                // Masquer interface
+                window.hideBaseCircle();
+                document.getElementById('checkPlusZone').classList.add('hidden');
+                document.getElementById('standardButtons').classList.add('hidden');
+                document.getElementById('cadenceButtons').classList.add('hidden');
+                
+                // PASSAGE DIRECT À LA SUITE (sans repasser par finishSb10ForEye)
+                say("C'est parfait, on continue.", function() {
+                    window.proceedToNextStepAfterEye(eye);
+                });
+                return; // SORTIE ICI : On ne passe PAS dans finishSb10ForEye
+            }
+            
+            // CAS B : Cylindre présent → Validation classique
             say("C'est parfait, on continue.", function() {
-                finishSb10ForEye();
+                finishSb10ForEye(); // Cette fonction lancera l'axe
             });
+            return;
         } 
-        // 2. Recherche de performance (Swéb exigé) : 3 Lapin, 4 Lapin, 4 Tortue ou 5 Tortue
+        
+        // 2. Zone Mitigée (3 ou 4 lettres, OU 5 lettres Tortue) → Test de gain
         else if ((lettersRead >= 3 && cadence === 'rabbit') || (lettersRead >= 4)) {
             // Initialisation directe du test de Swéb
             appState.examPhase = "QuartConcaveMyope";
@@ -3030,17 +3068,21 @@ window.validateSb10 = function() {
                 document.getElementById('standardButtons').classList.remove('hidden');
                 say("Essayez de lire cette nouvelle ligne s'il vous plaît.");
             }
+            return;
         }
-        // 3. Insuffisance de puissance : 0, 1, 2, ou 3 Tortue
-        // On renvoie vers processLogic pour un -0.25 direct (débrouillage)
+        
+        // 3. Insuffisance de puissance (0, 1, 2, ou 3 Tortue) → Débrouillage
         else {
             processLogic(lettersRead, cadence);
         }
+        
     } else {
-        // --- CAS SPHÈRE POSITIVE (HYPERMÉTROPE / BROUILLÉ) ---
+        // === CAS SPHÈRE POSITIVE (HYPERMÉTROPE / BROUILLÉ) ===
         initSphereCheckPlus();
     }
-};window.proceedToNextStepAfterEye = function(completedEye) {
+};
+  
+  window.proceedToNextStepAfterEye = function(completedEye) {
     var otherEye = (completedEye === 'OD') ? 'OG' : 'OD';
     var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
@@ -3088,22 +3130,27 @@ window.finishSb10ForEye = function() {
     else appState.sb10_OG_ok = true;
 
     // --- RÈGLE 1 : SÉCURITÉ CYLINDRE NUL ---
+    // Gestion du cylindre
     var puissanceCyl = Math.abs(target.cyl);
 
     if (puissanceCyl === 0) {
-        console.log("Cylindre nul détecté. Passage à l'œil suivant ou fin.");
+        // Ce cas ne devrait plus arriver pour un myope 5/5 (géré dans validateSb10)
+        // On le garde par sécurité pour les cas Check+/Check-
+        console.log("Cylindre nul (cas non-standard). Passage à la suite.");
         say("D'accord, on continue.", function() {
-            // APPEL DE LA CORRECTION ICI
             window.proceedToNextStepAfterEye(eye); 
         });
     } else {
-        // CAS STANDARD : Cylindre présent -> On lance l'Axe
+        // CAS STANDARD : Cylindre présent → Lancer l'axe
         document.getElementById('checkPlusZone').classList.add('hidden');
         document.getElementById('standardButtons').classList.add('hidden');
         document.getElementById('cadenceButtons').classList.add('hidden');
         document.getElementById('axisZone').classList.remove('hidden');
         initAxisCheck();
     }
+```
+
+---
 };
 
 // Fonction utilitaire pour gérer la fin d'un oeil et la bascule
