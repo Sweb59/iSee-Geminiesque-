@@ -3010,7 +3010,26 @@ window.validateSb10 = function() {
         } 
         // 2. Recherche de performance (Swéb exigé) : 3 Lapin, 4 Lapin, 4 Tortue ou 5 Tortue
         else if ((lettersRead >= 3 && cadence === 'rabbit') || (lettersRead >= 4)) {
-            initQuartConcaveMyope();
+            // Initialisation directe du test de Swéb
+            appState.examPhase = "QuartConcaveMyope";
+            window.showBaseCircle(); 
+            appState.baseSphereValue = getTargetEye().sphere;
+            
+            document.getElementById('standardButtons').classList.add('hidden');
+            document.getElementById('cadenceButtons').classList.add('hidden');
+            document.getElementById('checkPlusZone').classList.remove('hidden');
+            document.getElementById('stepPlusWrapper').classList.add('hidden');
+            document.getElementById('stepMinusWrapper').classList.remove('hidden');
+            document.getElementById('decisionsMinus').classList.add('hidden');
+            
+            appState.scoreN_SansVerre = lettersRead;
+            
+            if (goNextLine()) {
+                nextLetters();
+                updateDisplay("Test de Swéb : Lecture ligne 12.5 sans verre");
+                document.getElementById('standardButtons').classList.remove('hidden');
+                say("Essayez de lire cette nouvelle ligne s'il vous plaît.");
+            }
         }
         // 3. Insuffisance de puissance : 0, 1, 2, ou 3 Tortue
         // On renvoie vers processLogic pour un -0.25 direct (débrouillage)
@@ -3021,9 +3040,37 @@ window.validateSb10 = function() {
         // --- CAS SPHÈRE POSITIVE (HYPERMÉTROPE / BROUILLÉ) ---
         initSphereCheckPlus();
     }
+};window.proceedToNextStepAfterEye = function(completedEye) {
+    var otherEye = (completedEye === 'OD') ? 'OG' : 'OD';
+    var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
+
+    if (!appState.isMonocularExam && !isOtherEyeDone) {
+        appState.activeEye = otherEye;
+        appState.sb10_line_defog = 0;
+        appState.safety_mode = false;
+        appState.hasRestartedSb10 = false;
+        appState.examPhase = "Sb1.0";
+        applySb10Logic(); 
+        updateDisplay("Passage au second œil : " + otherEye);
+        say(window.getRandomPrompt());
+    } else {
+        say("Ok, passons à la suite.");
+        updateDisplay("Examen Terminé");
+        document.getElementById('standardButtons').classList.add('hidden');
+        document.getElementById('checkPlusZone').classList.add('hidden');
+        document.getElementById('examContent').classList.add('hidden');
+        document.getElementById('waitingMsg').classList.remove('hidden');
+        setHTML('waitingMsg', '<p style="font-size:1.5rem; color:var(--primary);">Examen terminé avec succès.</p>');
+    }
 };
 window.finishSb10ForEye = function() {
     window.hideBaseCircle();
+    
+    // Reset compteurs de sécurité
+    appState.sb10_line_defog = 0;
+    appState.safety_mode = false;
+    appState.hasRestartedSb10 = false;
+    
     var eye = appState.activeEye;
     var target = getTargetEye();
     var maxVa = ACUITY_TABLE[appState.vaIndex].va;
@@ -3060,34 +3107,7 @@ window.finishSb10ForEye = function() {
 };
 
 // Fonction utilitaire pour gérer la fin d'un oeil et la bascule
-window.proceedToNextStepAfterEye = function(completedEye) {
-    var otherEye = (completedEye === 'OD') ? 'OG' : 'OD';
-    var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
-    if (!appState.isMonocularExam && !isOtherEyeDone) {
-        // Changement d'œil
-        appState.activeEye = otherEye;
-        
-        // Reset des sécurités pour le second œil
-        appState.sb10_line_defog = 0;
-        appState.safety_mode = false;
-        
-        // On relance UNIQUEMENT la logique Sb1.0, pas tout l'examen
-        appState.examPhase = "Sb1.0";
-        applySb10Logic(); 
-        
-        updateDisplay("Passage au second œil : " + otherEye);
-    } else {
-        // Fin d'examen
-        say("Ok, passons à la suite.");
-        updateDisplay("Examen Terminé");
-        
-        document.getElementById('standardButtons').classList.add('hidden');
-        document.getElementById('examContent').classList.add('hidden');
-        document.getElementById('waitingMsg').classList.remove('hidden');
-        setHTML('waitingMsg', '<p style="font-size:1.5rem; color:var(--primary);">Examen terminé avec succès.</p>');
-    }
-};
   
   function initSphereCheckMinus() {
   window.showBaseCircle(); // <--- AJOUTER CETTE LIGNE
@@ -3878,19 +3898,20 @@ if (appState.examPhase === "Vérification de Swéb_CUMUL_FINAL") {
 function handleSb10Safety(currentSphere, score) {
     if (currentSphere >= 0) {
         appState.sb10_line_defog++;
-        // Si on a débrouillé plus de 0.50 (donc 3 fois 0.25 = 0.75)
+        
         if (appState.sb10_line_defog > 2) {
-            // NEW CHECK: Prevent infinite loop
             if (appState.hasRestartedSb10) {
                 alert("Sécurité : Seconde tentative échouée. On valide la sphère actuelle.");
+                appState.sb10_line_defog = 0;
+                appState.safety_mode = false;
                 finishSb10ForEye();
                 return;
             }
-
+            
+            appState.hasRestartedSb10 = true;
             appState.safety_mode = true;
-            // On sauvegarde le vrai score de l'échec
-            appState.safety_mem_letters = score; 
-
+            appState.safety_mem_letters = score;
+            
             alert("Sécurité : Débrouillage excessif sur sphère positive. Vérification.");
             initSphereCheckPlus();
         }
