@@ -2979,11 +2979,7 @@ function initSb10() {
 
 function applySb10Logic() {
     var eye = appState.activeEye; 
-    var otherEye = (eye === 'OD') ? 'OG' : 'OD';
-    var target = getTargetEye(); // Récupère l'œil actuellement actif
-
-    // On s'assure que l'œil passif est bien au brouillage Sb0.5 sauvegardé
-    appState.subj[otherEye].sphere = appState.saved_sb05[otherEye]; 
+    var target = getTargetEye(); 
     
     setVaToIndexClosest(0.50);
 
@@ -2993,35 +2989,88 @@ function applySb10Logic() {
     } else { 
         updateDisplay("Sb1.0: Positif -> Ligne 0.5 (" + eye + ")"); 
     }
+    // L'OEIL PASSIF N'EST PAS TOUCHÉ ICI, IL GARDE SA VALEUR DE BASCULE
 }
 window.validateSb10 = function() {
     var target = getTargetEye();
     var lettersRead = appState.lastResponseCount; 
     var cadence = appState.lastCadenceUsed;
+    const currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
     if (target.sphere < 0) {
-        // --- CAS SPHÈRE NÉGATIVE (MYOPE) ---
+        // ==========================================
+        // LOGIQUE MYOPE (NÉGATIF) : SWÉB DIRECT
+        // ==========================================
         
-        // 1. Validation Finale : 5/5 Rapide
+        // 1. Succès Total : 5 Lapin -> Fin d'examen pour cet oeil
         if (lettersRead === 5 && cadence === 'rabbit') {
             say("C'est parfait, on continue.", function() {
                 finishSb10ForEye();
             });
         } 
-        // 2. Recherche de performance (Swéb exigé) : 3 Lapin, 4 Lapin, 4 Tortue ou 5 Tortue
-        else if ((lettersRead >= 3 && cadence === 'rabbit') || (lettersRead >= 4)) {
-            initQuartConcaveMyope();
+        // 2. ZONE DÉCLENCHEUR SWÉB : 3L, 4T, 4L, 5T
+        else if ((lettersRead === 3 && cadence === 'rabbit') || 
+                 (lettersRead === 4) || 
+                 (lettersRead === 5 && cadence === 'turtle')) {
+            
+            updateDisplay("Performance Myope -> Test Swéb Direct");
+            // On saute l'étape du Quart Concave visuel
+            window.launchDirectSwebForMyope(); 
         }
-        // 3. Insuffisance de puissance : 0, 1, 2, ou 3 Tortue
-        // On renvoie vers processLogic pour un -0.25 direct (débrouillage)
+        // 3. ZONE DÉBROUILLAGE DIRECT : 0, 1, 2 (tous) et 3 Tortue
+        else {
+            updateDisplay("Insuffisance -> Débrouillage -0.25");
+            target.sphere -= 0.25;
+            appState.baseSphereValue = target.sphere;
+            nextLetters();
+            say("Je change de verre. Relisez-moi cette ligne.");
+        }
+    } else {
+        // ==========================================
+        // LOGIQUE HYPERMÉTROPE (POSITIF) : INCHANGÉE
+        // ==========================================
+        
+        // Si au 10/10 : on lance le test des verres (animations + boutons ronds)
+        if (currentVA === 1.0 && lettersRead >= 4) {
+            initSphereCheckMinus(); 
+        } 
+        // Sous le 10/10 : débrouillage fluide classique
+        else if (lettersRead >= 4) {
+            processLogic(lettersRead, cadence);
+        }
         else {
             processLogic(lettersRead, cadence);
         }
-    } else {
-        // --- CAS SPHÈRE POSITIVE (HYPERMÉTROPE / BROUILLÉ) ---
-        initSphereCheckPlus();
     }
 };
+window.launchDirectSwebForMyope = function() {
+    const target = getTargetEye();
+    // 1. On mémorise le score actuel avant de changer de ligne
+    appState.scoreN_SansVerre = appState.lastResponseCount || 0;
+    appState.isCheckingGain = true;
+    appState.baseSphereValue = target.sphere;
+
+    if (goNextLine()) {
+        appState.examPhase = "Vérification de Swéb";
+        nextLetters();
+        
+        // REPERE : Rafraîchissement forcé de l'interface
+        window.updateDisplay("Vérification de Swéb (Mesure de base)");
+        
+        // On s'assure que les boutons ronds sont cachés et les chiffres (0-5) visibles
+        document.getElementById('checkPlusZone').classList.add('hidden');
+        document.getElementById('standardButtons').classList.remove('hidden');
+        
+        // --- NOUVEAU MESSAGE POUR MYOPE UNIQUEMENT ---
+        say("C'est pas trop moche. Voyons si on peut faire encore un peu mieux sur cette nouvelle ligne.");
+    } else {
+        appState.examPhase = "Vérification de Swéb";
+        nextLetters();
+        window.updateDisplay("Vérification finale");
+        say("C'est déjà excellent. Relisez-moi ces lettres pour confirmer.");
+    }
+};
+  
 window.finishSb10ForEye = function() {
     window.hideBaseCircle();
     var eye = appState.activeEye;
@@ -3065,27 +3114,28 @@ window.proceedToNextStepAfterEye = function(completedEye) {
     var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
     if (!appState.isMonocularExam && !isOtherEyeDone) {
-        // Changement d'œil
+        // --- LOGIQUE DE BASCULE OEIL PASSIF (O1) ---
+        if (appState.initProfile === "1") {
+            appState.subj[completedEye].sphere = appState.saved_sb10[completedEye] + 0.75;
+        } else {
+            appState.subj[completedEye].sphere = appState.saved_sb05[completedEye];
+        }
+
+        // --- PRÉPARATION OEIL ACTIF (O2) ---
+        var raSphO2 = (otherEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
+        appState.subj[otherEye].sphere = raSphO2; 
+
         appState.activeEye = otherEye;
-        
-        // Reset des sécurités pour le second œil
         appState.sb10_line_defog = 0;
         appState.safety_mode = false;
-        
-        // On relance UNIQUEMENT la logique Sb1.0, pas tout l'examen
         appState.examPhase = "Sb1.0";
+        
         applySb10Logic(); 
-        
-        updateDisplay("Passage au second œil : " + otherEye);
+        updateDisplay("Bascule vers " + otherEye);
+        say("Bien, nous passons à l'examen de l'autre œil.");
     } else {
-        // Fin d'examen
         say("Ok, passons à la suite.");
-        updateDisplay("Examen Terminé");
-        
-        document.getElementById('standardButtons').classList.add('hidden');
-        document.getElementById('examContent').classList.add('hidden');
-        document.getElementById('waitingMsg').classList.remove('hidden');
-        setHTML('waitingMsg', '<p style="font-size:1.5rem; color:var(--primary);">Examen terminé avec succès.</p>');
+        updateDisplay("Phase Monoculaire Terminée");
     }
 };
   
@@ -3127,7 +3177,7 @@ function initSphereCheckPlus(skipIntro) {
     if(skipIntro) { nextLetters(); window.triggerFogCheck(); } 
     else { setTimeout(function() { say("C'est pas mal, mais on va essayer de faire un peu mieux", function() { nextLetters(); window.triggerFogCheck(); }); }, 500); }
 }
-  window.initQuartConcaveMyope = function() {
+  /*window.initQuartConcaveMyope = function() {
     // 1. VERROUILLAGE DE LA PHASE (PRIORITÉ ABSOLUE)
     appState.examPhase = "QuartConcaveMyope"; 
 
@@ -3151,7 +3201,7 @@ function initSphereCheckPlus(skipIntro) {
             window.triggerDefogCheck(); 
         });
     }, 500);
-};
+};*/
 // --------------------------------------------------------------------------
 // --- LOGIQUE ASYNCHRONE ET TIMING PRÉCIS (Basé sur Analyse Vidéo) ---
 // --------------------------------------------------------------------------
@@ -3441,7 +3491,17 @@ window.handleCadence = function(type) {
 };
 
 // --- LOGIQUE PRINCIPALE AVEC MESSAGES HARMONISÉS ---
-function processLogic(lettersRead, cadence) {
+  function processLogic(lettersRead, cadence) {
+    // --- AJOUT SÉCURITÉ : REDIRECTION VERS LE CALCUL DE SWÉB ---
+    if (appState.examPhase.includes("Vérification de Swéb")) {
+        // Si on est dans cette phase, on ignore la logique standard
+        // et on laisse les blocs spécialisés (CAS 1, 2, 3) gérer le calcul de gain.
+        // On s'assure juste que le score est mémorisé.
+        console.log("Logique Swéb détectée pour score : " + lettersRead);
+    }
+    // ----------------------------------------------------------
+
+    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
     // --- AJOUT DE LA RÈGLE DU GAIN ---
     
     // ---------------------------------
@@ -4158,18 +4218,21 @@ window.setEye = function(eye) {
 // 2. Fonction d'affichage principale (Compatible Header Split)
 window.updateDisplay = function(message) {
     // A. Mise à jour des colonnes de données (Gauche)
-    setHTML('disp_subjOD_sph', appState.subj.OD.sphere.toFixed(2)); setHTML('disp_subjOD_cyl', appState.subj.OD.cyl.toFixed(2));
-    setHTML('disp_subjOD_axe', appState.subj.OD.axe + "°"); setHTML('disp_subjOD_va', appState.subj.OD.va);
-    setHTML('disp_subjOG_sph', appState.subj.OG.sphere.toFixed(2)); setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
-    setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°"); setHTML('disp_subjOG_va', appState.subj.OG.va);
+    setHTML('disp_subjOD_sph', appState.subj.OD.sphere.toFixed(2)); 
+    setHTML('disp_subjOD_cyl', appState.subj.OD.cyl.toFixed(2));
+    setHTML('disp_subjOD_axe', appState.subj.OD.axe + "°"); 
+    setHTML('disp_subjOD_va', appState.subj.OD.va);
+    setHTML('disp_subjOG_sph', appState.subj.OG.sphere.toFixed(2)); 
+    setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
+    setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°"); 
+    setHTML('disp_subjOG_va', appState.subj.OG.va);
 
-    // --- GESTION VISUELLE BIO-MONOCULAIRE & SWÉB ---
+    // --- GESTION VISUELLE BIO-MONOCULAIRE, SWÉB & BALANCE ---
     var boxOD = document.getElementById('subjDispOD'); 
     var boxOG = document.getElementById('subjDispOG');
     
     // Détection si on est dans une phase où les deux yeux sont ouverts
-    // On vérifie si la phase contient "Check", "Swéb" ou est Sb1.0/Sb0.5
-  var isBioMode = (
+    var isBioMode = (
         appState.examPhase === "Sb1.0" || 
         (appState.examPhase && appState.examPhase.includes("Check")) || 
         (appState.examPhase && appState.examPhase.includes("Swéb")) ||
@@ -4177,70 +4240,51 @@ window.updateDisplay = function(message) {
     );
 
     if(boxOD && boxOG) {
-        // 1. Reset des styles
+        // Reset des styles
         boxOD.classList.remove('highlight', 'col-bio-inactive');
         boxOG.classList.remove('highlight', 'col-bio-inactive');
 
-        if(appState.activeEye === 'OD') {
-            // Oeil examiné (Actif)
+        // --- CAS 1 : BALANCE BINOCULAIRE FINALE ---
+        if (appState.examPhase === "Balance Binoculaire") {
+            boxOD.classList.add('highlight');
+            boxOG.classList.add('highlight');
+        } 
+        // --- CAS 2 : OEIL DROIT ACTIF ---
+        else if(appState.activeEye === 'OD') {
             boxOD.classList.add('highlight'); 
-            
-            // Oeil opposé (Passif) : Cyan transparent si Bio, sinon Marron par défaut
             if(isBioMode) boxOG.classList.add('col-bio-inactive'); 
         } 
+        // --- CAS 3 : OEIL GAUCHE ACTIF ---
         else {
-            // Oeil examiné (Actif)
             boxOG.classList.add('highlight'); 
-            
-            // Oeil opposé (Passif) : Cyan transparent si Bio, sinon Marron par défaut
             if(isBioMode) boxOD.classList.add('col-bio-inactive');
         }
     }
+
     // B. Mise à jour EN-TÊTE GAUCHE (Pilotage)
 
     // --- TRADUCTION DES PHASES ---
-    var affichagePhase = "Démarrage"; // 1. Par défaut (INIT)
-
+    var affichagePhase = "Démarrage";
     if (appState.examPhase) {
-        // --- TRADUCTION DES PHASES BLINDÉE ---
         switch(appState.examPhase) {
-            case "Sb0.2":            affichagePhase = "Recherche de la Sb0.2"; break;
-            case "Sb0.5":            affichagePhase = "Recherche de la Sb0.5 (T.Q.S.)"; break;
-            case "Sb1.0":            affichagePhase = "Recherche de la Sb1.0"; break;
-            
-            case "QuartConcaveMyope":
-                affichagePhase = "Test du Quart Concave";
-                break;
-
-            case "SphereCheckMinus": 
-                // SÉCURITÉ : Si on est sur un myope (sphère < 0), on force le bon nom 
-                // même si la variable interne s'est emmêlée les pinceaux.
-                if (appState.subj[appState.activeEye].sphere < 0) {
-                    affichagePhase = "Test du Quart Concave";
-                } else {
-                    affichagePhase = "Verres vérificateurs (-0.25)";
-                }
-                break;
-
-            case "SphereCheckPlus":  affichagePhase = "Verres vérificateurs (+0.25)"; break;
-            case "AxisCheck":        affichagePhase = "Mise au point de l'axe du cylindre"; break;
+            case "Sb0.2":             affichagePhase = "Recherche de la Sb0.2"; break;
+            case "Sb0.5":             affichagePhase = "Recherche de la Sb0.5 (T.Q.S.)"; break;
+            case "Sb1.0":             affichagePhase = "Recherche de la Sb1.0"; break;
+            case "QuartConcaveMyope":  affichagePhase = "Test du Quart Concave"; break;
+            case "SphereCheckMinus":   affichagePhase = (appState.subj[appState.activeEye].sphere < 0) ? "Test du Quart Concave" : "Verres vérificateurs (-0.25)"; break;
+            case "SphereCheckPlus":    affichagePhase = "Verres vérificateurs (+0.25)"; break;
+            case "AxisCheck":         affichagePhase = "Mise au point de l'axe du cylindre"; break;
             case "Vérification de Swéb": affichagePhase = "Vérification de Swéb"; break;
-            default:                 affichagePhase = appState.examPhase ? appState.examPhase.toUpperCase() : "INIT";
+            case "Balance Binoculaire": affichagePhase = "Équilibre et Confort Binoculaire"; break;
+            default:                  affichagePhase = appState.examPhase.toUpperCase();
         }
     }
-    
     setHTML('dispPhase', affichagePhase);
-    // -----------------------------
 
+    // --- MODE TEXTE ---
     var modeText = "MONOCULAIRE";
-    // Le mode BIO ne commence qu'à partir de la Sb1.0
-    if (appState.examPhase === "Sb1.0" || 
-        (appState.examPhase && appState.examPhase.includes("Check")) || 
-        (appState.examPhase && appState.examPhase.includes("Swéb")) ||
-        appState.examPhase === "QuartConcaveMyope") { 
-        
-        modeText = "BIO-MONOCULAIRE";
-    }
+    if (isBioMode) modeText = "BIO-MONOCULAIRE";
+    if (appState.examPhase === "Balance Binoculaire") modeText = "BINOCULAIRE";
     setHTML('dispMode', modeText);
 
     // --- GESTION DES BOUTONS PILOTAGE (OD/OG) ---
@@ -4248,29 +4292,23 @@ window.updateDisplay = function(message) {
     var btnPilotOG = document.getElementById('btnPilotOG');
 
     if (btnPilotOD && btnPilotOG) {
-        // On définit le mode occlusion (Gris foncé) UNIQUEMENT en Sb0.2 ou Mono pur
-        // L'occlusion (oeil fermé) est active en Sb0.2 ET en Sb0.5
-      var isOcclusionMode = (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5" || appState.isMonocularExam);
-        
-        // Reset des classes
         btnPilotOD.className = 'btn-pilot'; 
         btnPilotOG.className = 'btn-pilot';
 
-        if (appState.activeEye === 'OD') {
-            btnPilotOD.classList.add('active'); // Oeil testé en Bleu
-            
-            if (isOcclusionMode) {
-                btnPilotOG.classList.add('closed'); // Oeil opposé en Gris (fermé)
-            } else {
-                btnPilotOG.classList.add('open');   // Oeil opposé en Blanc (ouvert/brouillé)
-            }
+        if (appState.examPhase === "Balance Binoculaire") {
+            // Les deux yeux sont "actifs" visuellement
+            btnPilotOD.classList.add('active');
+            btnPilotOG.classList.add('active');
         } else {
-            btnPilotOG.classList.add('active'); // Oeil testé en Bleu
-            
-            if (isOcclusionMode) {
-                btnPilotOD.classList.add('closed'); // Oeil opposé en Gris (fermé)
+            var isOcclusionMode = (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5" || appState.isMonocularExam);
+            if (appState.activeEye === 'OD') {
+                btnPilotOD.classList.add('active');
+                if (isOcclusionMode) btnPilotOG.classList.add('closed');
+                else btnPilotOG.classList.add('open');
             } else {
-                btnPilotOD.classList.add('open');   // Oeil opposé en Blanc (ouvert/brouillé)
+                btnPilotOG.classList.add('active');
+                if (isOcclusionMode) btnPilotOD.classList.add('closed');
+                else btnPilotOD.classList.add('open');
             }
         }
     }
@@ -4278,10 +4316,20 @@ window.updateDisplay = function(message) {
     // C. Mise à jour EN-TÊTE DROIT (Visuel VA)
     setHTML('visBoxOD', appState.subj.OD.va); 
     setHTML('visBoxOG', appState.subj.OG.va);
-    var visOD = document.getElementById('visBoxOD'); var visOG = document.getElementById('visBoxOG');
+    var visOD = document.getElementById('visBoxOD'); 
+    var visOG = document.getElementById('visBoxOG');
+    
     if(visOD && visOG) {
-        if (appState.activeEye === 'OD') { visOD.classList.add('active-eye'); visOG.classList.remove('active-eye'); } 
-        else { visOD.classList.remove('active-eye'); visOG.classList.add('active-eye'); }
+        if (appState.examPhase === "Balance Binoculaire") {
+            visOD.classList.add('active-eye');
+            visOG.classList.add('active-eye');
+        } else if (appState.activeEye === 'OD') { 
+            visOD.classList.add('active-eye'); 
+            visOG.classList.remove('active-eye'); 
+        } else { 
+            visOD.classList.remove('active-eye'); 
+            visOG.classList.add('active-eye'); 
+        }
     }
 
     // D. Messages
@@ -4293,13 +4341,13 @@ window.updateDisplay = function(message) {
         else sysMsgEl.classList.remove('success-msg');
     }
 
-    // E. Génération des boutons de réponse ET FORCE AFFICHAGE
+    // E. Génération des boutons de réponse
     if(window.ACUITY_TABLE && appState.vaIndex < ACUITY_TABLE.length) {
         var currentData = ACUITY_TABLE[appState.vaIndex]; 
         setHTML('valVA', currentData.va);
         var linesArr = currentData.lines; 
         var txt = linesArr[appState.letterIndex % linesArr.length];
-        // NOUVEAU : Appel du moteur d'affichage par blocs
+        
         updateVisualAcuityDisplay(currentData.va, txt);
 
         var count = txt.split(' ').length; 
@@ -4309,27 +4357,19 @@ window.updateDisplay = function(message) {
         }
         setHTML('btnContainer', btnHTML);
 
-        // --- CORRECTION VISIBILITÉ (Le Fix Important) ---
-        var isSpecialMode = false;
-        var cadBtns = document.getElementById('cadenceButtons');
-        var chkPlus = document.getElementById('checkPlusZone');
-        var axisCtr = document.getElementById('axisControls');
-
-        if (cadBtns && !cadBtns.classList.contains('hidden')) isSpecialMode = true;
-        if (chkPlus && !chkPlus.classList.contains('hidden')) isSpecialMode = true;
-        if (axisCtr && !axisCtr.classList.contains('hidden')) isSpecialMode = true;
+        // Gestion de la visibilité des blocs de boutons
+        var isSpecialMode = (
+            !document.getElementById('cadenceButtons').classList.contains('hidden') || 
+            !document.getElementById('checkPlusZone').classList.contains('hidden') || 
+            !document.getElementById('axisControls').classList.contains('hidden')
+        );
 
         var stdBtns = document.getElementById('standardButtons');
         if (stdBtns) {
-            if (!isSpecialMode) {
-                stdBtns.classList.remove('hidden');
-            } else {
-                stdBtns.classList.add('hidden');
-            }
+            stdBtns.classList.toggle('hidden', isSpecialMode);
         }
     }
 };
-
 // =========================================================
 // === NOUVEAU MOTEUR D'AFFICHAGE (CORRIGÉ & INTÉGRÉ) ===
 // =========================================================
@@ -4472,7 +4512,31 @@ window.hideBaseCircle = function() {
     if(arrowM) arrowM.classList.remove('active');
     if(targetM) targetM.classList.remove('visible');
 };
-  
+
+  // --- FONCTION DE BALANCE BINOCULAIRE FINALE ---
+window.restoreBinocularBalance = function() {
+    // 1. Rétablissement des deux yeux à leurs Sb1.0 respectives (débrouillage total)
+    appState.subj.OD.sphere = appState.saved_sb10.OD;
+    appState.subj.OG.sphere = appState.saved_sb10.OG;
+
+    // 2. Passage visuel en mode Binoculaire pour l'interface
+    appState.examPhase = "Balance Binoculaire";
+    
+    // On force l'affichage des deux cartes en Cyan
+    appState.activeEye = "OD"; // Temporaire pour forcer le highlight via updateDisplay
+    
+    updateDisplay("Vision Binoculaire : Rétablissement des puissances nettes.");
+
+    // 3. Annonce vocale
+    say("Très bien. Je vous laisse maintenant les deux yeux ouverts. Est-ce que la vision est bien nette et confortable avec les deux yeux ensemble ?");
+    
+    // 4. Nettoyage de l'interface pour la phase suivante
+    document.getElementById('standardButtons').classList.add('hidden');
+    document.getElementById('checkPlusZone').classList.add('hidden');
+    
+    // Note: Ici vous pourrez ajouter l'affichage des boutons pour les tests 
+    // d'équilibre bioculaire ou de phorie.
+};
 </script>
 
   
