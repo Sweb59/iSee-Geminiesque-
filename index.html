@@ -3584,48 +3584,53 @@ if (appState.examPhase === "Vérification de Swéb") {
 }
 
 // ÉTAPE 2 : Mesure AVEC le -0.25 et calcul du gain
-  
-   if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
+    
+    // --- ÉTAPE 2 : Mesure AVEC le -0.25 et calcul du gain ---
+if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
     appState.scoreNPlus1_AvecVerre = lettersRead;
     var gainSurNPlus1 = appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre;
     
     if (gainSurNPlus1 >= 3) {
-        // --- CE BLOC EST REMPLACÉ ---
+        // SUCCÈS DU GAIN
         appState.isCheckingGain = false;
         const target = getTargetEye();
         
-        // VALIDATION DU VERRE : On fixe la nouvelle base
+        // On valide le verre
         target.sphere = appState.baseSphereValue - 0.25; 
         appState.baseSphereValue = target.sphere; 
         
-        // MISE À JOUR VA : Le patient a gagné une ligne
+        // On met à jour la VA
         appState.subj[appState.activeEye].va = ACUITY_TABLE[appState.vaIndex].va;
+        const currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
-        say("C'est parfait, l'acuité progresse. Vérifions si on peut encore l'améliorer.");
+        // --- NOUVELLE CONDITION DE SORTIE AU 20/10 ---
+        if (currentVA >= 2.0) {
+            say("Parfait, votre vision est maximale au 20/10ème. La recherche de sphère est terminée.", function() {
+                finishSb10ForEye(); 
+            });
+            return; 
+        } 
         
-        // REBOUCLAGE VERS LE +0.25 (votre nouvelle règle)
+        // Sinon, on reboucle vers le +0.25 (Logique standard)
+        say("C'est parfait, l'acuité progresse. Vérifions si on peut encore l'améliorer.");
         setTimeout(function() { 
             initSphereCheckPlus(true); 
         }, 800);
-        // -----------------------------
-    } 
-    else if (appState.scoreN_SansVerre < 5) {
-        // ON GARDE CETTE PARTIE (Test du gain cumulé)
-        // Note: vous pouvez ajuster le VA ici si ce n'est pas 1.0 (ex: acuité précédente)
+
+    } else if (appState.scoreN_SansVerre < 5) {
+        // ÉCHEC SUR N+1 : On teste le gain cumulé sur N
         var previousVA = ACUITY_TABLE[appState.vaIndex - 1].va;
         setVaToIndexClosest(previousVA);  
         appState.examPhase = "Vérification de Swéb_CUMUL_FINAL";
         nextLetters();
         updateDisplay("Vérification de Swéb (Gain cumulé sur ligne N)");
         say("D'accord. Regardez maintenant la ligne juste au-dessus, et lisez-moi les lettres.");
-    }
-    else {
-        // ON GARDE CETTE PARTIE (Echec direct)
+    } else {
+        // ÉCHEC TOTAL : On rend le verre et on finit la sphère
         revertMinusLens();
     }
     return;
 }
-
 // ÉTAPE 3 : Gain cumulé (si nécessaire)
 if (appState.examPhase === "Vérification de Swéb_CUMUL_FINAL") {
     var gainTotal = (lettersRead - appState.scoreN_SansVerre) + (appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre);
