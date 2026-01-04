@@ -2997,53 +2997,86 @@ window.validateSb10 = function() {
     var cadence = appState.lastCadenceUsed;
     const currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
-    if (target.sphere < 0) {
-        // ==========================================
-        // LOGIQUE MYOPE (NÉGATIF) : SWÉB DIRECT
-        // ==========================================
-        
-        // 1. Succès Total : 5 Lapin -> Fin d'examen pour cet oeil
-        if (lettersRead === 5 && cadence === 'rabbit') {
-            say("C'est parfait, on continue.", function() {
-                finishSb10ForEye();
-            });
-        } 
-        // 2. ZONE DÉCLENCHEUR SWÉB : 3L, 4T, 4L, 5T
-        else if ((lettersRead === 3 && cadence === 'rabbit') || 
-                 (lettersRead === 4) || 
-                 (lettersRead === 5 && cadence === 'turtle')) {
+    // --- CONDITION COMMUNE : SEULEMENT AU 10/10 ---
+    if (currentVA === 1.0) {
+
+        if (target.sphere < 0) {
+            // === LOGIQUE MYOPE (NÉGATIF) ===
             
-            updateDisplay("Performance Myope -> Test Swéb Direct");
-            // On saute l'étape du Quart Concave visuel
-            window.launchDirectSwebForMyope(); 
-        }
-        // 3. ZONE DÉBROUILLAGE DIRECT : 0, 1, 2 (tous) et 3 Tortue
-        else {
-            updateDisplay("Insuffisance -> Débrouillage -0.25");
-            target.sphere -= 0.25;
-            appState.baseSphereValue = target.sphere;
-            nextLetters();
-            say("Je change de verre. Relisez-moi cette ligne.");
+            // A. Déclencheurs de la Vérification (Swéb)
+            var triggerSweb = false;
+            if (lettersRead === 3 && cadence === 'rabbit') triggerSweb = true;
+            if (lettersRead === 4) triggerSweb = true;
+            if (lettersRead === 5 && cadence !== 'rabbit') triggerSweb = true;
+
+            // B. Déclencheurs du Débrouillage Simple (Sans test de gain)
+            var triggerSimpleDefog = false;
+            if (lettersRead <= 2) triggerSimpleDefog = true;
+            if (lettersRead === 3 && cadence === 'turtle') triggerSimpleDefog = true;
+
+           if (triggerSweb) {
+                appState.scoreN_SansVerre = lettersRead;
+                appState.isCheckingGain = true;
+                appState.baseSphereValue = target.sphere;
+                appState.examPhase = "Vérification de Swéb"; 
+                
+                // 1. On change la ligne techniquement
+                if (goNextLine()) nextLetters(); else nextLetters();
+
+                // 2. ON FORCE LA MISE À JOUR VISUELLE IMMÉDIATE (L'ajout est ici)
+                var currentData = ACUITY_TABLE[appState.vaIndex];
+                var txt = currentData.lines[appState.letterIndex % currentData.lines.length];
+                updateVisualAcuityDisplay(currentData.va, txt);
+                
+                // 3. On met à jour l'indicateur de phase en haut
+                updateDisplay("Vérification Myope à 1.0");
+
+                // 4. On lance la voix
+                say("C'est déjà pas mal. Voyons si on peut encore améliorer la netteté et le contraste. Lisez-moi cette nouvelle ligne.");
+                
+                return true; 
+            }
+            else if (triggerSimpleDefog) {
+                target.sphere -= 0.25;
+                appState.baseSphereValue = target.sphere;
+                nextLetters();
+                
+                // Forcer l'affichage du changement de lettres (si changement de lettres il y a)
+                var currentData = ACUITY_TABLE[appState.vaIndex];
+                var txt = currentData.lines[appState.letterIndex % currentData.lines.length];
+                updateVisualAcuityDisplay(currentData.va, txt);
+
+                updateDisplay("Insuffisance à 1.0 -> Débrouillage -0.25");
+                say("Je change de verre. Relisez-moi cette ligne.");
+                return true;
+            }
+
+        } else {
+            // === LOGIQUE HYPERMÉTROPE (POSITIF) ===
+            
+            // 1. DÉCLENCHEUR VERRES VÉRIFICATEURS (3, 4 ou 5 lettres)
+            // Dès que la ligne est "validée" ou "semi-validée", on teste le +0.25
+            if (lettersRead >= 3) {
+                initSphereCheckPlus(); 
+                return true; 
+            } 
+            // 2. DÉBROUILLAGE SIMPLE (0, 1 ou 2 lettres)
+            // Le patient ne voit rien ou presque : on augmente la puissance
+            else {
+                // On utilise la logique standard pour baisser la sphère (débrouiller)
+                processLogic(lettersRead, cadence);
+                return true;
+            }
         }
     } else {
-        // ==========================================
-        // LOGIQUE HYPERMÉTROPE (POSITIF) : INCHANGÉE
-        // ==========================================
-        
-        // Si au 10/10 : on lance le test des verres (animations + boutons ronds)
-        if (currentVA === 1.0 && lettersRead >= 4) {
-            initSphereCheckMinus(); 
-        } 
-        // Sous le 10/10 : débrouillage fluide classique
-        else if (lettersRead >= 4) {
-            processLogic(lettersRead, cadence);
-        }
-        else {
-            processLogic(lettersRead, cadence);
-        }
+        // HORS LIGNE 1.0 : Logique de progression standard
+        processLogic(lettersRead, cadence);
+      return true;
     }
+  return false;
 };
-window.launchDirectSwebForMyope = function() {
+  
+  /*window.launchDirectSwebForMyope = function() {
     const target = getTargetEye();
     // 1. On mémorise le score actuel avant de changer de ligne
     appState.scoreN_SansVerre = appState.lastResponseCount || 0;
@@ -3069,7 +3102,7 @@ window.launchDirectSwebForMyope = function() {
         window.updateDisplay("Vérification finale");
         say("C'est déjà excellent. Relisez-moi ces lettres pour confirmer.");
     }
-};
+};*/
   
 window.finishSb10ForEye = function() {
     window.hideBaseCircle();
@@ -3077,32 +3110,34 @@ window.finishSb10ForEye = function() {
     var target = getTargetEye();
     var maxVa = ACUITY_TABLE[appState.vaIndex].va;
     
-    // Mise à jour de la VA dans l'état et l'affichage
     appState.subj[eye].va = maxVa;
     setHTML('disp_subj' + eye + '_va', maxVa);
 
-    // Sauvegarde de la sphère finale
     if (eye === 'OD') appState.saved_sb10.OD = target.sphere; 
     else appState.saved_sb10.OG = target.sphere;
     
-    // Marquer l'œil actuel comme terminé pour la phase Sb10
+    // --- ÉTAPE CRUCIALE POUR CASSER LA BOUCLE ---
     if (eye === 'OD') appState.sb10_OD_ok = true; 
     else appState.sb10_OG_ok = true;
 
-    // --- RÈGLE 1 : SÉCURITÉ CYLINDRE NUL ---
+  // Ajout de cette ligne pour casser la boucle vocale
+    appState.examPhase = "Transition";
+
+    // On change la phase IMMÉDIATEMENT pour que handleCadence ne relance pas Sb1.0
+    appState.examPhase = "Validation_Intermédiaire"; 
+    // --------------------------------------------
+
     var puissanceCyl = Math.abs(target.cyl);
 
     if (puissanceCyl === 0) {
-        console.log("Cylindre nul détecté. Passage à l'œil suivant ou fin.");
-        say("D'accord, on continue.", function() {
-            // APPEL DE LA CORRECTION ICI
+        say("C'est parfait, cet oeil est terminé.", function() {
             window.proceedToNextStepAfterEye(eye); 
         });
     } else {
-        // CAS STANDARD : Cylindre présent -> On lance l'Axe
+        // Si cylindre, on lance l'axe
+        appState.examPhase = "AxisCheck"; // On change la phase ici aussi
         document.getElementById('checkPlusZone').classList.add('hidden');
         document.getElementById('standardButtons').classList.add('hidden');
-        document.getElementById('cadenceButtons').classList.add('hidden');
         document.getElementById('axisZone').classList.remove('hidden');
         initAxisCheck();
     }
@@ -3114,6 +3149,14 @@ window.proceedToNextStepAfterEye = function(completedEye) {
     var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
     if (!appState.isMonocularExam && !isOtherEyeDone) {
+
+      // --- AJOUTEZ CES LIGNES ICI ---
+        appState.isCheckingGain = false; 
+        appState.safety_mode = false;    
+        appState.sb10_line_defog = 0;    
+        appState.hasRestartedSb10 = false; 
+        // ------------------------------
+      
         // --- LOGIQUE DE BASCULE OEIL PASSIF (O1) ---
         if (appState.initProfile === "1") {
             appState.subj[completedEye].sphere = appState.saved_sb10[completedEye] + 0.75;
@@ -3415,34 +3458,24 @@ window.decideMinus = function(choice) {
 window.handleResponse = function(lettersRead) {
     if (appState.isSpeaking) return; // LOCK
 
-  appState.lastResponseCount = lettersRead;
+    appState.lastResponseCount = lettersRead;
+    
     // 1. Feedback Choice
     var wordsLow = ["Ok", "D'accord", "Bien"];
     var wordsHigh = ["Ok", "Bien", "Très bien", "Parfait", "D'accord"];
     var feedback = (lettersRead <= 3) ? wordsLow[Math.floor(Math.random() * wordsLow.length)] : wordsHigh[Math.floor(Math.random() * wordsHigh.length)];
 
-    // --- GESTION SPÉCIFIQUE Sb0.2 et Sb0.5 (Séquence Temporelle Stricte) ---
+    // --- GESTION SPÉCIFIQUE Sb0.2 et Sb0.5 ---
     if (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5") {
-
-        // 1. On parle d'abord (Feedback)
         say(feedback, function() {
-            // CE CODE S'EXECUTE UNE FOIS QUE "TRES BIEN" EST FINI
-
-            // 2. Snapshot état avant logique
             var oldVa = appState.vaIndex;
             var oldLet = appState.letterIndex;
             var oldEye = appState.activeEye;
 
-            // 3. Exécution logique (MISE A JOUR VISUELLE ICI)
             processLogic(lettersRead, 'rabbit');
 
-            // 4. Si la logique a changé l'œil (fin de phase), on s'arrête là (la transition vocale est gérée ailleurs)
             if (appState.activeEye !== oldEye) return;
-
-            // 5. Détection du changement visuel
             var changed = (appState.vaIndex !== oldVa || appState.letterIndex !== oldLet);
-
-            // 6. Si changement visuel -> Relance vocale
             if (changed) {
                 say(window.getRandomPrompt());
             }
@@ -3450,43 +3483,50 @@ window.handleResponse = function(lettersRead) {
         return;
     }
 
-    // --- GESTION STANDARD (Sb1.0, etc.) ---
+    // --- GESTION STANDARD ET SB1.0 (PARTIE À AJOUTER) ---
+    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
     var currentTxt = ACUITY_TABLE[appState.vaIndex].lines[appState.letterIndex % 8]; 
     if(!currentTxt) currentTxt = ACUITY_TABLE[appState.vaIndex].lines[0];
     var totalLetters = currentTxt.split(' ').length;
 
+    // Si la ligne est petite (<5 lettres) ou si le score est faible (<3), on traite direct
     if (totalLetters < 5 || lettersRead < 3) { 
-        // Pas de demande de cadence -> Logique immédiate
+        
+        // >>> LE BLOQUEUR DE SÉCURITÉ ICI <<<
+        if (window.validateSb10()) return; 
+
         processLogic(lettersRead, 'rabbit');
         if (!appState.isSpeaking) say(feedback);
+        
     } else { 
-        // Demande de cadence
-        say(feedback); // On dit juste "Bien"
+        // Sinon, on demande la cadence (Lapin/Tortue)
+        say(feedback); 
         askCadence(lettersRead); 
     }
 };
 
 window.handleCadence = function(type) {
-    if (appState.isSpeaking) return; // LOCK
+    if (appState.isSpeaking) return; 
 
-  appState.lastCadenceUsed = type;
-    // 1. Snapshot de la phase AVANT logique
-    var phaseBefore = appState.examPhase;
-
+    appState.lastCadenceUsed = type;
     var n = appState.pendingLetters; 
     appState.pendingLetters = null;
 
     document.getElementById('standardButtons').classList.remove('hidden'); 
     document.getElementById('cadenceButtons').classList.add('hidden');
 
-    // 2. Exécution Logique
-    processLogic(n, type);
+    // 1. On vérifie si validateSb10 intercepte le score (ex: 4 lapin à 1.0)
+    var intercepted = window.validateSb10();
 
-    // 3. Vérification APRES logique
-    // Si on est encore en Sb1.0, c'est qu'on continue (Ligne suivante ou débrouillage) -> On relance.
-    // Si on a changé de phase (vers SphereCheck, etc.), on ne dit rien.
-    if (phaseBefore === "Sb1.0" && appState.examPhase === "Sb1.0") {
-          say(window.getRandomPrompt());
+    // 2. Si non intercepté, on lance la logique standard (ex: 0.8 validé -> 1.0)
+    if (!intercepted) {
+        processLogic(n, type);
+    }
+
+    // 3. RÉTABLISSEMENT DE LA RELANCE :
+    // Si on est toujours en phase Sb1.0, on lance la phrase de relance
+    if (appState.examPhase === "Sb1.0") {
+        say(window.getRandomPrompt());
     }
 };
 
@@ -3519,68 +3559,66 @@ window.handleCadence = function(type) {
 // LOGIQUE EXPERTE : VÉRIFICATION DE SWÉB (SÉCURISÉE)
 // =========================================================
 
-// CAS 1 : On vient de saisir le score SANS le verre sur 12.5
+// --- LOGIQUE HARMONISÉE : VÉRIFICATION DE SWÉB ---
+
+// ÉTAPE 1 : Mesure sans le -0.25 (sur la ligne 1.25)
 if (appState.examPhase === "Vérification de Swéb") {
     appState.scoreNPlus1_SansVerre = lettersRead; 
-    
-    // ACTION : On applique le verre de test
     var target = getTargetEye();
     target.sphere = appState.baseSphereValue - 0.25; 
-    
-    // TRANSITION : On change de phase immédiatement pour le prochain clic
     appState.examPhase = "Vérification de Swéb_AVEC_VERRE";
     
     nextLetters(); 
     updateDisplay("Vérification de Swéb (Test avec -0.25)");
-    say("Bien. Et maintenant avec ce nouveau verre, relisez cette ligne s'il vous plaît.");
-    return; // STOP : On attend le clic suivant
+
+    if (target.sphere < 0) {
+        say("Bien. Et maintenant, est-ce que c'est mieux avec ce verre ? Relisez la ligne.");
+    } else {
+        say("Bien. Et maintenant avec ce nouveau verre, relisez cette ligne s'il vous plaît.");
+    }
+    return; 
 }
 
-// CAS 2 : On vient de saisir le score AVEC le verre sur 12.5
+// ÉTAPE 2 : Mesure AVEC le -0.25 et calcul du gain
 if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
     appState.scoreNPlus1_AvecVerre = lettersRead;
     var gainSurNPlus1 = appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre;
     
     if (gainSurNPlus1 >= 3) {
-        // SUCCÈS IMMÉDIAT
         appState.isCheckingGain = false;
         appState.examPhase = "Sb1.0";
         say("C'est parfait, on garde ce verre.");
         finishSb10ForEye();
     } 
     else if (appState.scoreN_SansVerre < 5) {
-        // CAS AMBIGU : On redescend à la ligne 10/10 (N)
         setVaToIndexClosest(1.0); 
         appState.examPhase = "Vérification de Swéb_CUMUL_FINAL";
         nextLetters();
-        updateDisplay("Vérification de Swéb (Gain cumulé sur 10/10)");
+        updateDisplay("Vérification de Swéb (Gain cumulé sur 1.0)");
         say("D'accord. Regardez maintenant la ligne juste au-dessus, et lisez-moi les lettres.");
     }
     else {
-        // ÉCHEC : Pas de gain et déjà au max sur la ligne précédente
         revertMinusLens();
     }
-    return; // STOP : On attend le clic ou la fin
+    return;
 }
 
-// CAS 3 : On vient de saisir le score de cumul sur 10/10
+// ÉTAPE 3 : Gain cumulé (si nécessaire)
 if (appState.examPhase === "Vérification de Swéb_CUMUL_FINAL") {
-    var gainSurN = lettersRead - appState.scoreN_SansVerre;
-    var gainSurNPlus1 = appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre;
-    var gainTotal = gainSurN + gainSurNPlus1;
+    var gainTotal = (lettersRead - appState.scoreN_SansVerre) + (appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre);
     
     if (gainTotal >= 3) {
-        // SUCCÈS CUMULÉ
         appState.isCheckingGain = false;
         appState.examPhase = "Sb1.0";
         say("Très bien, ce verre améliore globalement votre vision.");
         finishSb10ForEye();
     } else {
-        // ÉCHEC CUMULÉ
         revertMinusLens();
     }
-    return; // STOP
-}    // RÈGLE SPÉCIFIQUE SB0.2
+    return;
+}
+    
+    // RÈGLE SPÉCIFIQUE SB0.2
     if (appState.examPhase === "Sb0.2") {
         if (cadence === 'rabbit') {
             if (isSmallLine) {
@@ -4018,9 +4056,13 @@ function updateDisplay(message) {
 
     // Gestion des classes des colonnes de données
     if(appState.activeEye === 'OD') {
-        boxOD.classList.add('active'); boxOG.classList.remove('active');
+        // Oeil Droit devient Cyan, Oeil Gauche redevient gris/marron
+        boxOD.classList.add('highlight'); 
+        boxOG.classList.remove('highlight');
     } else {
-        boxOD.classList.remove('active'); boxOG.classList.add('active');
+        // Oeil Gauche devient Cyan, Oeil Droit redevient gris/marron
+        boxOG.classList.add('highlight'); 
+        boxOD.classList.remove('highlight');
     }
 
     // Gestion des classes des boutons Yeux (Nouvelle logique Occlusion)
