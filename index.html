@@ -3634,7 +3634,7 @@ if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
         // Sinon, on reboucle vers le +0.25 (Logique standard)
         // Le callback de 'say' garantit que initSphereCheckPlus ne se lance 
 // qu'une fois que la voix a terminé.
-say("C'est parfait, l'acuité progresse. Vérifions si on peut encore l'améliorer.", function() {
+say("C'est parfait. Vérifions si on peut encore améliorer votre vue.", function() {
     initSphereCheckPlus(true); 
 });
 
@@ -3645,7 +3645,7 @@ say("C'est parfait, l'acuité progresse. Vérifions si on peut encore l'amélior
         appState.examPhase = "Vérification de Swéb_CUMUL_FINAL";
         nextLetters();
         updateDisplay("Vérification de Swéb (Gain cumulé sur ligne N)");
-        say("D'accord. Regardez maintenant la ligne juste au-dessus, et lisez-moi les lettres.");
+        say("D'accord. Je vous montre des lettres un peu plus grandes; lisez les moi s'il vous plaît.");
     } else {
         // ÉCHEC TOTAL : On rend le verre et on finit la sphère
         revertMinusLens();
