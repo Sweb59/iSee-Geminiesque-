@@ -3136,10 +3136,12 @@ window.proceedToNextStepAfterEye = function(completedEye) {
     if (!appState.isMonocularExam && !isOtherEyeDone) {
 
       // --- AJOUTEZ CES LIGNES ICI ---
+        // --- BLOC DE REMPLACEMENT CORRIGÉ ---
         appState.isCheckingGain = false; 
         appState.safety_mode = false;    
         appState.sb10_line_defog = 0;    
-        appState.hasRestartedSb10 = false; 
+        appState.hasRestartedSb10 = false;
+        appState.tqsFogCount = 0; // Réinitialise le compteur de brouillage TQS pour l'œil suivant
         // ------------------------------
       
         // --- LOGIQUE DE BASCULE OEIL PASSIF (O1) ---
@@ -3619,24 +3621,28 @@ if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
         target.sphere = appState.baseSphereValue - 0.25; 
         appState.baseSphereValue = target.sphere; 
         
-        // On met à jour la VA
+ // On met à jour la VA
         appState.subj[appState.activeEye].va = ACUITY_TABLE[appState.vaIndex].va;
         const currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
-        // --- NOUVELLE CONDITION DE SORTIE AU 20/10 ---
-        if (currentVA >= 2.0) {
-            say("Parfait, votre vision est maximale au 20/10ème. La recherche de sphère est terminée.", function() {
+        // --- LOGIQUE DE SORTIE DIFFÉRENCIÉE ---
+        if (target.sphere < 0) {
+            // MYOPE : Validation immédiate et sortie (votre règle)
+            say("C'est parfait, ce verre est validé. Nous avons terminé la sphère.", function() {
                 finishSb10ForEye(); 
             });
-            return; 
-        } 
-        
-        // Sinon, on reboucle vers le +0.25 (Logique standard)
-        // Le callback de 'say' garantit que initSphereCheckPlus ne se lance 
-// qu'une fois que la voix a terminé.
-say("C'est parfait. Vérifions si on peut encore améliorer votre vue.", function() {
-    initSphereCheckPlus(true); 
-});
+        } else {
+            // HYPERMÉTROPE : On continue vers le +0.25 SAUF si on est au max du tableau
+            if (currentVA >= 2.0) {
+                say("Parfait, votre vision est maximale. La recherche de sphère est terminée.", function() {
+                    finishSb10ForEye(); 
+                });
+            } else {
+                say("C'est parfait. Vérifions si on peut encore améliorer votre vue.", function() {
+                    initSphereCheckPlus(true); 
+                });
+            }
+        }
 
     } else if (appState.scoreN_SansVerre < 5) {
         // ÉCHEC SUR N+1 : On teste le gain cumulé sur N
@@ -3668,10 +3674,18 @@ if (gainTotal >= 3) {
     // Note : On ne change pas l'acuité visuelle ici car on est sur la ligne N 
     // qu'il voyait déjà, mais le confort/gain est prouvé.
     
-    // La fonction initSphereCheckPlus ne se lancera que lorsque la phrase sera terminée.
-say("Très bien, ce verre améliore globalement votre vision. On continue les vérifications.", function() {
-    initSphereCheckPlus(true);
-});
+    // --- LOGIQUE DE SORTIE DIFFÉRENCIÉE (Étape 3) ---
+        if (target.sphere < 0) {
+            // MYOPE : Validation et sortie
+            say("Très bien, ce verre améliore globalement votre vision. Nous avons terminé la sphère.", function() {
+                finishSb10ForEye();
+            });
+        } else {
+            // HYPERMÉTROPE : On continue vers le +0.25
+            say("Très bien, ce verre améliore globalement votre vision. On continue les vérifications.", function() {
+                initSphereCheckPlus(true);
+            });
+        }
 } else {
     // ÉCHEC DU GAIN : On rejette le -0.25, on revient à la base et on FINIT LA SPHÈRE
     revertMinusLens(); 
