@@ -3418,44 +3418,48 @@ window.decideMinus = function(choice) {
     if (appState.isSpeaking) return;
 
     if (choice === 'better') {
-        // Initialisation de la mémoire Swéb
+        // --- CAS : LE PATIENT DEMANDE PLUS DE NÉGATIF ---
         appState.scoreN_SansVerre = appState.lastResponseCount || 0;
         appState.isCheckingGain = true;
 
         if (goNextLine()) {
-            appState.examPhase = "Vérification de Swéb"; // Phase Étape 1
+            appState.examPhase = "Vérification de Swéb"; 
             nextLetters(); 
-            updateDisplay("Vérification de Swéb (Mesure de base)");
+            updateDisplay("Vérification de Swéb (Mesure de base sur N+1)");
+            
             document.getElementById('checkPlusZone').classList.add('hidden');
             document.getElementById('standardButtons').classList.remove('hidden');
+            
             say("D'accord. Mais il faut me le prouver. Lisez-moi cette nouvelle ligne s'il vous plaît.");
         } else {
-            appState.examPhase = "Vérification de Swéb";
-            nextLetters();
-            document.getElementById('checkPlusZone').classList.add('hidden');
-            document.getElementById('standardButtons').classList.remove('hidden');
-            say("D'accord. Relisez ces lettres s'il vous plaît.");
+            // CAS : Déjà à l'acuité maximale du tableau (20/10)
+            updateDisplay("Acuité maximale atteinte. Fin de la sphère.");
+            say("Votre vision est déjà optimale. Passons à la suite.", function() {
+                finishSb10ForEye();
+            });
         }
+
     } else {
-        // --- CAS : REJET DU -0.25 (PAREIL OU MOINS BIEN) ---
-        // 1. Verrouillage : On s'assure que le mode gain est désactivé
+        // --- CAS : REJET DU -0.25 (Sortie définitive de la sphère) ---
         appState.isCheckingGain = false;
 
-        // 2. Retour à la sphère qui a validé le 10/10 initial
+        // Rétablissement de la sphère de base (celle validée avant le test)
         var target = getTargetEye();
         target.sphere = appState.baseSphereValue; 
         
-        updateDisplay("Rejet du -0.25. Validation de la base.");
+        updateDisplay("Refus du -0.25. Réglage final validé.");
 
-        // 3. Fermeture de l'interface de test
-        if(document.getElementById('checkPlusZone')) document.getElementById('checkPlusZone').classList.add('hidden');
+        if(document.getElementById('checkPlusZone')) 
+            document.getElementById('checkPlusZone').classList.add('hidden');
         
-        say("Très bien, continuons.", function() {
+        // Sortie vers l'astigmatisme
+        say("Très bien, nous avons votre réglage.", function() {
             finishSb10ForEye(); 
         });
     }
 };
-window.handleResponse = function(lettersRead) {
+  
+  window.handleResponse = function(lettersRead) {
     if (appState.isSpeaking) return; // LOCK
 
     appState.lastResponseCount = lettersRead;
@@ -3580,24 +3584,43 @@ if (appState.examPhase === "Vérification de Swéb") {
 }
 
 // ÉTAPE 2 : Mesure AVEC le -0.25 et calcul du gain
-if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
+  
+   if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
     appState.scoreNPlus1_AvecVerre = lettersRead;
     var gainSurNPlus1 = appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre;
     
     if (gainSurNPlus1 >= 3) {
+        // --- CE BLOC EST REMPLACÉ ---
         appState.isCheckingGain = false;
-        appState.examPhase = "Sb1.0";
-        say("C'est parfait, on garde ce verre.");
-        finishSb10ForEye();
+        const target = getTargetEye();
+        
+        // VALIDATION DU VERRE : On fixe la nouvelle base
+        target.sphere = appState.baseSphereValue - 0.25; 
+        appState.baseSphereValue = target.sphere; 
+        
+        // MISE À JOUR VA : Le patient a gagné une ligne
+        appState.subj[appState.activeEye].va = ACUITY_TABLE[appState.vaIndex].va;
+
+        say("C'est parfait, l'acuité progresse. Vérifions si on peut encore l'améliorer.");
+        
+        // REBOUCLAGE VERS LE +0.25 (votre nouvelle règle)
+        setTimeout(function() { 
+            initSphereCheckPlus(true); 
+        }, 800);
+        // -----------------------------
     } 
     else if (appState.scoreN_SansVerre < 5) {
-        setVaToIndexClosest(1.0); 
+        // ON GARDE CETTE PARTIE (Test du gain cumulé)
+        // Note: vous pouvez ajuster le VA ici si ce n'est pas 1.0 (ex: acuité précédente)
+        var previousVA = ACUITY_TABLE[appState.vaIndex - 1].va;
+        setVaToIndexClosest(previousVA);  
         appState.examPhase = "Vérification de Swéb_CUMUL_FINAL";
         nextLetters();
-        updateDisplay("Vérification de Swéb (Gain cumulé sur 1.0)");
-        say("D'accord. Lisez moi maintenant ces lettres.");
+        updateDisplay("Vérification de Swéb (Gain cumulé sur ligne N)");
+        say("D'accord. Regardez maintenant la ligne juste au-dessus, et lisez-moi les lettres.");
     }
     else {
+        // ON GARDE CETTE PARTIE (Echec direct)
         revertMinusLens();
     }
     return;
@@ -3607,14 +3630,28 @@ if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
 if (appState.examPhase === "Vérification de Swéb_CUMUL_FINAL") {
     var gainTotal = (lettersRead - appState.scoreN_SansVerre) + (appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre);
     
-    if (gainTotal >= 3) {
-        appState.isCheckingGain = false;
-        appState.examPhase = "Sb1.0";
-        say("Très bien, ce verre améliore globalement votre vision.");
-        finishSb10ForEye();
-    } else {
-        revertMinusLens();
-    }
+    // --- NOUVEAU BLOC À INSÉRER ---
+if (gainTotal >= 3) {
+    appState.isCheckingGain = false;
+    const target = getTargetEye();
+    
+    // VALIDATION DU VERRE : On fixe la nouvelle base
+    target.sphere = appState.baseSphereValue - 0.25;
+    appState.baseSphereValue = target.sphere;
+
+    // Note : On ne change pas l'acuité visuelle ici car on est sur la ligne N 
+    // qu'il voyait déjà, mais le confort/gain est prouvé.
+    
+    say("Très bien, ce verre améliore globalement votre vision. On continue les vérifications.");
+    
+    // REBOUCLAGE : On repart au tout début du cycle (Verres vérificateurs +0.25)
+    setTimeout(function() { 
+        initSphereCheckPlus(true); // true pour sauter l'intro vocale
+    }, 800);
+} else {
+    // ÉCHEC DU GAIN : On rejette le -0.25, on revient à la base et on FINIT LA SPHÈRE
+    revertMinusLens(); 
+}
     return;
 }
     
@@ -3997,20 +4034,21 @@ function handleSb10Safety(currentSphere, score) {
 // Fonction de secours pour annuler le verre de test en cas d'échec de gain
 function revertMinusLens() {
     var target = getTargetEye();
-    // On remet la sphère initiale (celle d'avant le test du -0.25)
+    
+    // 1. Rétablissement de la sphère initiale (avant le test du -0.25)
     target.sphere = appState.baseSphereValue; 
     
     appState.isCheckingGain = false;
-    appState.examPhase = "Sb1.0";
+    appState.examPhase = "Sb1.0"; // On remet une phase neutre par sécurité
     
-    // On s'assure que l'affichage revient sur la ligne de référence 10/10
-    setVaToIndexClosest(1.0); 
+    // 2. Message de feedback
+    updateDisplay("Gain insuffisant : retour à la base.");
     
-    updateDisplay("Gain insuffisant : retour à la base");
-    say("Ce n'est pas mieux finalement, on revient à la position précédente.");
-    
-    // On valide définitivement l'œil pour passer à la suite
-    finishSb10ForEye();
+    // 3. SORTIE DÉFINITIVE VERS L'ASTIGMATISME
+    say("Ce n'est pas mieux finalement, on revient à la position précédente.", function() {
+        // Cette ligne est cruciale : elle ferme la recherche de sphère
+        finishSb10ForEye(); 
+    });
 }
 function changeSphereAndRetest(delta) { var target = getTargetEye(); target.sphere += delta; nextLetters(); }
 function nextLetters() { appState.letterIndex++; }
