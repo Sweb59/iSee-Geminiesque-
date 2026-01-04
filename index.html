@@ -4313,11 +4313,27 @@ window.updateDisplay = function(message) {
         }
     }
 
+    // --- Dans la fonction window.updateDisplay ---
+
     // C. Mise à jour EN-TÊTE DROIT (Visuel VA)
-    setHTML('visBoxOD', appState.subj.OD.va); 
-    setHTML('visBoxOG', appState.subj.OG.va);
+    var vaOD = appState.subj.OD.va;
+    var vaOG = appState.subj.OG.va;
+
+    // Fonction interne pour transformer 1 en 1.0 tout en gardant 0.8 ou 1.25 intacts
+    function formatVA(val) {
+        if (val === "--" || val === undefined) return "--";
+        var n = parseFloat(val);
+        if (n === 1) return "1.0"; 
+        return val; // Retourne la valeur d'origine (0.8, 1.25, etc.)
+    }
+
+    setHTML('visBoxOD', formatVA(vaOD)); 
+    setHTML('visBoxOG', formatVA(vaOG));
+
     var visOD = document.getElementById('visBoxOD'); 
     var visOG = document.getElementById('visBoxOG');
+    
+    // La suite de votre code (gestion de la classe active-eye) reste inchangée...
     
     if(visOD && visOG) {
         if (appState.examPhase === "Balance Binoculaire") {
