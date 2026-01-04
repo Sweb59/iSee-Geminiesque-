@@ -4440,11 +4440,15 @@ window.updateDisplay = function(message) {
 
     // Fonction interne pour transformer 1 en 1.0 tout en gardant 0.8 ou 1.25 intacts
     function formatVA(val) {
-        if (val === "--" || val === undefined) return "--";
-        var n = parseFloat(val);
-        if (n === 1) return "1.0"; 
-        return val; // Retourne la valeur d'origine (0.8, 1.25, etc.)
-    }
+    if (val === "--" || val === undefined) return "--";
+    var n = parseFloat(val);
+    
+    // LA NOUVELLE RÈGLE HARMONISÉE :
+    if (n === 1) return "1.0";      // Si 10/10, on écrit "1.0"
+    else if (n === 2) return "2.0"; // Si 20/10, on écrit "2.0"
+    
+    return val; // Pour tous les autres cas (0.8, 1.25, etc.)
+}
 
     setHTML('visBoxOD', formatVA(vaOD)); 
     setHTML('visBoxOG', formatVA(vaOG));
