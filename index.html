@@ -3207,8 +3207,10 @@ window.proceedToNextStepAfterEye = function(completedEye) {
 }
 
 function initSphereCheckPlus(skipIntro) {
-  window.showBaseCircle(); // <--- AJOUTER CETTE LIGNE  
-  appState.examPhase = "SphereCheckPlus"; appState.baseSphereValue = getTargetEye().sphere;
+    window.showBaseCircle(); 
+    appState.examPhase = "SphereCheckPlus"; 
+    appState.baseSphereValue = getTargetEye().sphere;
+    
     document.getElementById('standardButtons').classList.add('hidden');
     document.getElementById('cadenceButtons').classList.add('hidden');
     document.getElementById('checkPlusZone').classList.remove('hidden');
@@ -3216,9 +3218,20 @@ function initSphereCheckPlus(skipIntro) {
     document.getElementById('decisionsPlus').classList.add('hidden');
     document.getElementById('stepMinusWrapper').classList.add('hidden');
     document.getElementById('decisionsMinus').classList.add('hidden');
-    document.getElementById('btnMinus025').disabled = true;
-    if(skipIntro) { nextLetters(); window.triggerFogCheck(); } 
-    else { setTimeout(function() { say("C'est pas mal, mais on va essayer de faire un peu mieux", function() { nextLetters(); window.triggerFogCheck(); }); }, 500); }
+
+    if (skipIntro) {
+        // --- ON NE DIT RIEN, ON LANCE JUSTE LE TEST ---
+        nextLetters(); 
+        window.triggerFogCheck(); 
+    } else {
+        // --- INTRODUCTION LONGUE UNIQUEMENT LA PREMIÈRE FOIS ---
+        setTimeout(function() { 
+            say("C'est pas mal, mais on va essayer de faire un peu mieux", function() { 
+                nextLetters(); 
+                window.triggerFogCheck(); 
+            }); 
+        }, 500); 
+    }
 }
   /*window.initQuartConcaveMyope = function() {
     // 1. VERROUILLAGE DE LA PHASE (PRIORITÉ ABSOLUE)
@@ -3364,15 +3377,23 @@ window.decidePlus = function(choice) {
     const raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
 
     if (choice === 'better' || choice === 'same') {
-        // LE PATIENT ACCEPTE LE PLUS : On annule toute velléité de test Swéb (-0.25)
+        document.getElementById('decisionsPlus').classList.add('hidden');
+      // LE PATIENT ACCEPTE LE PLUS : On annule toute velléité de test Swéb (-0.25)
         appState.isCheckingGain = false; 
         
         nextLetters();
-        target.sphere = appState.baseSphereValue + 0.25; 
+        target.sphere = appState.baseSphereValue + 0.25;
+      appState.baseSphereValue = target.sphere; // Important pour fixer la nouvelle base
         updateDisplay("Accepté (+0.25) -> On recommence le test de brouillage"); 
         
         // On relance le test du +0.25 sur la nouvelle base
-        setTimeout(function() { initSphereCheckPlus(); }, 500);
+        // --- MODIFICATION ICI ---
+        // On utilise 'say' pour dire la phrase de relance, 
+        // puis on lance l'animation une fois la phrase finie.
+        say("D'accord, je vous remontre", function() {
+            window.triggerFogCheck(); 
+        });
+        // -------------------------
     } else {
         // --- CAS : REJET DU +0.25 ---
         const isRaPositiveAtZero = (raSph >= 0 && currentSph <= 0);
@@ -3568,6 +3589,20 @@ window.handleCadence = function(type) {
 // ÉTAPE 1 : Mesure sans le -0.25 (sur la ligne 1.25)
 if (appState.examPhase === "Vérification de Swéb") {
     appState.scoreNPlus1_SansVerre = lettersRead; 
+
+// --- CORRECTION BUG BOUCLE INFINIE ---
+    // Si le patient voit déjà tout (5 lettres) SANS le verre de -0.25
+    if (lettersRead >= 5) {
+        appState.isCheckingGain = false;
+        appState.subj[appState.activeEye].va = ACUITY_TABLE[appState.vaIndex].va;
+        
+        say("C'est parfait, votre acuité augmente déjà. Vérifions si on peut encore faire mieux.", function() {
+            initSphereCheckPlus(true); // Rebouclage immédiat
+        });
+        return;
+    }
+    // --------------------------------------
+  
     var target = getTargetEye();
     target.sphere = appState.baseSphereValue - 0.25; 
     appState.examPhase = "Vérification de Swéb_AVEC_VERRE";
@@ -3612,10 +3647,11 @@ if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
         } 
         
         // Sinon, on reboucle vers le +0.25 (Logique standard)
-        say("C'est parfait, l'acuité progresse. Vérifions si on peut encore l'améliorer.");
-        setTimeout(function() { 
-            initSphereCheckPlus(true); 
-        }, 800);
+        // Le callback de 'say' garantit que initSphereCheckPlus ne se lance 
+// qu'une fois que la voix a terminé.
+say("C'est parfait, l'acuité progresse. Vérifions si on peut encore l'améliorer.", function() {
+    initSphereCheckPlus(true); 
+});
 
     } else if (appState.scoreN_SansVerre < 5) {
         // ÉCHEC SUR N+1 : On teste le gain cumulé sur N
@@ -3647,12 +3683,10 @@ if (gainTotal >= 3) {
     // Note : On ne change pas l'acuité visuelle ici car on est sur la ligne N 
     // qu'il voyait déjà, mais le confort/gain est prouvé.
     
-    say("Très bien, ce verre améliore globalement votre vision. On continue les vérifications.");
-    
-    // REBOUCLAGE : On repart au tout début du cycle (Verres vérificateurs +0.25)
-    setTimeout(function() { 
-        initSphereCheckPlus(true); // true pour sauter l'intro vocale
-    }, 800);
+    // La fonction initSphereCheckPlus ne se lancera que lorsque la phrase sera terminée.
+say("Très bien, ce verre améliore globalement votre vision. On continue les vérifications.", function() {
+    initSphereCheckPlus(true);
+});
 } else {
     // ÉCHEC DU GAIN : On rejette le -0.25, on revient à la base et on FINIT LA SPHÈRE
     revertMinusLens(); 
