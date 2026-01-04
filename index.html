@@ -2071,7 +2071,7 @@ window.checkCylInput = function(el) {
     }
 
     val = Math.round(val * 4) / 4; 
-    el.value = val.toFixed(2);
+    el.value = (val > 0 ? "+" : "") + val.toFixed(2);
 };
 // --- LOGIQUE TRANSPOSITION & AXE ---
 
@@ -2138,9 +2138,12 @@ function performTranspositionMath(axeInitial) {
     var newAxe = (axeInitial + 90) % 180;
     if (newAxe === 0) newAxe = 180; 
 
-    // APPLICATION
-    elSph.value = (Math.round(newSph * 4) / 4).toFixed(2);
-    elCyl.value = (Math.round(newCyl * 4) / 4).toFixed(2);
+    // APPLICATION (avec gestion du signe + pour la nouvelle sphère)
+    let finalSph = Math.round(newSph * 4) / 4;
+    let finalCyl = Math.round(newCyl * 4) / 4;
+
+    elSph.value = (finalSph > 0 ? "+" : "") + finalSph.toFixed(2);
+    elCyl.value = (finalCyl > 0 ? "+" : "") + finalCyl.toFixed(2); // Sécurité même si le but est d'être négatif
     elAxe.value = Math.round(newAxe);
 
     // FERMETURE GENERALE
@@ -2197,7 +2200,8 @@ window.forceNegativeCyl = function(el) {
     }
 
     val = Math.round(val * 4) / 4; // Step 0.25
-    el.value = val.toFixed(2);
+    // Ajoute le "+" si positif, sinon laisse tel quel
+    el.value = (val > 0 ? "+" : "") + val.toFixed(2);
 };
 
 // Fonction normalisation axe (0-175 avec modulo 180)
@@ -2481,10 +2485,15 @@ window.finishDataEntry = function() {
     // Remplissage sécurité
     var prefixes = ['raOD', 'raOG', 'frontoOD', 'frontoOG'];
     prefixes.forEach(function(p) {
-       var s = document.getElementById(p + '_sph'); if (!s.value) s.value = "0.00";
-       var c = document.getElementById(p + '_cyl'); if (!c.value) c.value = "0.00";
-       var a = document.getElementById(p + '_axe'); if (!a.value) a.value = "0";
-    });
+   var s = document.getElementById(p + '_sph'); 
+   if (!s.value) {
+       s.value = "0.00";
+   } else {
+       let val = parseFloat(s.value.replace('+', ''));
+       s.value = (val > 0 ? "+" : "") + val.toFixed(2);
+   }
+   // ... (reste de la boucle pour cyl et axe)
+});
 
     // --- NOUVEL AFFICHAGE PATIENT (LIGNE HAUTE) ---// --- NOUVEL AFFICHAGE (Barre du haut simplifiée) ---
    // --- BLOC MODIFIÉ : Récupération Nom + Calcul Age ---
@@ -2719,11 +2728,18 @@ window.startRulesAndIntro = function() {
     var raOD = { s: getVal('raOD_sph'), c: getVal('raOD_cyl'), a: getVal('raOD_axe') };
     var raOG = { s: getVal('raOG_sph'), c: getVal('raOG_cyl'), a: getVal('raOG_axe') };
 
-    // 3. Injection des valeurs RA dans les cartes Subjectif
-    setHTML('disp_subjOD_sph', raOD.s.toFixed(2)); setHTML('disp_subjOG_sph', raOG.s.toFixed(2));
-    setHTML('disp_subjOD_cyl', raOD.c.toFixed(2)); setHTML('disp_subjOG_cyl', raOG.c.toFixed(2));
-    setHTML('disp_subjOD_axe', normalizeAxis(raOD.a) + "°"); setHTML('disp_subjOG_axe', normalizeAxis(raOG.a) + "°");
-    setHTML('disp_subjOD_va', "--"); setHTML('disp_subjOG_va', "--");
+    // 3. Injection des valeurs RA dans les cartes Subjectif (avec gestion du signe +)
+    setHTML('disp_subjOD_sph', (raOD.s > 0 ? "+" : "") + raOD.s.toFixed(2)); 
+    setHTML('disp_subjOG_sph', (raOG.s > 0 ? "+" : "") + raOG.s.toFixed(2));
+    
+    setHTML('disp_subjOD_cyl', raOD.c.toFixed(2)); 
+    setHTML('disp_subjOG_cyl', raOG.c.toFixed(2));
+    
+    setHTML('disp_subjOD_axe', normalizeAxis(raOD.a) + "°"); 
+    setHTML('disp_subjOG_axe', normalizeAxis(raOG.a) + "°");
+    
+    setHTML('disp_subjOD_va', "--"); 
+    setHTML('disp_subjOG_va', "--");
 
     // 4. FORÇAGE VISUEL (YEUX OUVERTS)
     // On met les deux cartes en Cyan (Sélectionnées)
@@ -2774,69 +2790,38 @@ window.launchExamSequence = function() {
         var raOD = { s: getVal('raOD_sph'), c: getVal('raOD_cyl'), a: getVal('raOD_axe') };
         var raOG = { s: getVal('raOG_sph'), c: getVal('raOG_cyl'), a: getVal('raOG_axe') };
 
-        // Normalisation des axes RA
         raOD.a = normalizeAxis(raOD.a);
         raOG.a = normalizeAxis(raOG.a);
 
         var p = appState.initProfile;
-
-        // Check Myopie force profil (Redondance de sécurité)
         if (p === '1' && (raOD.s < 0 || raOG.s < 0)) { p = '2'; setHTML('displayProfileName', '2'); }
         appState.profile = p;
 
-        // Calcul Brouillage
         if (p === "3" || p === "3+") {
-            var fogOD = (raOD.s < 0) ? 2.00 : 2.25; var fogOG = (raOG.s < 0) ? 2.00 : 2.25;
+            var fogOD = (raOD.s < 0) ? 2.00 : 2.25; 
+            var fogOG = (raOG.s < 0) ? 2.00 : 2.25;
             appState.subj.OD = { sphere: raOD.s + fogOD, cyl: raOD.c, axe: raOD.a, va: "--" };
             appState.subj.OG = { sphere: raOG.s + fogOG, cyl: raOG.c, axe: raOG.a, va: "--" };
             appState.examPhase = "Sb0.2"; appState.targetVa = 0.06;
-
-            // LOGIQUE SPECIALE CYLINDRE -0.25 en Profil 3/3+
-            if (appState.subj.OD.cyl === -0.25) {
-                appState.memCyl.OD = { cyl: -0.25, axe: appState.subj.OD.axe };
-                appState.subj.OD.cyl = 0; appState.subj.OD.axe = 0;
-            }
-            if (appState.subj.OG.cyl === -0.25) {
-                appState.memCyl.OG = { cyl: -0.25, axe: appState.subj.OG.axe };
-                appState.subj.OG.cyl = 0; appState.subj.OG.axe = 0;
-            }
+            if (appState.subj.OD.cyl === -0.25) { appState.memCyl.OD = { cyl: -0.25, axe: appState.subj.OD.axe }; appState.subj.OD.cyl = 0; appState.subj.OD.axe = 0; }
+            if (appState.subj.OG.cyl === -0.25) { appState.memCyl.OG = { cyl: -0.25, axe: appState.subj.OG.axe }; appState.subj.OG.cyl = 0; appState.subj.OG.axe = 0; }
         } else if (p === "2") {
-            var fogOD = (raOD.s < 0) ? 0.75 : 1.00; var fogOG = (raOG.s < 0) ? 0.75 : 1.00;
+            var fogOD = (raOD.s < 0) ? 0.75 : 1.00; 
+            var fogOG = (raOG.s < 0) ? 0.75 : 1.00;
             appState.subj.OD = { sphere: raOD.s + fogOD, cyl: raOD.c, axe: raOD.a, va: "--" };
             appState.subj.OG = { sphere: raOG.s + fogOG, cyl: raOG.c, axe: raOG.a, va: "--" };
             appState.examPhase = "Sb0.5"; appState.targetVa = 0.32;
         } else {
-            // --- CORRECTION LOGIQUE PROFIL 1 ---
-            // On identifie l'oeil de départ (celui choisi par Schober/Latéralité)
             var startEye = appState.firstEye; 
             var otherEye = (startEye === 'OD') ? 'OG' : 'OD';
-
-            // L'oeil examiné (startEye) commence à sa valeur RA nette
-            appState.subj[startEye] = { 
-                sphere: (startEye === 'OD' ? raOD.s : raOG.s), 
-                cyl: (startEye === 'OD' ? raOD.c : raOG.c), 
-                axe: (startEye === 'OD' ? raOD.a : raOG.a), 
-                va: "--" 
-            };
-
-            // L'oeil passif (otherEye) est brouillé immédiatement de +0.75
-            appState.subj[otherEye] = { 
-                sphere: (otherEye === 'OD' ? raOD.s : raOG.s) + 0.75, 
-                cyl: (otherEye === 'OD' ? raOD.c : raOG.c), 
-                axe: (otherEye === 'OD' ? raOD.a : raOG.a), 
-                va: "--" 
-            };
-
-            // On initialise les mémoires de sécurité pour le Bio-Monoculaire
-            appState.saved_sb05 = { 
-                OD: raOD.s + 0.75, 
-                OG: raOG.s + 0.75 
-            };
-
-            appState.examPhase = "Sb1.0"; 
-            appState.targetVa = 0.50;
+            appState.subj[startEye] = { sphere: (startEye === 'OD' ? raOD.s : raOG.s), cyl: (startEye === 'OD' ? raOD.c : raOG.c), axe: (startEye === 'OD' ? raOD.a : raOG.a), va: "--" };
+            appState.subj[otherEye] = { sphere: (otherEye === 'OD' ? raOD.s : raOG.s) + 0.75, cyl: (otherEye === 'OD' ? raOD.c : raOG.c), axe: (otherEye === 'OD' ? raOD.a : raOG.a), va: "--" };
+            appState.saved_sb05 = { OD: raOD.s + 0.75, OG: raOG.s + 0.75 };
+            appState.examPhase = "Sb1.0"; appState.targetVa = 0.50;
         }
 
+        // Commande magique pour le signe + :
+        window.updateDisplay("Initialisation...");
         // Init Exam
         appState.isRunning = true;
 
@@ -4110,20 +4095,55 @@ function applyChanges(sphereDelta, message) {
 
 function updateDisplay(message) {
     // 1. Mise à jour Panneau Gauche
-    setHTML('subjOD_sph', appState.subj.OD.sphere.toFixed(2)); setHTML('subjOG_sph', appState.subj.OG.sphere.toFixed(2));
-    setHTML('subjOD_cyl', appState.subj.OD.cyl.toFixed(2)); setHTML('subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
-    setHTML('subjOD_axe', appState.subj.OD.axe + "°"); setHTML('subjOG_axe', appState.subj.OG.axe + "°");
+    let sOD = appState.subj.OD.sphere;
+    let sOG = appState.subj.OG.sphere;
+  // Récupération des valeurs Fronto (LM)
+let fOD = getVal('frontoOD_sph');
+let fOG = getVal('frontoOG_sph');
 
-    // 2. Mise à jour Panneau Droite (Nouvelle Section Verticale)
-    setHTML('disp_subjOD_sph', appState.subj.OD.sphere.toFixed(2));
+// Affichage avec le signe +
+setHTML('frontoOD_sph', (fOD > 0 ? "+" : "") + fOD.toFixed(2));
+setHTML('frontoOG_sph', (fOG > 0 ? "+" : "") + fOG.toFixed(2));
+// Récupération et formatage des valeurs AR (Autoréfractomètre)
+let rOD = getVal('raOD_sph');
+let rOG = getVal('raOG_sph');
+setHTML('raOD_sph', (rOD > 0 ? "+" : "") + rOD.toFixed(2));
+setHTML('raOG_sph', (rOG > 0 ? "+" : "") + rOG.toFixed(2));
+   // --- MISE À JOUR DES CARTES DE DONNÉES (PETITS AFFICHEURS) ---
+    setHTML('subjOD_sph', (sOD > 0 ? "+" : "") + sOD.toFixed(2)); 
+    setHTML('subjOG_sph', (sOG > 0 ? "+" : "") + sOG.toFixed(2));
+    setHTML('subjOD_cyl', appState.subj.OD.cyl.toFixed(2)); 
+    setHTML('subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
+    setHTML('subjOD_axe', appState.subj.OD.axe + "°"); 
+    setHTML('subjOG_axe', appState.subj.OG.axe + "°");
+
+    // --- MISE À JOUR DU DASHBOARD CENTRAL (GRANDS AFFICHEURS) ---
+    // On utilise les mêmes variables sOD et sOG déjà calculées plus haut
+    setHTML('disp_subjOD_sph', (sOD > 0 ? "+" : "") + sOD.toFixed(2));
     setHTML('disp_subjOD_cyl', appState.subj.OD.cyl.toFixed(2));
     setHTML('disp_subjOD_axe', appState.subj.OD.axe + "°");
-    setHTML('disp_subjOD_va', appState.subj.OD.va); // Ajout VA OD
+    setHTML('disp_subjOD_va', formatVA(appState.subj.OD.va));
 
-    setHTML('disp_subjOG_sph', appState.subj.OG.sphere.toFixed(2));
+    setHTML('disp_subjOG_sph', (sOG > 0 ? "+" : "") + sOG.toFixed(2));
     setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
     setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°");
-    setHTML('disp_subjOG_va', appState.subj.OG.va); // Ajout VA OG
+    setHTML('disp_subjOG_va', formatVA(appState.subj.OG.va));
+
+    // 2. Mise à jour Panneau Droite (Nouvelle Section Verticale)
+    // On récupère les nombres bruts
+    let currentSphOD = appState.subj.OD.sphere;
+    let currentSphOG = appState.subj.OG.sphere;
+
+    // On injecte le texte formaté avec le signe +
+    setHTML('disp_subjOD_sph', (currentSphOD > 0 ? "+" : "") + currentSphOD.toFixed(2));
+    setHTML('disp_subjOD_cyl', appState.subj.OD.cyl.toFixed(2));
+    setHTML('disp_subjOD_axe', appState.subj.OD.axe + "°");
+    setHTML('disp_subjOD_va', appState.subj.OD.va);
+
+    setHTML('disp_subjOG_sph', (currentSphOG > 0 ? "+" : "") + currentSphOG.toFixed(2));
+    setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
+    setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°");
+    setHTML('disp_subjOG_va', appState.subj.OG.va);
 
     // Gestion visuelle de l'œil actif
     var boxOD = document.getElementById('subjDispOD');
@@ -4337,11 +4357,17 @@ window.setEye = function(eye) {
 // 2. Fonction d'affichage principale (Compatible Header Split)
 window.updateDisplay = function(message) {
     // A. Mise à jour des colonnes de données (Gauche)
-    setHTML('disp_subjOD_sph', appState.subj.OD.sphere.toFixed(2)); 
+    // Calcul des valeurs avec gestion du signe +
+    let sphOD = appState.subj.OD.sphere;
+    let sphOG = appState.subj.OG.sphere;
+
+    // Mise à jour de la colonne de gauche (Cartes Subjectif)
+    setHTML('disp_subjOD_sph', (sphOD > 0 ? "+" : "") + sphOD.toFixed(2)); 
     setHTML('disp_subjOD_cyl', appState.subj.OD.cyl.toFixed(2));
     setHTML('disp_subjOD_axe', appState.subj.OD.axe + "°"); 
     setHTML('disp_subjOD_va', appState.subj.OD.va);
-    setHTML('disp_subjOG_sph', appState.subj.OG.sphere.toFixed(2)); 
+
+    setHTML('disp_subjOG_sph', (sphOG > 0 ? "+" : "") + sphOG.toFixed(2)); 
     setHTML('disp_subjOG_cyl', appState.subj.OG.cyl.toFixed(2));
     setHTML('disp_subjOG_axe', appState.subj.OG.axe + "°"); 
     setHTML('disp_subjOG_va', appState.subj.OG.va);
