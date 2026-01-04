@@ -4408,23 +4408,31 @@ window.updateDisplay = function(message) {
 
     // B. Mise à jour EN-TÊTE GAUCHE (Pilotage)
 
-    // --- TRADUCTION DES PHASES ---
-    var affichagePhase = "Démarrage";
-    if (appState.examPhase) {
-        switch(appState.examPhase) {
-            case "Sb0.2":             affichagePhase = "Recherche de la Sb0.2"; break;
-            case "Sb0.5":             affichagePhase = "Recherche de la Sb0.5 (T.Q.S.)"; break;
-            case "Sb1.0":             affichagePhase = "Recherche de la Sb1.0"; break;
-            case "QuartConcaveMyope":  affichagePhase = "Test du Quart Concave"; break;
-            case "SphereCheckMinus":   affichagePhase = (appState.subj[appState.activeEye].sphere < 0) ? "Test du Quart Concave" : "Verres vérificateurs (-0.25)"; break;
-            case "SphereCheckPlus":    affichagePhase = "Verres vérificateurs (+0.25)"; break;
-            case "AxisCheck":         affichagePhase = "Mise au point de l'axe du cylindre"; break;
-            case "Vérification de Swéb": affichagePhase = "Vérification de Swéb"; break;
-            case "Balance Binoculaire": affichagePhase = "Équilibre et Confort Binoculaire"; break;
-            default:                  affichagePhase = appState.examPhase.toUpperCase();
-        }
+    // --- TRADUCTION DES PHASES (CIBLÉE SUR SWÉB) ---
+var affichagePhase = "Démarrage";
+if (appState.examPhase) {
+    switch(appState.examPhase) {
+        case "Sb0.2":           affichagePhase = "Recherche de la Sb0.2"; break;
+        case "Sb0.5":           affichagePhase = "Recherche de la Sb0.5 (T.Q.S.)"; break;
+        case "Sb1.0":           affichagePhase = "Recherche de la Sb1.0"; break;
+        
+        // --- GROUPEMENT SWÉB ---
+        case "Vérification de Swéb":
+        case "Vérification de Swéb_AVEC_VERRE":
+        case "Vérification de Swéb_CUMUL_FINAL":
+            affichagePhase = "Vérification de Swéb"; 
+            break;
+
+        // On garde les autres tels qu'ils sont actuellement
+        case "QuartConcaveMyope": affichagePhase = "Test du Quart Concave"; break;
+        case "SphereCheckMinus":  affichagePhase = (appState.subj[appState.activeEye].sphere < 0) ? "Test du Quart Concave" : "Verres vérificateurs (-0.25)"; break;
+        case "SphereCheckPlus":   affichagePhase = "Verres vérificateurs (+0.25)"; break;
+        case "AxisCheck":         affichagePhase = "Mise au point de l'axe du cylindre"; break;
+        case "Balance Binoculaire": affichagePhase = "Équilibre et Confort Binoculaire"; break;
+        default:                  affichagePhase = appState.examPhase.toUpperCase();
     }
-    setHTML('dispPhase', affichagePhase);
+}
+setHTML('dispPhase', affichagePhase);
 
     // --- MODE TEXTE ---
     var modeText = "MONOCULAIRE";
