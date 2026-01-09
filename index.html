@@ -2563,29 +2563,42 @@ window.saveAndCloseModal = function(type) {
     document.getElementById('modalEntryMethod').classList.remove('hidden'); // Retour menu
 };
 
-// 4. Terminer la saisie (Bouton Final)
+// 4. Terminer la saisie (Bouton Final de la modale de choix)
 window.finishDataEntry = function() {
     document.getElementById('modalEntryMethod').classList.add('hidden');
 
-    // Remplissage sécurité
-    var prefixes = ['raOD', 'raOG', 'frontoOD', 'frontoOG'];
-    prefixes.forEach(function(p) {
-   var s = document.getElementById(p + '_sph'); 
-   if (!s.value) {
-       s.value = "0.00";
-   } else {
-       let val = parseFloat(s.value.replace('+', ''));
-       s.value = (val > 0 ? "+" : "") + val.toFixed(2);
-   }
-   // ... (reste de la boucle pour cyl et axe)
-});
+    // Liste de tous les IDs de champs à vérifier (AR et Fronto)
+    var fields = [
+        'raOD_sph', 'raOD_cyl', 'raOD_axe',
+        'raOG_sph', 'raOG_cyl', 'raOG_axe',
+        'frontoOD_sph', 'frontoOD_cyl', 'frontoOD_axe',
+        'frontoOG_sph', 'frontoOG_cyl', 'frontoOG_axe'
+    ];
 
-    // --- NOUVEL AFFICHAGE PATIENT (LIGNE HAUTE) ---// --- NOUVEL AFFICHAGE (Barre du haut simplifiée) ---
-   // --- BLOC MODIFIÉ : Récupération Nom + Calcul Age ---
+    fields.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+
+        // SI LE CHAMP EST VIDE
+        if (el.value.trim() === "") {
+            if (id.includes('_axe')) {
+                el.value = "0"; // Axe par défaut
+            } else {
+                el.value = "0.00"; // Sphère et Cylindre par défaut
+            }
+        } 
+        // SI LE CHAMP EST DÉJÀ REMPLI, ON S'ASSURE DU FORMAT +0.00
+        else if (id.includes('_sph') || id.includes('_cyl')) {
+            let val = parseFloat(el.value.replace(',', '.'));
+            if (!isNaN(val)) {
+                el.value = (val > 0 ? "+" : "") + val.toFixed(2);
+            }
+        }
+    });
+
+    // --- MISE À JOUR DU RÉSUMÉ PATIENT EN HAUT ---
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "";
-    
-    // Calcul de l'âge
     var dob = document.getElementById('inDob').value;
     var ageStr = dob ? getAgeFromDob(dob) + " ans" : "";
 
@@ -2593,24 +2606,21 @@ window.finishDataEntry = function() {
         <div class="patient-info-block">
             <span style="color:var(--primary);">${nom}</span> 
             <span style="color:var(--primary);">${prenom}</span>
-            
             <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
         </div>
         <div id="badgeProfilePlace"></div> 
     `;
     document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
-    // Mise à jour badge si déjà connu
+    
     if(appState.initProfile) updateProfileBadge(appState.initProfile);
 
-    // --- ICI : ON CACHE LA BARRE DE DONNÉES (FLUX DEMANDÉ) ---
-    // On verrouille les inputs mais on garde la classe 'hidden'
+    // On cache les données techniques jusqu'au lancement de l'examen
     toggleInputs('examDataStrip', false); 
     document.getElementById('examDataStrip').classList.add('hidden');
 
-    // Suite du flux
+    // Suite du flux vers la latéralité
     document.getElementById('modalHandedness').classList.remove('hidden');
 };
-
 // Fonction utilitaire pour le badge couleur (A AJOUTER JUSTE APRES)
 // Fonction utilitaire pour le badge (Juste le chiffre rond)
 window.updateProfileBadge = function(p) {
