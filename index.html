@@ -1997,11 +1997,47 @@ window.getRandomPrompt = function() {
     return window.NEXT_PROMPTS[Math.floor(Math.random() * window.NEXT_PROMPTS.length)];
 };
 
+// Fonction utilitaire pour harmoniser l'affichage des acuités (ex: 1 -> 1.0)
+function formatVA(val) {
+    if (val === "--" || val === undefined || val === 0 || val === "") return "--";
+    var n = parseFloat(val);
+    if (isNaN(n)) return val;
+    if (n === 1) return "1.0";
+    if (n === 2) return "2.0";
+    return val;
+}
+  
 // --- FONCTIONS UTILITAIRES ---
 window.getVal = function(id) { 
     var el = document.getElementById(id);
     if(!el || !el.value) return 0;
     return parseFloat(el.value.replace(',', '.')) || 0; 
+};
+
+  // --- AJOUT : FONCTION DE NETTOYAGE VA ---
+window.cleanAndSyncVA = function(lettersRead) {
+    // On définit les phases où la VA ne doit pas être mise à jour
+    const sensitivePhases = [
+        "Vérification de Swéb", 
+        "Vérification de Swéb_AVEC_VERRE", 
+        "Vérification de Swéb_CUMUL_FINAL",
+        "SphereCheckMinus",
+        "SphereCheckPlus",
+        "QuartConcaveMyope",
+        "AxisCheck"
+    ];
+
+    // Sécurité : si on est dans un test spécial, on ne touche pas à la VA confirmée
+    if (sensitivePhases.includes(appState.examPhase) || appState.isCheckingGain || appState.safety_mode) {
+        return;
+    }
+
+    const currentVA = ACUITY_TABLE[appState.vaIndex].va;
+
+    // Règle médicale : on valide le palier seulement si score >= 3
+    if (lettersRead >= 3) {
+        appState.subj[appState.activeEye].va = currentVA;
+    }
 };
 window.setHTML = function(id, val) { 
     var el = document.getElementById(id); if(el) el.innerHTML = val;
@@ -3128,43 +3164,38 @@ window.finishSb10ForEye = function() {
     }
 };
 
-// Fonction utilitaire pour gérer la fin d'un oeil et la bascule
 window.proceedToNextStepAfterEye = function(completedEye) {
     var otherEye = (completedEye === 'OD') ? 'OG' : 'OD';
     var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
     if (!appState.isMonocularExam && !isOtherEyeDone) {
-
-      // --- AJOUTEZ CES LIGNES ICI ---
-        // --- BLOC DE REMPLACEMENT CORRIGÉ ---
+        // 1. Reset des drapeaux de sécurité pour le nouvel oeil
         appState.isCheckingGain = false; 
         appState.safety_mode = false;    
         appState.sb10_line_defog = 0;    
         appState.hasRestartedSb10 = false;
-        appState.tqsFogCount = 0; // Réinitialise le compteur de brouillage TQS pour l'œil suivant
-        // ------------------------------
-      
-        // --- LOGIQUE DE BASCULE OEIL PASSIF (O1) ---
-        if (appState.initProfile === "1") {
-            appState.subj[completedEye].sphere = appState.saved_sb10[completedEye] + 0.75;
-        } else {
-            appState.subj[completedEye].sphere = appState.saved_sb05[completedEye];
-        }
+        appState.tqsFogCount = 0; 
 
-        // --- PRÉPARATION OEIL ACTIF (O2) ---
+        // 2. BROUILLAGE DE L'OEIL PASSIF (O1) BASÉ SUR RA + 0.75
+        // On récupère la valeur RA brute saisie au départ
+        var raSphO1 = getVal('ra' + completedEye + '_sph');
+        
+        // On règle l'œil qui vient de finir sur RA + 0.75
+        // La Sb1.0 trouvée reste sauvegardée dans appState.saved_sb10
+        appState.subj[completedEye].sphere = raSphO1 + 0.75;
+
+        // 3. PRÉPARATION DE L'OEIL ACTIF (O2)
         var raSphO2 = (otherEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
         appState.subj[otherEye].sphere = raSphO2; 
 
         appState.activeEye = otherEye;
-        appState.sb10_line_defog = 0;
-        appState.safety_mode = false;
         appState.examPhase = "Sb1.0";
         
         applySb10Logic(); 
-        updateDisplay("Bascule vers " + otherEye);
+        updateDisplay("Bascule vers " + otherEye + " (Oeil " + completedEye + " brouillé à RA+0.75)");
         say("Bien, nous passons à l'examen de l'autre œil.");
     } else {
-        say("Ok, passons à la suite.");
+        say("L'examen monoculaire est terminé. Passons à la suite.");
         updateDisplay("Phase Monoculaire Terminée");
     }
 };
@@ -3471,6 +3502,10 @@ window.decideMinus = function(choice) {
     if (appState.isSpeaking) return; // LOCK
 
     appState.lastResponseCount = lettersRead;
+
+    // >>> AJOUTE LA LIGNE ICI <<<
+    window.cleanAndSyncVA(lettersRead); 
+    // ---------------------------
     
     // 1. Feedback Choice
     var wordsLow = ["Ok", "D'accord", "Bien"];
@@ -4032,19 +4067,42 @@ if (gainTotal >= 3) {
         }
     }
 
-    // GENERAL - MESSAGES BAVARDS
-    var msg = ""; var changeSphere = 0;
-    if (isSmallLine) {
-       if (lettersRead < totalLetters) { changeSphere = -0.25; nextLetters(); msg = "Non vu -> Sph -0.25"; } else { if (goNextLine()) msg = "Validé -> Suivant"; else msg = "Acuité Max"; }
-    } else {
-       if (lettersRead < 3) { changeSphere = -0.25; msg = "< 3 lettres -> Sph -0.25"; } 
-       else if (lettersRead === 3) { changeSphere = -0.25; nextLetters(); msg = "= 3 lettres -> Sph -0.25"; } 
-       else {
-           if (cadence === 'turtle') { changeSphere = -0.25; nextLetters(); msg = "> 3 (Tortue) -> Sph -0.25"; } 
-           else { if (currentVA === 1.0) { nextLetters(); msg = "VA 1.0 -> Test Faces"; } else { if (goNextLine()) msg = "Validé -> Suivant"; else msg = "Acuité Max"; } }
-       }
+    // --- LOGIQUE FINALE : DÉCISION SUITE À LA RÉPONSE (VERSION EXPERTE) ---
+    if (isPassed && cadence === 'rabbit') {
+        // CAS 1 : SUCCÈS FLUIDE (LAPIN) -> On valide et on monte
+        appState.subj[appState.activeEye].va = currentVA;
+        if (goNextLine()) {
+            updateDisplay("Validé -> Ligne suivante");
+        } else {
+            updateDisplay("Acuité maximale atteinte");
+            finishSb10ForEye(); 
+        }
+    } 
+    else if (isPassed && cadence === 'turtle') {
+        // CAS 2 : SUCCÈS HÉSITANT (TORTUE) -> On débrouille ET on change les lettres
+        var target = getTargetEye();
+        target.sphere -= 0.25;
+        nextLetters(); 
+        updateDisplay("Hésitant -> Débrouille -0.25 & Nouvelles lettres");
+        
+        say([
+            "C'est un peu hésitant. Essayons avec ce nouveau réglage, relisez ces nouvelles lettres.",
+            "D'accord, je change un peu le verre. Dites-moi si c'est plus fluide avec ces nouvelles lettres."
+        ]);
     }
-    applyChanges(changeSphere, msg);
+    else {
+        // CAS 3 : ÉCHEC (SCORE < 3) -> On débrouille SANS changer les lettres
+        var target = getTargetEye();
+        target.sphere -= 0.25;
+        // On ne change pas les lettres pour permettre la comparaison de netteté
+        updateDisplay("Échec " + currentVA + " -> Débrouille -0.25");
+
+        say([
+            "Ok, et si je fais ceci, pouvez-vous lire ces lettres ?",
+            "D'accord. Et si je fais ça, pouvez-vous lire la ligne ?",
+            "Regardez à nouveau, arrivez-vous à en lire plus ?"
+        ]);
+    }
 }
 
 // Fonction utilitaire pour la sécurité Sb1.0
@@ -4482,42 +4540,34 @@ setHTML('dispPhase', affichagePhase);
 
     // --- Dans la fonction window.updateDisplay ---
 
-    // C. Mise à jour EN-TÊTE DROIT (Visuel VA)
-    var vaOD = appState.subj.OD.va;
-    var vaOG = appState.subj.OG.va;
+    // --- C. MISE À JOUR EN-TÊTE DROIT (Visuel VA Confirmée) ---
+// On récupère les valeurs confirmées par cleanAndSyncVA (ou "--" par défaut)
+var confirmedVaOD = appState.subj.OD.va || "--";
+var confirmedVaOG = appState.subj.OG.va || "--";
 
-    // Fonction interne pour transformer 1 en 1.0 tout en gardant 0.8 ou 1.25 intacts
-    function formatVA(val) {
-    if (val === "--" || val === undefined) return "--";
-    var n = parseFloat(val);
-    
-    // LA NOUVELLE RÈGLE HARMONISÉE :
-    if (n === 1) return "1.0";      // Si 10/10, on écrit "1.0"
-    else if (n === 2) return "2.0"; // Si 20/10, on écrit "2.0"
-    
-    return val; // Pour tous les autres cas (0.8, 1.25, etc.)
-}
+// On injecte les valeurs formatées (ex: 1 devient 1.0) dans les cadrans
+setHTML('visBoxOD', formatVA(confirmedVaOD)); 
+setHTML('visBoxOG', formatVA(confirmedVaOG));
 
-    setHTML('visBoxOD', formatVA(vaOD)); 
-    setHTML('visBoxOG', formatVA(vaOG));
+// Gestion visuelle de l'œil actif sur les boîtes VA
+var visOD = document.getElementById('visBoxOD'); 
+var visOG = document.getElementById('visBoxOG');
 
-    var visOD = document.getElementById('visBoxOD'); 
-    var visOG = document.getElementById('visBoxOG');
-    
-    // La suite de votre code (gestion de la classe active-eye) reste inchangée...
-    
-    if(visOD && visOG) {
-        if (appState.examPhase === "Balance Binoculaire") {
-            visOD.classList.add('active-eye');
-            visOG.classList.add('active-eye');
-        } else if (appState.activeEye === 'OD') { 
-            visOD.classList.add('active-eye'); 
-            visOG.classList.remove('active-eye'); 
-        } else { 
-            visOD.classList.remove('active-eye'); 
-            visOG.classList.add('active-eye'); 
-        }
+if(visOD && visOG) {
+    // Si on est en balance finale, les deux sont allumés
+    if (appState.examPhase === "Balance Binoculaire") {
+        visOD.classList.add('active-eye');
+        visOG.classList.add('active-eye');
+    } 
+    // Sinon, seul l'œil qui travaille est mis en avant (Cyan)
+    else if (appState.activeEye === 'OD') { 
+        visOD.classList.add('active-eye'); 
+        visOG.classList.remove('active-eye'); 
+    } else { 
+        visOD.classList.remove('active-eye'); 
+        visOG.classList.add('active-eye'); 
     }
+}
 
     // D. Messages
     setHTML('valProfile', appState.profile); 
