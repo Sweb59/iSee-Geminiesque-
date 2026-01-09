@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
 <style>
   /* --- CHARTE GRAPHIQUE --- */
   :root { 
@@ -2008,7 +2010,41 @@ function formatVA(val) {
 }
   
 // --- FONCTIONS UTILITAIRES ---
-window.getVal = function(id) { 
+
+  function showAmblyopiaSafetyModal() {
+    const eye = appState.activeEye;
+    const lastVA = appState.subj[eye].va;
+
+    // --- LOGIQUE DE REBROUILLAGE FORCÉ (+0.50) ---
+    // On prend la sphère actuelle (ex: +1.50) et on lui rajoute 0.50 
+    // pour revenir à la sphère qui fonctionnait (ex: +2.00).
+    let currentSph = parseFloat(appState.subj[eye].sphere);
+    let lastValidSph = currentSph + 0.50;
+
+    // Sécurité : On met à jour le sujet avec cette valeur rectifiée
+    appState.subj[eye].sphere = lastValidSph;
+
+    Swal.fire({
+        title: 'Plateau d\'acuité détecté',
+        html: `L'acuité visuelle n'augmente plus malgré deux débrouillages consécutifs.<br><br>
+               <b>Diagnostic probable :</b> Amblyopie ou Limite physiologique de l'œil.<br>
+               <span style="font-size:0.9rem; color:#78909C;">(Sphère au palier atteinte)</span><br><br>
+               L'examen continue avec les dernières valeurs stabilisées :<br><br>
+               <div style="background:#f4f4f4; padding:15px; border-radius:8px; border:1px solid #04ABC6;">
+               <b style="font-size:1.3rem; color:#37474F;">Sphère : ${lastValidSph > 0 ? '+' : ''}${lastValidSph.toFixed(2)} | Acuité : ${formatVA(lastVA)}</b>
+               </div>`,
+        icon: 'info',
+        confirmButtonText: 'CONTINUER L\'EXAMEN',
+        confirmButtonColor: '#04ABC6',
+        allowOutsideClick: false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            updateDisplay("Plateau détecté : retour forcé au palier précédent.");
+            finishSb10ForEye();
+        }
+    });
+}
+  window.getVal = function(id) { 
     var el = document.getElementById(id);
     if(!el || !el.value) return 0;
     return parseFloat(el.value.replace(',', '.')) || 0; 
@@ -2852,7 +2888,6 @@ window.launchExamSequence = function() {
             var otherEye = (startEye === 'OD') ? 'OG' : 'OD';
             appState.subj[startEye] = { sphere: (startEye === 'OD' ? raOD.s : raOG.s), cyl: (startEye === 'OD' ? raOD.c : raOG.c), axe: (startEye === 'OD' ? raOD.a : raOG.a), va: "--" };
             appState.subj[otherEye] = { sphere: (otherEye === 'OD' ? raOD.s : raOG.s) + 0.75, cyl: (otherEye === 'OD' ? raOD.c : raOG.c), axe: (otherEye === 'OD' ? raOD.a : raOG.a), va: "--" };
-            appState.saved_sb05 = { OD: raOD.s + 0.75, OG: raOG.s + 0.75 };
             appState.examPhase = "Sb1.0"; appState.targetVa = 0.50;
         }
 
@@ -3132,21 +3167,22 @@ window.finishSb10ForEye = function() {
     var maxVa = ACUITY_TABLE[appState.vaIndex].va;
     
     appState.subj[eye].va = maxVa;
-    setHTML('disp_subj' + eye + '_va', maxVa);
+    // On force l'affichage VA
+    setHTML('disp_subj' + eye + '_va', formatVA(maxVa));
 
+    // Sauvegarde de la sphère rectifiée (+2.00)
     if (eye === 'OD') appState.saved_sb10.OD = target.sphere; 
     else appState.saved_sb10.OG = target.sphere;
     
-    // --- ÉTAPE CRUCIALE POUR CASSER LA BOUCLE ---
     if (eye === 'OD') appState.sb10_OD_ok = true; 
     else appState.sb10_OG_ok = true;
 
-  // Ajout de cette ligne pour casser la boucle vocale
-    appState.examPhase = "Transition";
-
-    // On change la phase IMMÉDIATEMENT pour que handleCadence ne relance pas Sb1.0
     appState.examPhase = "Validation_Intermédiaire"; 
-    // --------------------------------------------
+
+    // --- AJOUT DE SÉCURITÉ ICI ---
+    // Cette ligne force le dashboard à afficher le +2.00 immédiatement
+    updateDisplay("Fin de la recherche de sphère."); 
+    // -----------------------------
 
     var puissanceCyl = Math.abs(target.cyl);
 
@@ -3155,15 +3191,13 @@ window.finishSb10ForEye = function() {
             window.proceedToNextStepAfterEye(eye); 
         });
     } else {
-        // Si cylindre, on lance l'axe
-        appState.examPhase = "AxisCheck"; // On change la phase ici aussi
+        appState.examPhase = "AxisCheck"; 
         document.getElementById('checkPlusZone').classList.add('hidden');
         document.getElementById('standardButtons').classList.add('hidden');
         document.getElementById('axisZone').classList.remove('hidden');
         initAxisCheck();
     }
 };
-
 window.proceedToNextStepAfterEye = function(completedEye) {
     var otherEye = (completedEye === 'OD') ? 'OG' : 'OD';
     var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
@@ -3176,13 +3210,18 @@ window.proceedToNextStepAfterEye = function(completedEye) {
         appState.hasRestartedSb10 = false;
         appState.tqsFogCount = 0; 
 
-        // 2. BROUILLAGE DE L'OEIL PASSIF (O1) BASÉ SUR RA + 0.75
-        // On récupère la valeur RA brute saisie au départ
-        var raSphO1 = getVal('ra' + completedEye + '_sph');
+       // 2. BROUILLAGE DE L'OEIL PASSIF (O1)
+        // On récupère la Sb0.5 enregistrée (Profil 2/3)
+        var sb05_mesuree = (completedEye === 'OD') ? appState.saved_sb05.OD : appState.saved_sb05.OG;
         
-        // On règle l'œil qui vient de finir sur RA + 0.75
-        // La Sb1.0 trouvée reste sauvegardée dans appState.saved_sb10
-        appState.subj[completedEye].sphere = raSphO1 + 0.75;
+        // Si on a une vraie mesure (Profil 2, 3), on l'utilise. 
+        // Sinon (Profil 1), on calcule le théorique.
+        if (sb05_mesuree && sb05_mesuree !== 0) {
+            appState.subj[completedEye].sphere = sb05_mesuree;
+        } else {
+            var raSphO1 = getVal('ra' + completedEye + '_sph');
+            appState.subj[completedEye].sphere = raSphO1 + 0.75;
+        }
 
         // 3. PRÉPARATION DE L'OEIL ACTIF (O2)
         var raSphO2 = (otherEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
@@ -3955,31 +3994,27 @@ if (gainTotal >= 3) {
             if (sph >= 0) {
                 // === CAS SPHÈRE POSITIVE OU NULLE ===
                 // 1. Échec
-                if (lettersRead < 3 || (lettersRead === 3 && cadence === 'turtle')) {
-
-                    // --- CORRECTION CHRONOLOGIQUE : CHECK AVANT DÉBROUILLAGE ---
-                    if (appState.sb10_line_defog >= 2) {
-                        // C'est le 3ème échec -> STOP AVANT DE TOUCHER LA SPHERE
-                        if (appState.hasRestartedSb10) {
-                            alert("Sécurité : Seconde tentative échouée. On valide la sphère actuelle.");
-                            finishSb10ForEye();
-                            return;
-                        }
-                        appState.safety_mode = true;
-                        appState.safety_mem_letters = lettersRead;
-                        alert("Sécurité : Débrouillage excessif (" + sph.toFixed(2) + "). Vérification.");
-                        initSphereCheckPlus();
-                        return; // SORTIE ICI, SPHÈRE INCHANGÉE (4.00)
-                    }
-                    appState.sb10_line_defog++;
-                    // -----------------------------------------------------------
-
-                    changeSphereAndRetest(-0.25); updateDisplay("Echec 1.0 (+) -> Débrouille -0.25"); 
-                    return;
+                // 1. Échec
+           // 1. Échec
+            if (lettersRead < 3 || (lettersRead === 3 && cadence === 'turtle')) {
+                // On vérifie si on a déjà tenté DEUX débrouillages sur cette ligne précise
+                if (appState.sb10_line_defog >= 2) { 
+                    showAmblyopiaSafetyModal();
+                    return true; 
                 }
-                // 2. Succès -> Check Plus
-                appState.subj[appState.activeEye].va = currentVA;
-                initSphereCheckPlus(); return;
+                
+                // Sinon, on incrémente (0->1, puis 1->2) et on débrouille de -0.25
+                appState.sb10_line_defog = (appState.sb10_line_defog || 0) + 1;
+                changeSphereAndRetest(-0.25); 
+                updateDisplay("Échec -> Tentative de débrouillage (-0.25)");
+                say("Ok, et si je fais ceci, pouvez-vous lire ces lettres ?");
+                return true; // STOP ICI
+            }
+               // 2. Succès -> Check Plus
+            appState.sb10_line_defog = 0; // RESET : Le patient a réussi, on remet les chances à zéro.
+            appState.subj[appState.activeEye].va = currentVA;
+            initSphereCheckPlus(); 
+            return true;
             } else {
                 // === CAS SPHÈRE NÉGATIVE (< 0) ===
                 // 1. Échec Franc
@@ -4028,20 +4063,14 @@ if (gainTotal >= 3) {
         } else { 
 
             // --- CORRECTION CHRONOLOGIQUE : CHECK AVANT DÉBROUILLAGE (POUR SPH >= 0) ---
-            if (sph >= 0) {
+           if (sph >= 0) {
+                // On vérifie d'abord si on a atteint le palier
                 if (appState.sb10_line_defog >= 2) {
-                    if (appState.hasRestartedSb10) {
-                        alert("Sécurité : Seconde tentative échouée. On valide la sphère actuelle.");
-                        finishSb10ForEye();
-                        return;
-                    }
-                    appState.safety_mode = true;
-                    appState.safety_mem_letters = lettersRead;
-                    alert("Sécurité : Débrouillage excessif (" + sph.toFixed(2) + "). Vérification.");
-                    initSphereCheckPlus();
-                    return;
+                    showAmblyopiaSafetyModal();
+                    return; // STOP ICI
                 }
-                appState.sb10_line_defog++;
+                // Si non, on marque l'échec pour autoriser le débrouillage qui suit
+                appState.sb10_line_defog = (appState.sb10_line_defog || 0) + 1;
             }
             // --- SÉCURITÉ MYOPE (POUR SPH < 0) ---
             else {
@@ -4068,33 +4097,43 @@ if (gainTotal >= 3) {
     }
 
     // --- LOGIQUE FINALE : DÉCISION SUITE À LA RÉPONSE (VERSION EXPERTE) ---
-    if (isPassed && cadence === 'rabbit') {
-        // CAS 1 : SUCCÈS FLUIDE (LAPIN) -> On valide et on monte
-        appState.subj[appState.activeEye].va = currentVA;
+    // --- LOGIQUE FINALE : DÉCISION SUITE À LA RÉPONSE ---
+   // --- LOGIQUE FINALE : DÉCISION SUITE À LA RÉPONSE ---
+   if (isPassed && cadence === 'rabbit') {
+        appState.sb10_line_defog = 0;
+        const eyeToSave = appState.activeEye;
+
+        // --- SAUVEGARDE PRIORITAIRE ---
+        // On force l'enregistrement dans les deux structures pour être certain
+        appState.saved_sb10[eyeToSave] = parseFloat(appState.subj[eyeToSave].sphere);
+        
+        // Mise à jour de la VA
+        appState.subj[eyeToSave].va = currentVA;
+        
         if (goNextLine()) {
-            updateDisplay("Validé -> Ligne suivante");
+            updateDisplay("Validé " + currentVA + " -> Sphère " + appState.saved_sb10[eyeToSave].toFixed(2) + " mémorisée");
         } else {
-            updateDisplay("Acuité maximale atteinte");
             finishSb10ForEye(); 
         }
-    } 
+        return; 
+    }
     else if (isPassed && cadence === 'turtle') {
-        // CAS 2 : SUCCÈS HÉSITANT (TORTUE) -> On débrouille ET on change les lettres
+        // CAS 2 : SUCCÈS HÉSITANT -> Débrouille ET change les lettres
         var target = getTargetEye();
         target.sphere -= 0.25;
         nextLetters(); 
         updateDisplay("Hésitant -> Débrouille -0.25 & Nouvelles lettres");
         
         say([
-            "C'est un peu hésitant. Essayons avec ce nouveau réglage, relisez ces nouvelles lettres.",
-            "D'accord, je change un peu le verre. Dites-moi si c'est plus fluide avec ces nouvelles lettres."
+            "Ok. Essayons comme ceci, relisez ces nouvelles lettres.",
+            "D'accord, et comme cela lisez ces nouvelles lettres."
         ]);
+        return;
     }
     else {
-        // CAS 3 : ÉCHEC (SCORE < 3) -> On débrouille SANS changer les lettres
+        // CAS 3 : ÉCHEC (SCORE < 3) -> Débrouille SANS changer les lettres
         var target = getTargetEye();
         target.sphere -= 0.25;
-        // On ne change pas les lettres pour permettre la comparaison de netteté
         updateDisplay("Échec " + currentVA + " -> Débrouille -0.25");
 
         say([
@@ -4102,10 +4141,10 @@ if (gainTotal >= 3) {
             "D'accord. Et si je fais ça, pouvez-vous lire la ligne ?",
             "Regardez à nouveau, arrivez-vous à en lire plus ?"
         ]);
+        return;
     }
 }
-
-// Fonction utilitaire pour la sécurité Sb1.0
+    // Fonction utilitaire pour la sécurité Sb1.0
 function handleSb10Safety(currentSphere, score) {
     if (currentSphere >= 0) {
         appState.sb10_line_defog++;
