@@ -2240,7 +2240,7 @@ function performTranspositionMath(axeInitial) {
     var newSph = sph + cyl;
     var newCyl = -cyl;
     var newAxe = (axeInitial + 90) % 180;
-    if (newAxe === 0) newAxe = 180; 
+    if (newAxe >= 180) newAxe = 0;
 
     // APPLICATION (avec gestion du signe + pour la nouvelle sphère)
     let finalSph = Math.round(newSph * 4) / 4;
@@ -2314,6 +2314,10 @@ function normalizeAxis(val) {
     val = Math.round(val / 5) * 5;
     // Modulo 180 qui gère les négatifs (ex: -5 => 175)
     val = (val % 180 + 180) % 180;
+    
+    // --- RÈGLE CLINIQUE : 180° devient 0° ---
+    if (val === 180 || val === 0) return 0;
+    
     return val;
 }
 
@@ -2634,8 +2638,13 @@ window.finishDataEntry = function() {
             }
         } else if (id.includes('_axe')) {
             var cylEl = document.getElementById(prefix + '_cyl');
-            var cVal = cylEl ? (parseFloat(cylEl.value.replace(',', '.')) || 0) : 0;
-            if (cVal === 0 || val === "") el.value = "0";
+            var currentCyl = cylEl ? (parseFloat(cylEl.value.replace(',', '.')) || 0) : 0;
+            var currentAxe = parseInt(el.value) || 0;
+
+            // RÈGLE : Force à 0 si : pas de cylindre OU champ vide OU axe à 180
+            if (currentCyl === 0 || el.value.trim() === "" || currentAxe >= 180) {
+                el.value = "0";
+            }
         }
     });
 
