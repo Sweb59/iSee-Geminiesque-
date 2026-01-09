@@ -1607,8 +1607,27 @@ input[id^="fronto"] {
     </div>
 </div>
 
-<div class="app-container">
-    <div id="zonePatient" class="grid-item">
+  ... (toutes vos autres modales au-dessus) ...
+
+    <div id="modalAxeSecurity" class="modal-overlay hidden">
+        <div class="modal-content" style="border-top: 5px solid #04ABC6; max-width: 500px;">
+            <h2 style="color:var(--primary-dark); border:none;">⚠️ Axe sans Cylindre</h2>
+            <div class="modal-text" style="text-align:left;">
+                Vous avez saisi un axe (<span id="txtOrphanAxe" style="font-weight:bold;"></span>°) pour l'œil <span id="txtOrphanEye" style="font-weight:bold;"></span>, mais la puissance du cylindre est à 0.00.
+                <br><br>
+                Que souhaitez-vous faire ?
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px;">
+                <button class="btn-action btn-validate" onclick="window.backToCylEntry()">RETOURNER SAISIR LE CYLINDRE</button>
+                <button class="btn-action btn-grey" style="background:#ECEFF1; color:#546E7A;" onclick="window.clearOrphanAxe()">EFFACER L'AXE ET CONTINUER</button>
+            </div>
+        </div>
+    </div>
+    </div> 
+  
+  <div class="app-container"> <div id="zonePatient" class="grid-item">
+      
+
         <div id="patientSummaryContent" style="width:100%;">
             <span style="color:#B0BEC5; font-style:italic;">En attente d'identification...</span>
         </div>
@@ -2564,64 +2583,95 @@ window.saveAndCloseModal = function(type) {
 };
 
 // 4. Terminer la saisie (Bouton Final de la modale de choix)
-window.finishDataEntry = function() {
-    document.getElementById('modalEntryMethod').classList.add('hidden');
+var currentOrphanPrefix = ""; // Stocke l'œil qui pose problème
 
-    // Liste de tous les IDs de champs à vérifier (AR et Fronto)
-    var fields = [
-        'raOD_sph', 'raOD_cyl', 'raOD_axe',
-        'raOG_sph', 'raOG_cyl', 'raOG_axe',
-        'frontoOD_sph', 'frontoOD_cyl', 'frontoOD_axe',
-        'frontoOG_sph', 'frontoOG_cyl', 'frontoOG_axe'
-    ];
+window.finishDataEntry = function() {
+    var prefixes = ['raOD', 'raOG', 'frontoOD', 'frontoOG'];
+    var errorFound = false;
+
+    // --- 1. DÉTECTION D'INCOHÉRENCE (OUVERTURE MODALE) ---
+    for (var i = 0; i < prefixes.length; i++) {
+        var p = prefixes[i];
+        var cylVal = parseFloat(document.getElementById(p + '_cyl').value.replace(',', '.')) || 0;
+        var axeVal = document.getElementById(p + '_axe').value.trim();
+
+        if (cylVal === 0 && axeVal !== "" && axeVal !== "0") {
+            currentOrphanPrefix = p;
+            document.getElementById('txtOrphanAxe').innerText = axeVal;
+            document.getElementById('txtOrphanEye').innerText = p.includes('OD') ? "DROIT" : "GAUCHE";
+            document.getElementById('modalAxeSecurity').classList.remove('hidden');
+            errorFound = true;
+            break; 
+        }
+    }
+
+    if (errorFound) return; // Stoppe la fermeture si erreur
+
+    // --- 2. REMPLISSAGE DES VIDES ET FORMATAGE ---
+    var fields = ['raOD_sph', 'raOD_cyl', 'raOD_axe', 'raOG_sph', 'raOG_cyl', 'raOG_axe',
+                  'frontoOD_sph', 'frontoOD_cyl', 'frontoOD_axe', 'frontoOG_sph', 'frontoOG_cyl', 'frontoOG_axe'];
 
     fields.forEach(function(id) {
         var el = document.getElementById(id);
         if (!el) return;
+        var prefix = id.split('_')[0]; 
+        var val = el.value.trim();
 
-        // SI LE CHAMP EST VIDE
-        if (el.value.trim() === "") {
-            if (id.includes('_axe')) {
-                el.value = "0"; // Axe par défaut
+        if (id.includes('_cyl')) {
+            if (val === "" || parseFloat(val.replace(',', '.')) === 0) {
+                el.value = "0.00";
+                var axeEl = document.getElementById(prefix + '_axe');
+                if (axeEl) axeEl.value = "0";
             } else {
-                el.value = "0.00"; // Sphère et Cylindre par défaut
+                let v = parseFloat(val.replace(',', '.'));
+                el.value = (v > 0 ? "+" : "") + v.toFixed(2);
             }
-        } 
-        // SI LE CHAMP EST DÉJÀ REMPLI, ON S'ASSURE DU FORMAT +0.00
-        else if (id.includes('_sph') || id.includes('_cyl')) {
-            let val = parseFloat(el.value.replace(',', '.'));
-            if (!isNaN(val)) {
-                el.value = (val > 0 ? "+" : "") + val.toFixed(2);
+        } else if (id.includes('_sph')) {
+            if (val === "") el.value = "0.00";
+            else {
+                let v = parseFloat(val.replace(',', '.'));
+                el.value = (v > 0 ? "+" : "") + v.toFixed(2);
             }
+        } else if (id.includes('_axe')) {
+            var cylEl = document.getElementById(prefix + '_cyl');
+            var cVal = cylEl ? (parseFloat(cylEl.value.replace(',', '.')) || 0) : 0;
+            if (cVal === 0 || val === "") el.value = "0";
         }
     });
 
-    // --- MISE À JOUR DU RÉSUMÉ PATIENT EN HAUT ---
+    // --- 3. FERMETURE ET UI ---
+    document.getElementById('modalEntryMethod').classList.add('hidden');
     var nom = document.getElementById('inName').value || "-";
     var prenom = document.getElementById('inForename').value || "";
     var dob = document.getElementById('inDob').value;
     var ageStr = dob ? getAgeFromDob(dob) + " ans" : "";
 
-    var summaryHTML = `
+    document.getElementById('patientSummaryContent').innerHTML = `
         <div class="patient-info-block">
             <span style="color:var(--primary);">${nom}</span> 
             <span style="color:var(--primary);">${prenom}</span>
             <span style="font-size:1.1rem; color:#90A4AE; font-weight:600; text-transform:none;">${ageStr}</span>
         </div>
-        <div id="badgeProfilePlace"></div> 
-    `;
-    document.getElementById('patientSummaryContent').innerHTML = summaryHTML;
+        <div id="badgeProfilePlace"></div>`;
     
     if(appState.initProfile) updateProfileBadge(appState.initProfile);
-
-    // On cache les données techniques jusqu'au lancement de l'examen
-    toggleInputs('examDataStrip', false); 
     document.getElementById('examDataStrip').classList.add('hidden');
-
-    // Suite du flux vers la latéralité
     document.getElementById('modalHandedness').classList.remove('hidden');
 };
-// Fonction utilitaire pour le badge couleur (A AJOUTER JUSTE APRES)
+
+// Fonctions de redirection de la modale de sécurité
+window.backToCylEntry = function() {
+    document.getElementById('modalAxeSecurity').classList.add('hidden');
+    var type = currentOrphanPrefix.startsWith('ra') ? 'AutoRef' : 'Fronto';
+    window.openModal(type);
+};
+
+window.clearOrphanAxe = function() {
+    document.getElementById(currentOrphanPrefix + '_axe').value = "0";
+    document.getElementById('modalAxeSecurity').classList.add('hidden');
+    window.finishDataEntry(); // Relance la validation
+};  
+  // Fonction utilitaire pour le badge couleur (A AJOUTER JUSTE APRES)
 // Fonction utilitaire pour le badge (Juste le chiffre rond)
 window.updateProfileBadge = function(p) {
     var color = getProfileColor(p);
