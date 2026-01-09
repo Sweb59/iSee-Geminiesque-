@@ -2014,14 +2014,14 @@ function formatVA(val) {
   function showAmblyopiaSafetyModal() {
     const eye = appState.activeEye;
     const lastVA = appState.subj[eye].va;
+    const isNegative = (appState.subj[eye].sphere < 0);
 
     // --- LOGIQUE DE REBROUILLAGE FORCÉ (+0.50) ---
-    // On prend la sphère actuelle (ex: +1.50) et on lui rajoute 0.50 
-    // pour revenir à la sphère qui fonctionnait (ex: +2.00).
+    // On annule les deux échecs de -0.25
     let currentSph = parseFloat(appState.subj[eye].sphere);
     let lastValidSph = currentSph + 0.50;
 
-    // Sécurité : On met à jour le sujet avec cette valeur rectifiée
+    // On applique la correction immédiatement
     appState.subj[eye].sphere = lastValidSph;
 
     Swal.fire({
@@ -2029,18 +2029,31 @@ function formatVA(val) {
         html: `L'acuité visuelle n'augmente plus malgré deux débrouillages consécutifs.<br><br>
                <b>Diagnostic probable :</b> Amblyopie ou Limite physiologique de l'œil.<br>
                <span style="font-size:0.9rem; color:#78909C;">(Sphère au palier atteinte)</span><br><br>
-               L'examen continue avec les dernières valeurs stabilisées :<br><br>
+               L'examen continue avec la dernière valeur stable :<br><br>
                <div style="background:#f4f4f4; padding:15px; border-radius:8px; border:1px solid #04ABC6;">
                <b style="font-size:1.3rem; color:#37474F;">Sphère : ${lastValidSph > 0 ? '+' : ''}${lastValidSph.toFixed(2)} | Acuité : ${formatVA(lastVA)}</b>
                </div>`,
         icon: 'info',
-        confirmButtonText: 'CONTINUER L\'EXAMEN',
+        confirmButtonText: isNegative ? 'TERMINER CET ŒIL' : 'VÉRIFIER LA SPHÈRE',
         confirmButtonColor: '#04ABC6',
         allowOutsideClick: false
     }).then((result) => {
         if (result.isConfirmed) {
-            updateDisplay("Plateau détecté : retour forcé au palier précédent.");
-            finishSb10ForEye();
+            if (isNegative) {
+                // MYOPE : On valide et on finit
+                updateDisplay("Plateau détecté : retour au palier et fin.");
+                finishSb10ForEye();
+            } else {
+                // HYPERMÉTROPE : On lance le test +0.25
+                updateDisplay("Plateau détecté : passage aux verres vérificateurs.");
+
+                // --- CORRECTION : ON REDESCEND SUR LA LIGNE DU PALIER ---
+                setVaToIndexClosest(lastVA); // lastVA est l'acuité du palier (ex: 0.6)
+                nextLetters(); // On rafraîchit les lettres à l'écran
+                // -------------------------------------------------------
+
+                initSphereCheckPlus(true); 
+            }
         }
     });
 }
@@ -3496,27 +3509,35 @@ window.decideMinus = function(choice) {
     if (appState.isSpeaking) return;
 
     if (choice === 'better') {
-        // --- CAS : LE PATIENT DEMANDE PLUS DE NÉGATIF ---
+        const eye = appState.activeEye;
+        const baseVA = parseFloat(appState.subj[eye].va); // Acuité mémorisée au palier
+
         appState.scoreN_SansVerre = appState.lastResponseCount || 0;
         appState.isCheckingGain = true;
 
-        if (goNextLine()) {
-            appState.examPhase = "Vérification de Swéb"; 
-            nextLetters(); 
-            updateDisplay("Vérification de Swéb (Mesure de base sur N+1)");
-            
-            document.getElementById('checkPlusZone').classList.add('hidden');
-            document.getElementById('standardButtons').classList.remove('hidden');
-            
-            say("D'accord. Mais il faut me le prouver. Lisez-moi cette nouvelle ligne s'il vous plaît.");
+        // --- LOGIQUE DE SYNCHRONISATION ---
+        if (baseVA < 1.0) {
+            // Si on vient d'un plateau (ex: 0.6), on force Swéb sur la ligne d'après (0.8)
+            setVaToIndexClosest(baseVA); 
+            goNextLine(); 
+            updateDisplay("Vérification de Swéb adaptée au palier " + formatVA(baseVA));
         } else {
-            // CAS : Déjà à l'acuité maximale du tableau (20/10)
-            updateDisplay("Acuité maximale atteinte. Fin de la sphère.");
-            say("Votre vision est déjà optimale. Passons à la suite.", function() {
+            // Sinon (Cas standard à 1.0), on monte normalement au 1.25
+            if (!goNextLine()) {
+                // Sécurité si déjà au maximum du tableau
                 finishSb10ForEye();
-            });
+                return;
+            }
+            updateDisplay("Vérification de Swéb standard");
         }
 
+        appState.examPhase = "Vérification de Swéb"; 
+        nextLetters(); 
+        
+        document.getElementById('checkPlusZone').classList.add('hidden');
+        document.getElementById('standardButtons').classList.remove('hidden');
+        
+        say("D'accord. Mais il faut me le prouver. Lisez-moi cette nouvelle ligne s'il vous plaît.");
     } else {
         // --- CAS : REJET DU -0.25 (Sortie définitive de la sphère) ---
         appState.isCheckingGain = false;
@@ -4017,41 +4038,49 @@ if (gainTotal >= 3) {
             return true;
             } else {
                 // === CAS SPHÈRE NÉGATIVE (< 0) ===
-                // 1. Échec Franc
+                const currentVA = ACUITY_TABLE[appState.vaIndex].va;
+
+                // --- 1. ÉCHECS OU DÉBROUILLAGE EXCESSIF (Lignes 0.5 à 1.0) ---
                 if (lettersRead < 3 || (lettersRead === 3 && cadence === 'turtle')) { 
-
-                    // --- SÉCURITÉ MYOPE ---
+                    
+                    // Sécurité plateau automatique (Lignes 0.5 à 1.0)
                     if (appState.sb10_line_defog >= 2) {
-                          appState.safety_mode = true;
-                          appState.safety_mem_letters = lettersRead;
-                          alert("Sécurité Myope : Débrouillage excessif. Test du Quart Concave.");
-
-                          // --- AJOUT MAJEUR : ON AJOUTE LE -0.25 POUR LE TEST ICI ---
-                          var target = getTargetEye(); target.sphere -= 0.25; 
-                          // -----------------------------------------------------------
-
-                          initSphereCheckMinus(); // Lance le test sans changer la ligne
-                          return;
+                        showAmblyopiaSafetyModal(); 
+                        return;
                     }
+                    
+                    // Débrouillage classique (même au 1.0 si échec franc)
                     appState.sb10_line_defog++;
-                    // ----------------------
-
                     changeSphereAndRetest(-0.25); 
-                    updateDisplay("Echec 1.0 (-) -> Débrouille -0.25"); 
+                    updateDisplay("Echec " + currentVA + " (-) -> Débrouille -0.25"); 
                     return; 
                 }
-                // 2. Zone Mitigée (3 ou 4 lettres, OU 5 lettres Tortue)
-                if (lettersRead === 3 || lettersRead === 4 || (lettersRead === 5 && cadence === 'turtle')) { 
-                    initSphereCheckMinus(); 
-                    return; 
-                }
-                // 3. Succès Total (5 lettres ET Lapin)
-                if (lettersRead === 5 && cadence === 'rabbit') { 
+                
+                // --- 2. RÉUSSITE RAPIDE (LAPIN) ---
+                if (lettersRead >= 3 && cadence === 'rabbit') {
+                    appState.sb10_line_defog = 0; // Reset sécurité car progrès
                     appState.subj[appState.activeEye].va = currentVA;
-                    // Validation immédiate, pas de Quart Concave
-                    alert("Sphère Validée (Succès Total) !"); 
-                    finishSb10ForEye(); 
-                    return; 
+
+                    if (currentVA === 1.0) {
+                        if (lettersRead < 5) {
+                            // RÉUSSITE PARTIELLE AU 1.0 -> SEUL CAS POUR LE QUART CONCAVE
+                            updateDisplay("1.0 partiel (Lapin) -> Test Quart Concave");
+                            appState.safety_mode = true;
+                            appState.safety_mem_letters = lettersRead;
+                            var target = getTargetEye();
+                            target.sphere -= 0.25; 
+                            initSphereCheckMinus(); 
+                        } else {
+                            // 5 lettres Lapin au 1.0 -> FIN
+                            updateDisplay("1.0 validé (5/5) -> Fin de l'oeil");
+                            finishSb10ForEye();
+                        }
+                    } else {
+                        // Avant 1.0 -> Progression normale
+                        goNextLine();
+                        updateDisplay("Validé -> Ligne suivante");
+                    }
+                    return;
                 }
             }
         }
@@ -4074,19 +4103,24 @@ if (gainTotal >= 3) {
             }
             // --- SÉCURITÉ MYOPE (POUR SPH < 0) ---
             else {
-                if (appState.sb10_line_defog >= 2) {
-                      appState.safety_mode = true;
-                      appState.safety_mem_letters = lettersRead;
-                      alert("Sécurité Myope : Débrouillage excessif. Test du Quart Concave.");
-
-                      // --- AJOUT MAJEUR : ON AJOUTE LE -0.25 POUR LE TEST ICI ---
-                      var target = getTargetEye(); target.sphere -= 0.25; 
-                      // -----------------------------------------------------------
-
-                      initSphereCheckMinus();
-                      return;
-                }
-                appState.sb10_line_defog++;
+                // --- NOUVELLE SÉCURITÉ UNIFIÉE ---
+                    if (appState.sb10_line_defog >= 2) {
+                        const currentVA = ACUITY_TABLE[appState.vaIndex].va;
+                        
+                        if (currentVA < 1.0) {
+                            // Échec sur 0.5, 0.6 ou 0.8 -> On lance la MODALE (formule +0.50)
+                            showAmblyopiaSafetyModal();
+                        } else {
+                            // Échec sur le 1.0 -> On garde le QUART CONCAVE manuel
+                            appState.safety_mode = true;
+                            appState.safety_mem_letters = lettersRead;
+                            var target = getTargetEye(); 
+                            target.sphere -= 0.25; 
+                            initSphereCheckMinus();
+                        }
+                        return;
+                    }
+                    appState.sb10_line_defog++;
             }
             // ---------------------------------------------------------------------------
 
