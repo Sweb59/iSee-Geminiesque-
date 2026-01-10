@@ -3628,59 +3628,67 @@ window.decideMinus = function(choice) {
 };
   
   window.handleResponse = function(lettersRead) {
-    if (appState.isSpeaking) return; // LOCK
+    if (appState.isSpeaking) return; // Sécurité : ignore le clic si l'assistant parle déjà
 
     appState.lastResponseCount = lettersRead;
 
-    // >>> AJOUTE LA LIGNE ICI <<<
+    // Mise à jour de la VA confirmée dans l'interface
     window.cleanAndSyncVA(lettersRead); 
-    // ---------------------------
     
-    // 1. Feedback Choice
+    // 1. Définition du feedback (Petit mot d'encouragement)
     var wordsLow = ["Ok", "D'accord", "Bien"];
     var wordsHigh = ["Ok", "Bien", "Très bien", "Parfait", "D'accord"];
     var feedback = (lettersRead <= 3) ? wordsLow[Math.floor(Math.random() * wordsLow.length)] : wordsHigh[Math.floor(Math.random() * wordsHigh.length)];
 
-    // --- GESTION SPÉCIFIQUE Sb0.2 et Sb0.5 ---
+    // --- CAS A : GESTION Sb0.2 et Sb0.5 (Logique simplifiée et rapide) ---
     if (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5") {
         say(feedback, function() {
-            var oldVa = appState.vaIndex;
-            var oldLet = appState.letterIndex;
             var oldEye = appState.activeEye;
-
             processLogic(lettersRead, 'rabbit');
-
+            
+            // Si on change d'œil, l'autre fonction gère déjà la parole, on s'arrête ici.
             if (appState.activeEye !== oldEye) return;
-            var changed = (appState.vaIndex !== oldVa || appState.letterIndex !== oldLet);
-            if (changed) {
+
+            // Petit délai pour laisser les lettres changer visuellement
+            setTimeout(function() {
                 say(window.getRandomPrompt());
-            }
+            }, 300);
         });
         return;
     }
 
-    // --- GESTION STANDARD ET SB1.0 (PARTIE À AJOUTER) ---
-    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
+    // --- CAS B : GESTION Sb1.0 ET PHASES SUIVANTES ---
     var currentTxt = ACUITY_TABLE[appState.vaIndex].lines[appState.letterIndex % 8]; 
     if(!currentTxt) currentTxt = ACUITY_TABLE[appState.vaIndex].lines[0];
     var totalLetters = currentTxt.split(' ').length;
 
-    // Si la ligne est petite (<5 lettres) ou si le score est faible (<3), on traite direct
-    if (totalLetters < 5 || lettersRead < 3) { 
-        
-        // >>> LE BLOQUEUR DE SÉCURITÉ ICI <<<
-        if (window.validateSb10()) return; 
-
-        processLogic(lettersRead, 'rabbit');
-        if (!appState.isSpeaking) say(feedback);
-        
-    } else { 
-        // Sinon, on demande la cadence (Lapin/Tortue)
+    // 1. Si score < 3 : On gère la relance ici (car pas de boutons de cadence)
+    if (lettersRead < 3) { 
+        say(feedback, function() {
+            // Vérifie si validateSb10 intercepte (fin d'examen ou test spécial)
+            // Note: on l'appelle dans le callback pour que l'action visuelle 
+            // se passe APRES le "D'accord"
+            var intercepted = window.validateSb10(); 
+            
+            if (!intercepted) {
+                // Application du débrouillage
+                processLogic(lettersRead, 'rabbit');
+                
+                // Délai "humain" de 450ms (simule le changement de verre)
+                setTimeout(function() {
+                    if (appState.isRunning && !appState.isCheckingGain && !appState.safety_mode) {
+                        say(window.getRandomPrompt());
+                    }
+                }, 450);
+            }
+        });
+    } 
+    // 2. Si score >= 3 : On demande la cadence (la relance est déjà dans handleCadence)
+    else { 
         say(feedback); 
         askCadence(lettersRead); 
     }
 };
-
 window.handleCadence = function(type) {
     if (appState.isSpeaking) return; 
 
