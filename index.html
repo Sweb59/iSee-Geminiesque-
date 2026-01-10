@@ -3138,13 +3138,17 @@ function applySb10Logic() {
     
     setVaToIndexClosest(0.50);
 
-    if (target.sphere < 0) {
-        target.sphere -= 0.50;
-        updateDisplay("Sb1.0: Négatif -> Débrouille -0.50 -> Ligne 0.5 (" + eye + ")");
+    var currentSphere = parseFloat(target.sphere);
+
+    if (currentSphere < 0) {
+        // MYOPE : Débrouille de -0.50 sur base Sb0.5
+        var newSphere = currentSphere - 0.50;
+        target.sphere = newSphere;
+        updateDisplay("Sb1.0 Myope: Débrouille -0.50 (Base: " + currentSphere.toFixed(2) + " -> " + newSphere.toFixed(2) + ")");
     } else { 
-        updateDisplay("Sb1.0: Positif -> Ligne 0.5 (" + eye + ")"); 
+        // HYPERMÉTROPE : On conserve STRICTEMENT la Sb0.5
+        updateDisplay("Sb1.0 Hypermétrope: Conservation base Sb0.5 (" + currentSphere.toFixed(2) + ")"); 
     }
-    // L'OEIL PASSIF N'EST PAS TOUCHÉ ICI, IL GARDE SA VALEUR DE BASCULE
 }
 window.validateSb10 = function() {
     var target = getTargetEye();
@@ -3323,8 +3327,8 @@ window.proceedToNextStepAfterEye = function(completedEye) {
         }
 
         // 3. PRÉPARATION DE L'OEIL ACTIF (O2)
-        var raSphO2 = (otherEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
-        appState.subj[otherEye].sphere = raSphO2; 
+        // On ne touche PAS à appState.subj[otherEye].sphere ! 
+        // Il contient déjà la valeur Sb0.5 trouvée précédemment.
 
         appState.activeEye = otherEye;
         appState.examPhase = "Sb1.0";
