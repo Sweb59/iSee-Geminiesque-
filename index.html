@@ -3009,25 +3009,38 @@ window.launchExamSequence = function() {
 // ... SUITE LOGIQUE (TargetEye, Validate, ProcessLogic...) ...
 function getTargetEye() { return (appState.activeEye === 'OD') ? appState.subj.OD : appState.subj.OG; }
 
-function validateSb02() {
+window.validateSb02 = function() {
     var eye = appState.activeEye;
-    if (eye === 'OD') appState.sb02_OD_ok = true; else appState.sb02_OG_ok = true;
-    say("On va de l'autre côté.", function() {
+    
+    // 1. Verrouillage immédiat : on change de phase fictivement pour stopper les relances
+    appState.examPhase = "TRANSITION"; 
+
+    if (eye === 'OD') appState.sb02_OD_ok = true; 
+    else appState.sb02_OG_ok = true;
+
+    say("Bien, on va de l'autre côté.", function() {
         if (appState.sb02_OD_ok && appState.sb02_OG_ok) { 
-            // TOUT LE MONDE A FINI SB0.2 -> PASSAGE A SB0.5
             initSb05(); 
         } 
         else {
-            var nextEye = (eye === 'OD') ? 'OG' : 'OD'; appState.activeEye = nextEye;
-            appState.defoggedInZone = false; appState.vaIndex = appState.startVaIndex;
-            appState.letterIndex = 0; updateDisplay("Recherche Sb0.2 (" + nextEye + ")");
-
-            // AJOUT: Relance vocale après changement d'œil
-            say(window.getRandomPrompt());
+            var nextEye = (eye === 'OD') ? 'OG' : 'OD'; 
+            
+            // 2. Reset complet de l'état pour le second oeil
+            appState.activeEye = nextEye;
+            appState.examPhase = "Sb0.2"; // On remet la phase correcte
+            appState.vaIndex = appState.startVaIndex; 
+            appState.letterIndex = 0;
+            appState.defoggedInZone = false;
+            
+            updateDisplay("Recherche Sb0.2 (" + nextEye + ")");
+            
+            // 3. Relance propre après un court délai
+            setTimeout(function() {
+                if (appState.isRunning) say(window.getRandomPrompt());
+            }, 600);
         }
     });
-}
-
+};
 function initSb05() {
     // ALERT REMOVED FOR FLUID TRANSITION
     // alert("Début Recherche Sb0.5 (T.Q.S).\nRetour au premier œil (" + appState.firstEye + ").");
@@ -3080,18 +3093,20 @@ function validateSb05() {
     var eye = appState.activeEye;
     if (eye === 'OD') appState.sb05_OD_ok = true; else appState.sb05_OG_ok = true;
 
-    // Sauvegarde de la Sb0.5 trouvée
     if(eye === 'OD') appState.saved_sb05.OD = appState.subj.OD.sphere; 
     else appState.saved_sb05.OG = appState.subj.OG.sphere;
 
-    say("On va de l'autre côté.", function() {
+    say("Bien, on va de l'autre côté.", function() {
         if (appState.sb05_OD_ok && appState.sb05_OG_ok) { 
             initSb10(); 
         } 
         else {
             var nextEye = (eye === 'OD') ? 'OG' : 'OD'; 
             appState.activeEye = nextEye;
-            // Pas de recalcul de sphère ici (déjà fait en global), juste reset variables TQS
+            
+            // --- SÉCURITÉ : On remet la phase Sb0.5 après la transition ---
+            appState.examPhase = "Sb0.5"; 
+            
             appState.count06_validations = 0; 
             appState.tqs_attempted_06 = false;
             appState.tqsFogCount = 0;
@@ -3099,8 +3114,10 @@ function validateSb05() {
             setVaToIndexClosest(0.32); 
             updateDisplay("Sb0.5 (" + nextEye + ") : Départ 0.3");
 
-            // AJOUT: Relance vocale après changement d'œil
-            say(window.getRandomPrompt());
+            // Délai pour que le visuel s'installe avant la voix
+            setTimeout(function() {
+                if (appState.isRunning) say(window.getRandomPrompt());
+            }, 500);
         }
     });
 }
@@ -3640,19 +3657,22 @@ window.decideMinus = function(choice) {
     var wordsHigh = ["Ok", "Bien", "Très bien", "Parfait", "D'accord"];
     var feedback = (lettersRead <= 3) ? wordsLow[Math.floor(Math.random() * wordsLow.length)] : wordsHigh[Math.floor(Math.random() * wordsHigh.length)];
 
-    // --- CAS A : GESTION Sb0.2 et Sb0.5 (Logique simplifiée et rapide) ---
+    // --- GESTION Sb0.2 et Sb0.5 (SÉCURITÉ DOUBLE : ŒIL ET PHASE) ---
     if (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5") {
         say(feedback, function() {
             var oldEye = appState.activeEye;
-            processLogic(lettersRead, 'rabbit');
-            
-            // Si on change d'œil, l'autre fonction gère déjà la parole, on s'arrête ici.
-            if (appState.activeEye !== oldEye) return;
+            var oldPhase = appState.examPhase; // Ajout de la surveillance de phase
 
-            // Petit délai pour laisser les lettres changer visuellement
-            setTimeout(function() {
-                say(window.getRandomPrompt());
-            }, 300);
+            processLogic(lettersRead, 'rabbit');
+
+            // On ne relance QUE si l'œil est identique ET la phase est identique
+            if (appState.activeEye === oldEye && appState.examPhase === oldPhase) {
+                setTimeout(function() {
+                    if (appState.isRunning) {
+                        say(window.getRandomPrompt());
+                    }
+                }, 300);
+            }
         });
         return;
     }
@@ -3665,24 +3685,27 @@ window.decideMinus = function(choice) {
     // 1. Si score < 3 : On gère la relance ici (car pas de boutons de cadence)
     if (lettersRead < 3) { 
         say(feedback, function() {
-            // Vérifie si validateSb10 intercepte (fin d'examen ou test spécial)
-            // Note: on l'appelle dans le callback pour que l'action visuelle 
-            // se passe APRES le "D'accord"
-            var intercepted = window.validateSb10(); 
+            if (window.validateSb10()) return; 
+
+            processLogic(lettersRead, 'rabbit');
             
-            if (!intercepted) {
-                // Application du débrouillage
-                processLogic(lettersRead, 'rabbit');
-                
-                // Délai "humain" de 450ms (simule le changement de verre)
-                setTimeout(function() {
-                    if (appState.isRunning && !appState.isCheckingGain && !appState.safety_mode) {
+            setTimeout(function() {
+                // SÉCURITÉ : On ne relance QUE si on est toujours en phase d'examen active
+                // Si la phase est "TRANSITION" ou si elle a changé, on ne dit rien.
+                if (appState.isRunning && 
+                    appState.examPhase !== "TRANSITION" && 
+                    !appState.isCheckingGain && 
+                    !appState.safety_mode) {
+                    
+                    if (lettersRead === 0) {
+                        say("C'est normal. Et comme ça, est-ce que c'est mieux ?");
+                    } else {
                         say(window.getRandomPrompt());
                     }
-                }, 450);
-            }
+                }
+            }, 450);
         });
-    } 
+    }
     // 2. Si score >= 3 : On demande la cadence (la relance est déjà dans handleCadence)
     else { 
         say(feedback); 
@@ -3864,8 +3887,7 @@ if (gainTotal >= 3) {
 }
     return;
 }
-    
-    // RÈGLE SPÉCIFIQUE SB0.2
+   // --- RÈGLE SPÉCIFIQUE SB0.2 (VALIDATION FINALE FIXÉE) ---
     if (appState.examPhase === "Sb0.2") {
         if (cadence === 'rabbit') {
             if (isSmallLine) {
@@ -3873,56 +3895,53 @@ if (gainTotal >= 3) {
             } else {
                 if (lettersRead >= 3) isPassed = true;
             }
-        }
-        else if (cadence === 'turtle') {
-            if (!isSmallLine) {
-                if (lettersRead >= 4) isPassed = true;
-            }
+        } else if (cadence === 'turtle') {
+            if (!isSmallLine && lettersRead >= 4) isPassed = true;
         }
 
         if (isPassed) {
-            // MISE A JOUR VA LUE
+            // On enregistre le succès de la ligne actuelle (ex: 0.20)
             appState.subj[appState.activeEye].va = currentVA;
+            
+            var status = goNextLine(); 
 
-            if (currentVA === 0.25) {
-                if (appState.activeEye === 'OD') appState.seen025_OD = true; else appState.seen025_OG = true;
-                validateSb02();
+            if (status === false) {
+                // IMPORTANT : On rafraîchit l'interface pour afficher le 0.20
+                // AVANT que validateSb02 ne lance la transition vocale.
+                updateDisplay("2/10 Validé. Passage à l'autre œil...");
+                return; 
+            }
+
+            updateDisplay("Validé " + currentVA + " -> Suivant");
+            return;
+          
+        } else {
+            // GESTION ÉCHEC AU 0.25 SANS DÉBROUILLAGE PRÉALABLE
+            if (currentVA === 0.25 && !appState.defoggedInZone) {
+                updateDisplay("Échec 2.5/10 -> Validation du palier 2/10.");
+                setTimeout(function() { validateSb02(); }, 600);
                 return;
             }
-            if (goNextLine()) updateDisplay("Validé -> Suivant");
-            else updateDisplay("Max Atteint");
-            return;
-        } else {
-            if (currentVA === 0.25) {
-                 updateDisplay("Palier 0.25 non franchi -> Sb0.2 validée");
-                 setTimeout(function() { validateSb02(); }, 1000); 
-                 return;
-            }
 
+            // Débrouillage classique
             var currentSph = getTargetEye().sphere;
             var raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
+            
             if (currentSph - 0.25 < raSph) {
                  document.getElementById('modalDefogLimit').classList.remove('hidden');
                  return;
             }
 
-            if (currentVA >= 0.06 && currentVA <= 0.20) {
-                appState.defoggedInZone = true;
-            }
+            if (currentVA <= 0.20) appState.defoggedInZone = true;
 
             getTargetEye().sphere -= 0.25;
+            if (lettersRead >= 3 || (isSmallLine && lettersRead > 0)) nextLetters();
 
-            // --- CORRECTION : Changement de lettres si >= 3 OU si ligne petite et >= 1 lettre lue ---
-            if (lettersRead >= 3 || (isSmallLine && lettersRead > 0)) {
-                nextLetters();
-            } 
-
-            var msg = (cadence === 'turtle') ? "Tortue -> Sph -0.25" : "Non vu -> Sph -0.25";
-            updateDisplay(msg);
+            updateDisplay("Débrouillage -0.25");
             return;
         }
     }
-
+  
     // RÈGLE SPÉCIFIQUE SB0.5 (T.Q.S)
     if (appState.examPhase === "Sb0.5") {
 
@@ -3981,14 +4000,24 @@ if (gainTotal >= 3) {
             return;
         }
 
-        // CAS C : Ligne 0.50 (Finale)
+      // CAS C : Ligne 0.50 (Validation Finale de la phase)
         if (currentVA === 0.50) {
             if (isPassed) {
+                // 1. On valide visuellement le 0.50 dans le cadran
                 appState.subj[appState.activeEye].va = currentVA;
+                
+                // 2. On verrouille la phase pour la transition vocale
+                appState.examPhase = "TRANSITION";
+                
+                // 3. On force l'affichage final avant de changer d'œil
+                updateDisplay("0.5 validé. Phase Sb0.5 terminée.");
+                
+                // 4. On lance la sortie de phase
                 validateSb05();
             } else {
+                // Échec au 0.50 : débrouillage classique
                 getTargetEye().sphere -= 0.25;
-                nextLetters(); // <-- Ajout pour relance vocale
+                nextLetters(); 
                 updateDisplay("Échec 0.5 -> Débrouille -0.25");
             }
             return;
@@ -4299,12 +4328,38 @@ function revertMinusLens() {
 function changeSphereAndRetest(delta) { var target = getTargetEye(); target.sphere += delta; nextLetters(); }
 function nextLetters() { appState.letterIndex++; }
 function goNextLine() {
-    appState.sb10_line_defog = 0; // Reset sécurité nouvelle ligne
+    appState.sb10_line_defog = 0; 
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
-    if (currentVA === 0.25 && appState.examPhase === "Sb0.2") { if (appState.activeEye === 'OD') appState.seen025_OD = true; if (appState.activeEye === 'OG') appState.seen025_OG = true; }
-    if (appState.examPhase === "Sb0.2" && currentVA === 0.20 && appState.defoggedInZone) { validateSb02(); return false; }
-    if (appState.examPhase === "Sb0.5" && currentVA === 0.40) { appState.tqs_attempted_06 = true; setVaToIndexClosest(0.60); return true; }
-    if (appState.vaIndex < ACUITY_TABLE.length - 1) { appState.vaIndex++; appState.letterIndex = 0; return true; }
+
+    // --- LOGIQUE SPÉCIFIQUE PHASE Sb0.2 (2/10 vs 2.5/10) ---
+    if (appState.examPhase === "Sb0.2") {
+        if (currentVA === 0.20) {
+            if (appState.defoggedInZone) {
+                // CAS A : Débrouillage préalable -> STOP au 2/10
+                validateSb02(); 
+                return false; // <--- CRITIQUE : Dit à processLogic de s'arrêter
+            } else {
+                // CAS B : Pas de débrouillage -> Tenter 2.5/10
+                appState.vaIndex++; 
+                appState.letterIndex = 0;
+                return true; 
+            }
+        }
+
+        if (currentVA === 0.25) {
+            if (appState.activeEye === 'OD') appState.seen025_OD = true; 
+            else appState.seen025_OG = true;
+            validateSb02();
+            return false; // <--- CRITIQUE : Arrête le flux
+        }
+    }
+
+    // LOGIQUE STANDARD
+    if (appState.vaIndex < ACUITY_TABLE.length - 1) { 
+        appState.vaIndex++; 
+        appState.letterIndex = 0; 
+        return true; 
+    }
     return false;
 }
 function setVaToIndexClosest(target) { for(var i=0; i<ACUITY_TABLE.length; i++) { if(ACUITY_TABLE[i].va >= target) { appState.vaIndex = i; break; } } appState.letterIndex = 0; }
