@@ -1319,6 +1319,24 @@ input[id^="fronto"] {
 #axisDecisions .btn-decision:hover, #btnReplayAxis:hover {
     transform: scale(1.05);
 }  
+
+/* --- SÉCURITÉ ANTI-CLIGNOTEMENT (RADICALE) --- */
+/* On neutralise tous les effets de survol et d'ombre quand la classe 'locked' est présente */
+.btn-resp.locked, .btn-action.locked, .btn-timer.locked, .btn-decision.locked {
+    pointer-events: none !important;
+    cursor: default !important;
+    transform: none !important;
+    opacity: 0.5 !important;
+    box-shadow: none !important;
+    transition: none !important;
+}
+/* On force l'état bloqué même si la souris survole le bouton */
+.btn-resp.locked:hover, .btn-action.locked:hover {
+    background: var(--primary-light) !important; /* Reste en couleur pâle */
+    color: var(--primary-dark) !important;
+    transform: none !important;
+}
+  
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -2353,27 +2371,36 @@ window.initVoices = function() {
     window.checkMyopia();
     window.speechSynthesis.getVoices();
 }
-function say(textOrArray, callback) {
+
+  function say(textOrArray, callback, keepLocked) {
     if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
 
-    // LOCK
+    // Verrouillage immédiat dès qu'on commence à parler
     appState.isSpeaking = true;
     updateLockUI(true);
 
     var text = Array.isArray(textOrArray) ? textOrArray[Math.floor(Math.random() * textOrArray.length)] : textOrArray;
     var u = new SpeechSynthesisUtterance(text);
     u.lang = 'fr-FR'; u.rate = 1.0; 
+    
     var voices = window.speechSynthesis.getVoices();
-    var bestVoice = voices.find(function(v) { return v.lang.includes('fr') && (v.name.includes('Google') || v.name.includes('Thomas')); });
-    if (!bestVoice) bestVoice = voices.find(function(v) { return v.lang.includes('fr'); });
+    var bestVoice = voices.find(v => v.lang.includes('fr') && (v.name.includes('Google') || v.name.includes('Thomas')));
+    if (!bestVoice) bestVoice = voices.find(v => v.lang.includes('fr'));
     if (bestVoice) u.voice = bestVoice;
 
     u.onend = function() {
-        // UNLOCK
-        appState.isSpeaking = false;
-        updateLockUI(false);
+        // --- LOGIQUE ANTI-CLIGNOTEMENT ---
+        if (keepLocked) {
+            // On force le maintien du verrouillage pour la phrase suivante
+            appState.isSpeaking = true;
+            updateLockUI(true);
+        } else {
+            appState.isSpeaking = false;
+            updateLockUI(false);
+        }
         if (callback) callback();
     };
+    
     u.onerror = function() {
         appState.isSpeaking = false;
         updateLockUI(false);
@@ -2381,13 +2408,16 @@ function say(textOrArray, callback) {
 
     window.speechSynthesis.speak(u);
 }
-
 function updateLockUI(locked) {
-    // Applique une classe visuelle aux boutons pour indiquer qu'ils sont bloqués
     var btns = document.querySelectorAll('.btn-resp, .btn-action, .btn-timer, .btn-decision');
     btns.forEach(function(b) {
-        if(locked) b.classList.add('locked');
-        else b.classList.remove('locked');
+        if(locked) {
+            b.classList.add('locked');
+            b.style.pointerEvents = 'none'; // Sécurité JS supplémentaire
+        } else {
+            b.classList.remove('locked');
+            b.style.pointerEvents = 'auto';
+        }
     });
 }
 
@@ -3647,7 +3677,7 @@ window.decideMinus = function(choice) {
     }
 };
   
-  window.handleResponse = function(lettersRead) {
+ window.handleResponse = function(lettersRead) {
     if (appState.isSpeaking) return; 
     appState.lastResponseCount = lettersRead;
     window.cleanAndSyncVA(lettersRead); 
@@ -3655,46 +3685,63 @@ window.decideMinus = function(choice) {
     var wordsLow = ["Ok", "D'accord", "Bien"];
     var feedback = wordsLow[Math.floor(Math.random() * wordsLow.length)];
 
-    // --- LOGIQUE SB0.2 & SB0.5 ---
+    // --- PHASE Sb0.2 & Sb0.5 ---
     if (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5") {
+        // Ajout de true pour garder le verrouillage entre le feedback et la relance
         say(feedback, function() {
             processLogic(lettersRead, 'rabbit');
             if (appState.examPhase !== "TRANSITION") {
-                setTimeout(function() { say(window.getRandomPrompt()); }, 300);
+                setTimeout(function() { 
+                    say(window.getRandomPrompt()); 
+                }, 300);
+            } else {
+                appState.isSpeaking = false;
+                updateLockUI(false);
             }
-        });
+        }, true); // <--- BLOQUE LE CLIGNOTEMENT ICI
         return;
     }
 
-    // --- LOGIQUE SB1.0 (TOUTES LES LIGNES) ---
+    // --- PHASE Sb1.0 (RECHERCHE 10/10) ---
     if (lettersRead < 3) {
-        // 1. On donne le feedback (ex: "Bien")
+        // --- ÉTAPE A : VERROUILLAGE MANUEL IMMÉDIAT ---
+        appState.isSpeaking = true; 
+        updateLockUI(true); 
+
+        // On lance le feedback court
         say(feedback, function() {
-            // --- CE QUI SUIT NE S'EXÉCUTE QU'APRÈS LA FIN DU FEEDBACK ---
+            // Le feedback est fini. Grâce au verrouillage manuel ci-dessus,
+            // les boutons RESTENT grisés ici.
 
-            // 2. Calcul technique (Silencieux)
             var isIntercepted = window.validateSb10(); 
+            if (!isIntercepted) processLogic(lettersRead, 'rabbit');
 
-            if (!isIntercepted) {
-                processLogic(lettersRead, 'rabbit');
-            }
-
-            // 3. Relance vocale (Pause de confort visuel de 300ms)
+            // --- ÉTAPE B : PAUSE ET RELANCE ---
             setTimeout(function() {
-                // On vérifie qu'on n'est pas passé à un test de gain (Swéb)
                 if (appState.isRunning && appState.examPhase === "Sb1.0" && !appState.isCheckingGain) {
-                    if (lettersRead === 0) {
-                        say("C'est normal. Je change de verre. Est-ce que c'est mieux comme ça ?");
-                    } else {
-                        say("Je change de verre. Relisez-moi cette ligne s'il vous plaît.");
-                    }
+                    
+                    // On lance la deuxième phrase
+                    // On utilise une version anonyme du lock pour être sûr
+                    var prompt = (lettersRead === 0) ? 
+                        "C'est normal. Je change de verre. Est-ce que c'est mieux comme ça ?" : 
+                        "Je change de verre. Relisez-moi cette ligne s'il vous plaît.";
+                    
+                    say(prompt, function() {
+                        // --- ÉTAPE C : DÉVERROUILLAGE FINAL ---
+                        // On ne libère les boutons que quand TOUTE la phrase est finie
+                        appState.isSpeaking = false;
+                        updateLockUI(false);
+                    });
+
+                } else {
+                    // Si aucune phrase de relance n'est lancée (changement de phase), on libère
+                    appState.isSpeaking = false;
+                    updateLockUI(false);
                 }
-            }, 300); 
-        });
+            }, 400); // Délai de 400ms pour bien voir le changement de sphère
+        }, true); // On garde le paramètre true par sécurité
         return;
-    }
-    else { 
-        // SUCCÈS (3, 4, 5) : On demande la cadence pour décider si on monte de ligne
+    } else { 
         say(feedback); 
         askCadence(lettersRead); 
     }
@@ -4765,10 +4812,9 @@ if(visOD && visOG) {
         else sysMsgEl.classList.remove('success-msg');
     }
 
-    // E. Génération des boutons de réponse
+   // E. Génération des boutons de réponse
     if(window.ACUITY_TABLE && appState.vaIndex < ACUITY_TABLE.length) {
         var currentData = ACUITY_TABLE[appState.vaIndex]; 
-        setHTML('valVA', currentData.va);
         var linesArr = currentData.lines; 
         var txt = linesArr[appState.letterIndex % linesArr.length];
         
@@ -4776,10 +4822,16 @@ if(visOD && visOG) {
 
         var count = txt.split(' ').length; 
         var btnHTML = "";
+        
+        // --- CORRECTION ICI : On vérifie si on doit créer le bouton déjà verrouillé ---
+        var lockClass = (appState.isSpeaking) ? " locked" : "";
+        var lockAttr = (appState.isSpeaking) ? " style='pointer-events:none;'" : "";
+
         for(var i=0; i<=count; i++) { 
-            btnHTML += '<button class="btn-resp" onclick="window.handleResponse('+i+')">'+i+'</button> '; 
+            btnHTML += '<button class="btn-resp' + lockClass + '"' + lockAttr + ' onclick="window.handleResponse('+i+')">'+i+'</button> '; 
         }
         setHTML('btnContainer', btnHTML);
+        // -------------------------------------------------------------------------
 
         // Gestion de la visibilité des blocs de boutons
         var isSpecialMode = (
