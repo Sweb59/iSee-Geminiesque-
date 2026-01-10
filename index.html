@@ -3206,7 +3206,6 @@ window.validateSb10 = function() {
                 updateVisualAcuityDisplay(currentData.va, txt);
 
                 updateDisplay("Insuffisance à 1.0 -> Débrouillage -0.25");
-                say("Je change de verre. Relisez-moi cette ligne.");
                 return true;
             }
 
@@ -3649,74 +3648,58 @@ window.decideMinus = function(choice) {
 };
   
   window.handleResponse = function(lettersRead) {
-    if (appState.isSpeaking) return; // Sécurité : ignore le clic si l'assistant parle déjà
-
+    if (appState.isSpeaking) return; 
     appState.lastResponseCount = lettersRead;
-
-    // Mise à jour de la VA confirmée dans l'interface
     window.cleanAndSyncVA(lettersRead); 
-    
-    // 1. Définition du feedback (Petit mot d'encouragement)
-    var wordsLow = ["Ok", "D'accord", "Bien"];
-    var wordsHigh = ["Ok", "Bien", "Très bien", "Parfait", "D'accord"];
-    var feedback = (lettersRead <= 3) ? wordsLow[Math.floor(Math.random() * wordsLow.length)] : wordsHigh[Math.floor(Math.random() * wordsHigh.length)];
 
-    // --- GESTION Sb0.2 et Sb0.5 (SÉCURITÉ DOUBLE : ŒIL ET PHASE) ---
+    var wordsLow = ["Ok", "D'accord", "Bien"];
+    var feedback = wordsLow[Math.floor(Math.random() * wordsLow.length)];
+
+    // --- LOGIQUE SB0.2 & SB0.5 ---
     if (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5") {
         say(feedback, function() {
-            var oldEye = appState.activeEye;
-            var oldPhase = appState.examPhase; // Ajout de la surveillance de phase
-
             processLogic(lettersRead, 'rabbit');
-
-            // On ne relance QUE si l'œil est identique ET la phase est identique
-            if (appState.activeEye === oldEye && appState.examPhase === oldPhase) {
-                setTimeout(function() {
-                    if (appState.isRunning) {
-                        say(window.getRandomPrompt());
-                    }
-                }, 300);
+            if (appState.examPhase !== "TRANSITION") {
+                setTimeout(function() { say(window.getRandomPrompt()); }, 300);
             }
         });
         return;
     }
 
-    // --- CAS B : GESTION Sb1.0 ET PHASES SUIVANTES ---
-    var currentTxt = ACUITY_TABLE[appState.vaIndex].lines[appState.letterIndex % 8]; 
-    if(!currentTxt) currentTxt = ACUITY_TABLE[appState.vaIndex].lines[0];
-    var totalLetters = currentTxt.split(' ').length;
-
-    // 1. Si score < 3 : On gère la relance ici (car pas de boutons de cadence)
-    if (lettersRead < 3) { 
+    // --- LOGIQUE SB1.0 (TOUTES LES LIGNES) ---
+    if (lettersRead < 3) {
+        // 1. On donne le feedback (ex: "Bien")
         say(feedback, function() {
-            if (window.validateSb10()) return; 
+            // --- CE QUI SUIT NE S'EXÉCUTE QU'APRÈS LA FIN DU FEEDBACK ---
 
-            processLogic(lettersRead, 'rabbit');
-            
+            // 2. Calcul technique (Silencieux)
+            var isIntercepted = window.validateSb10(); 
+
+            if (!isIntercepted) {
+                processLogic(lettersRead, 'rabbit');
+            }
+
+            // 3. Relance vocale (Pause de confort visuel de 300ms)
             setTimeout(function() {
-                // SÉCURITÉ : On ne relance QUE si on est toujours en phase d'examen active
-                // Si la phase est "TRANSITION" ou si elle a changé, on ne dit rien.
-                if (appState.isRunning && 
-                    appState.examPhase !== "TRANSITION" && 
-                    !appState.isCheckingGain && 
-                    !appState.safety_mode) {
-                    
+                // On vérifie qu'on n'est pas passé à un test de gain (Swéb)
+                if (appState.isRunning && appState.examPhase === "Sb1.0" && !appState.isCheckingGain) {
                     if (lettersRead === 0) {
-                        say("C'est normal. Et comme ça, est-ce que c'est mieux ?");
+                        say("C'est normal. Je change de verre. Est-ce que c'est mieux comme ça ?");
                     } else {
-                        say(window.getRandomPrompt());
+                        say("Je change de verre. Relisez-moi cette ligne s'il vous plaît.");
                     }
                 }
-            }, 450);
+            }, 300); 
         });
+        return;
     }
-    // 2. Si score >= 3 : On demande la cadence (la relance est déjà dans handleCadence)
     else { 
+        // SUCCÈS (3, 4, 5) : On demande la cadence pour décider si on monte de ligne
         say(feedback); 
         askCadence(lettersRead); 
     }
 };
-window.handleCadence = function(type) {
+  window.handleCadence = function(type) {
     if (appState.isSpeaking) return; 
 
     appState.lastCadenceUsed = type;
@@ -4279,15 +4262,10 @@ if (gainTotal >= 3) {
         var target = getTargetEye();
         target.sphere -= 0.25;
         updateDisplay("Échec " + currentVA + " -> Débrouille -0.25");
-
-        say([
-            "Ok, et si je fais ceci, pouvez-vous lire ces lettres ?",
-            "D'accord. Et si je fais ça, pouvez-vous lire la ligne ?",
-            "Regardez à nouveau, arrivez-vous à en lire plus ?"
-        ]);
+        // On ne fait PAS nextLetters() ici !
         return;
     }
-}
+  }
     // Fonction utilitaire pour la sécurité Sb1.0
 function handleSb10Safety(currentSphere, score) {
     if (currentSphere >= 0) {
