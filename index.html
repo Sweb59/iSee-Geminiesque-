@@ -2478,6 +2478,8 @@ var appState = {
     OD: { sphere: 0, cyl: 0, axe: 0, va: "--", swebDone: false }, 
     OG: { sphere: 0, cyl: 0, axe: 0, va: "--", swebDone: false } 
 },
+  fogTotalAdded: 0,  // <--- LIGNE À AJOUTER
+    retestCount: 0,    // <--- LIGNE À AJOUTER (pour la sécurité Retester)
     memCyl: { OD: null, OG: null }, 
     vaIndex: 0, startVaIndex: 0, letterIndex: 0, pendingLetters: null, defoggedInZone: false,
     examPhase: "Sb0.2", patientInfo: { name: "", forename: "", dob: "", age: 0, uid: "" },
@@ -3347,8 +3349,10 @@ window.proceedToNextStepAfterEye = function(completedEye) {
         appState.safety_mode = false;    
         appState.sb10_line_defog = 0;    
         appState.hasRestartedSb10 = false;
-        appState.tqsFogCount = 0; 
-      appState.subj[otherEye].swebDone = false; // Permet Swéb sur le second œil
+        appState.tqsFogCount = 0;
+        appState.subj[otherEye].swebDone = false; // Permet Swéb sur le second œil
+        appState.fogTotalAdded = 0;               // <--- LIGNE À AJOUTER
+        appState.retestCount = 0;                 // <--- LIGNE À AJOUTER
 
        // 2. BROUILLAGE DE L'OEIL PASSIF (O1)
         // On récupère la Sb0.5 enregistrée (Profil 2/3)
@@ -3556,14 +3560,23 @@ await wait(1000);
     document.getElementById('btnMinus025').disabled = false;
 }
   
-  window.relaunchPlus = function() {
-    if (appState.isSpeaking) return; // LOCK
+ window.relaunchPlus = function() {
+    if (appState.isSpeaking) return;
     document.getElementById('decisionsPlus').classList.add('hidden');
+    
+    appState.retestCount = (appState.retestCount || 0) + 1;
 
-    // CHANGEMENT DE LETTRES UNIQUEMENT ICI (Relance explicite)
-    nextLetters(); 
-
-    say("D'accord, je vous remontre", function() { window.triggerFogCheck(); });
+    if (appState.retestCount >= 2) {
+        say("D'accord. Pour vous aider, je vais vous demander de me lire les lettres à haute voix avec chacun des verres. On commence par le premier.", function() {
+            window.triggerFogCheck();
+        });
+        appState.retestCount = 0; // Reset
+    } else {
+        nextLetters();
+        say("D'accord, je vous remontre", function() { 
+            window.triggerFogCheck(); 
+        });
+    }
 };
 
 window.decidePlus = function(choice) {
@@ -3575,22 +3588,52 @@ window.decidePlus = function(choice) {
 
     if (choice === 'better' || choice === 'same') {
         document.getElementById('decisionsPlus').classList.add('hidden');
-      // LE PATIENT ACCEPTE LE PLUS : On annule toute velléité de test Swéb (-0.25)
-        appState.isCheckingGain = false; 
+        appState.isCheckingGain = false;
         
-        nextLetters();
+        // 1. Mise à jour de la sphère et du compteur de cumul
         target.sphere = appState.baseSphereValue + 0.25;
-      appState.baseSphereValue = target.sphere; // Important pour fixer la nouvelle base
-        updateDisplay("Accepté (+0.25) -> On recommence le test de brouillage"); 
-        
-        // On relance le test du +0.25 sur la nouvelle base
-        // --- MODIFICATION ICI ---
-        // On utilise 'say' pour dire la phrase de relance, 
-        // puis on lance l'animation une fois la phrase finie.
+        appState.baseSphereValue = target.sphere;
+        appState.fogTotalAdded += 0.25; 
+
+        // 2. Sécurité : Alerte si le brouillage atteint 1.00 D
+        if (appState.fogTotalAdded >= 1.00) {
+            let messageAlarme = "";
+            let btnText = "";
+            
+            if (appState.profile === "1" || appState.profile === "2") {
+                messageAlarme = "Le patient accepte un brouillage trop important (+1.00 D). Il est conseillé de recommencer l'examen en <b>Profil 3 (Difficile)</b> pour bloquer l'accommodation.";
+                btnText = "PASSER EN PROFIL 3";
+            } else {
+                messageAlarme = "Malgré un protocole rigoureux, l'accommodation reste instable (+1.00 D de brouillage accepté). Il est recommandé de passer sous <b>Cycloplégique</b>.";
+                btnText = "STOP : PROTOCOLE CYCLO";
+            }
+
+            Swal.fire({
+                title: "Brouillage excessif",
+                html: messageAlarme,
+                icon: 'warning',
+                confirmButtonText: btnText,
+                confirmButtonColor: '#D32F2F',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (appState.profile === "1" || appState.profile === "2") {
+                        appState.initProfile = "3";
+                        window.restartExam(); 
+                    } else {
+                        window.prepareCycloStop();
+                    }
+                }
+            });
+            return; 
+        }
+
+        // 3. Suite normale si le seuil n'est pas atteint
+        nextLetters();
+        updateDisplay("Brouillage accepté (+ " + appState.fogTotalAdded.toFixed(2) + ")");
         say("D'accord, je vous remontre", function() {
-            window.triggerFogCheck(); 
+            window.triggerFogCheck();
         });
-        // -------------------------
     } else {
         // --- CAS : REJET DU +0.25 ---
         const isRaPositiveAtZero = (raSph >= 0 && currentSph <= 0);
@@ -3890,7 +3933,7 @@ if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
         appState.examPhase = "Vérification de Swéb_CUMUL_FINAL";
         nextLetters();
         updateDisplay("Vérification de Swéb (Gain cumulé sur ligne N)");
-        say("D'accord. Je vous montre des lettres un peu plus grandes; lisez les moi s'il vous plaît.");
+        say("D'accord. c'est un peu difficle; lisez moi ces lettres là s'il vous plaît.");
     } else {
         // ÉCHEC TOTAL : On rend le verre et on finit la sphère
         revertMinusLens();
@@ -3916,7 +3959,7 @@ if (gainTotal >= 3) {
     // --- LOGIQUE DE SORTIE DIFFÉRENCIÉE (Étape 3) ---
     if (target.sphere < 0) {
         // MYOPE : Sortie immédiate
-        say("Très bien, ce verre améliore globalement votre vision. Nous avons terminé la sphère.", function() {
+        say("Très bien, on continue.", function() {
             finishSb10ForEye();
         });
     } else {
