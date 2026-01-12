@@ -3905,26 +3905,33 @@ if (appState.examPhase === "Vérification de Swéb_CUMUL_FINAL") {
 if (gainTotal >= 3) {
     appState.isCheckingGain = false;
     const target = getTargetEye();
+    
+    // 1. Verrouillage si myope
     if (target.sphere < 0) appState.subj[appState.activeEye].swebDone = true;
-    // VALIDATION DU VERRE : On fixe la nouvelle base
+
+    // 2. Validation de la nouvelle sphère
     target.sphere = appState.baseSphereValue - 0.25;
     appState.baseSphereValue = target.sphere;
 
-    // Note : On ne change pas l'acuité visuelle ici car on est sur la ligne N 
-    // qu'il voyait déjà, mais le confort/gain est prouvé.
-    
     // --- LOGIQUE DE SORTIE DIFFÉRENCIÉE (Étape 3) ---
-        if (target.sphere < 0) {
-            // MYOPE : Validation et sortie
-            say("Très bien, ce verre améliore globalement votre vision. Nous avons terminé la sphère.", function() {
-                finishSb10ForEye();
+    if (target.sphere < 0) {
+        // MYOPE : Sortie immédiate
+        say("Très bien, ce verre améliore globalement votre vision. Nous avons terminé la sphère.", function() {
+            finishSb10ForEye();
+        });
+    } else {
+        // HYPERMÉTROPE : ON PROGRESSE !
+        // On valide officiellement la ligne supérieure (N+1)
+        if (goNextLine()) {
+            updateDisplay("Gain cumulé prouvé : passage à l'acuité " + ACUITY_TABLE[appState.vaIndex].va);
+            say("Très bien, votre vision s'améliore. Voyons si on peut faire encore mieux.", function() {
+                initSphereCheckPlus(true); // Relance les vérificateurs sur la nouvelle ligne
             });
         } else {
-            // HYPERMÉTROPE : On continue vers le +0.25
-            say("Très bien, ce verre améliore globalement votre vision. On continue les vérifications.", function() {
-                initSphereCheckPlus(true);
-            });
+            // Cas où on était déjà au max du tableau
+            finishSb10ForEye();
         }
+    }
 } else {
     // ÉCHEC DU GAIN : On rejette le -0.25, on revient à la base et on FINIT LA SPHÈRE
     revertMinusLens(); 
