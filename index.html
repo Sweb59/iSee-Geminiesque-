@@ -4740,13 +4740,17 @@ window.initAxisCheck = function() {
     var replayBtn = document.getElementById('btnReplayAxis');
     var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
 
-    // --- 1. CALCUL DYNAMIQUE UNIVERSEL ET INVERSÉ ---
+    // --- 1. CALCUL DES VALEURS POUR LES BULLES ---
     if (appState.cylHigh) {
+        // MÉTHODE GLISSEMENT : Pos 1 (Axe actuel) vs Pos 2 (Axe +/- 5°)
         appState.tempPos1 = target.axe; 
         var lastDir = appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1];
+        
+        // Si on a déjà choisi d'augmenter (ccw), on propose +5, sinon -5 par défaut
         var stepSign = (lastDir === 'ccw') ? 1 : -1; 
         appState.tempPos2 = normalizeAxis(target.axe + (5 * stepSign));
     } else {
+        // MÉTHODE CLASSIQUE : Pos 1 (Axe + Step) vs Pos 2 (Axe - Step)
         appState.tempPos1 = normalizeAxis(target.axe + appState.axisStep);
         appState.tempPos2 = normalizeAxis(target.axe - appState.axisStep);
     }
@@ -4754,54 +4758,49 @@ window.initAxisCheck = function() {
     var pos1_val = appState.tempPos1;
     var pos2_val = appState.tempPos2;
 
-    // INITIALISATION VISUELLE
+    // --- 2. INITIALISATION DE L'INTERFACE ---
     document.getElementById('jccVisuals').classList.remove('hidden');
     p1.classList.remove('active');
     p2.classList.remove('active');
     axisDecisions.classList.add('hidden');
     replayBtn.classList.add('hidden');
 
-    // --- SEQUENCE SYNCHRONISÉE (2.5s d'observation) ---
+    // --- 3. SEQUENCE SYNCHRONISÉE ---
 
-    // ÉTAPE 1 : POSITION 1
     say("Vous préférez la position", function() {
-        // MODIFICATION : On n'affiche le chiffre que si cylHigh est vrai
+        // CONDITION : On ne montre le chiffre que si c'est un cylindre FORT
         if (appState.cylHigh && axeDisplay) {
             axeDisplay.innerText = pos1_val + "°";
         }
-        
         p1.classList.add('active'); 
 
         say("une ?", function() {
             setTimeout(function() {
                 p1.classList.remove('active'); 
-
-                // ÉTAPE 2 : POSITION 2 + ENCHAÎNEMENT VOCAL
+                
                 say("Ou la position", function() {
-                    // MODIFICATION : On n'affiche le chiffre que si cylHigh est vrai
+                    // CONDITION : Mise à jour du chiffre pour la position 2 (Cylindre FORT uniquement)
                     if (appState.cylHigh && axeDisplay) {
                         axeDisplay.innerText = pos2_val + "°";
                     }
-                    
                     p2.classList.add('active');
 
                     say("deux, ou est-ce que c'est pareil ?", function() {
                         setTimeout(function() {
                             p2.classList.remove('active'); 
                             
+                            // FIN DE SÉQUENCE : On remet l'axe de référence (RA) sur le dashboard
+                            if (axeDisplay) {
+                                axeDisplay.innerText = target.axe + "°";
+                            }
+                            
                             document.getElementById('jccVisuals').classList.add('hidden');
-                            
-                            // On rétablit toujours l'axe de référence à la fin (Dashboard stable)
-                            if (axeDisplay) axeDisplay.innerText = target.axe + "°";
-                            
                             axisDecisions.classList.remove('hidden');
                             replayBtn.classList.remove('hidden');
-                            
-                            p1.classList.remove('active');
-                        }, 2500);
+                        }, 2500); // Temps d'observation bulle 2
                     });
                 }, false);
-            }, 2500); 
+            }, 2500); // Temps d'observation bulle 1
         }, false);
     }, false); 
 };
@@ -4837,55 +4836,93 @@ window.initAxisCheck = function() {
             appState.axisStep = (appState.cylHigh) ? 5 : (Math.abs(target.cyl) < 2.50 ? 20 : 10);
             target.axe = appState.axisInitialRA;
             updateDisplay("Axe RA rétabli (Sécurité 3 clics)");
-            say("C'est curieux. Pour vous aider à mieux répondre, vous allez maintenant lire à voix hautes les lettres pour chacune des positions.", function() {
+            say("D'accord, vérifions cela ensemble. Pour vous aider à mieux répondre, vous allez maintenant lire à voix haute les lettres pour chacune des positions.", function() {
                 setTimeout(function() { runJccSequence(); }, 1000);
             });
             return;
         }
 
         // --- CAS 2 : LOGIQUE DE CALCUL DE L'AXE ---
+        window.handleJccChoice = function(choice) {
+    if (appState.isSpeaking) return; 
+
+    document.getElementById('axisDecisions').classList.add('hidden');
+    document.getElementById('btnReplayAxis').classList.add('hidden');
+
+    var target = getTargetEye();
+    var isFinished = false; 
+    var direction = (choice === 'pos1') ? 'ccw' : 'cw';
+    var lastDirection = appState.axisDirectionHistory.length > 0 ? 
+        appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
+
+    // --- SÉCURITÉ : VERROU DES 3 CLICS ---
+    if (direction === lastDirection) {
+        appState.axisRepeatCount++;
+    } else {
+        appState.axisRepeatCount = 1;
+    }
+
+    if (appState.axisRepeatCount >= 3 && !appState.axisHelpMode) {
+        appState.axisRepeatCount = 0;
+        appState.axisHelpMode = true; 
+        appState.axisDirectionHistory = [];
+        appState.axisStep = (appState.cylHigh) ? 5 : (Math.abs(target.cyl) < 2.50 ? 20 : 10);
+        target.axe = appState.axisInitialRA;
+        updateDisplay("Axe RA rétabli (Sécurité 3 clics)");
+        say("D'accord, vérifions cela ensemble. Pour vous aider à mieux répondre, vous allez maintenant lire à voix haute les lettres pour chacune des positions.", function() {
+            setTimeout(function() { runJccSequence(); }, 1000);
+        });
+        return;
+    }
+
+    // --- PRÉPARATION DE LA PHRASE DE CONFIRMATION (AVANT LE PUSH) ---
+    var feedbackMsg = "";
+    if (choice === 'same') {
+        isFinished = true;
+        feedbackMsg = "C'est parfait. Relisez-moi cette ligne s'il vous plaît.";
+    } else {
+        if (lastDirection && direction !== lastDirection) {
+            feedbackMsg = "Excellent."; // Changement de sens
+        } else if (appState.axisDirectionHistory.length === 0) {
+            feedbackMsg = "Bien.";      // Premier clic
+        } else {
+            feedbackMsg = "D'accord.";  // Même sens
+        }
+    }
+
+    // --- CALCUL DE L'AXE ---
+    if (choice !== 'same') {
         if (appState.cylHigh) {
-            // === MÉTHODE CYLINDRE FORT (GLISSEMENT) ===
             if (choice === 'pos2') {
-                // Le patient préfère la proposition diminuée (-5)
                 target.axe = appState.tempPos2; 
-                appState.axisDirectionHistory.push('cw'); // On marque le sens horaire
-            } 
-            else if (choice === 'pos1') {
-                // Si c'est le TOUT PREMIER CHOIX et qu'il préfère RA (Position 1)
+            } else if (choice === 'pos1') {
                 if (appState.axisDirectionHistory.length === 0) {
-                    updateDisplay("Inversion : recherche vers les valeurs augmentées (RA + 5°)");
-                    // On force le sens anti-horaire pour le prochain tour
                     appState.axisDirectionHistory.push('ccw'); 
-                    setTimeout(function() { runJccSequence(); }, 800);
+                    say("Bien.", function() {
+                        setTimeout(function() { runJccSequence(); }, 600);
+                    });
                     return; 
                 } else {
                     isFinished = true;
                 }
             }
         } else {
-            // === MÉTHODE CLASSIQUE (ENCADREMENT) ===
             if (lastDirection && direction !== lastDirection) {
                 if (appState.axisStep === 20) appState.axisStep = 10;
                 else if (appState.axisStep === 10) appState.axisStep = 5;
             } else if (appState.axisStep === 10 && appState.axisDirectionHistory.length >= 2) {
                 appState.axisStep = 5;
             }
-
-            // --- ACTION INVERSÉE POUR CORRESPONDRE À L'AFFICHAGE ---
-            // Pos 1 affiche Axe + Step -> On ajoute le pas (+)
-            // Pos 2 affiche Axe - Step -> On retire le pas (-)
             var rot = (choice === 'pos1') ? appState.axisStep : -appState.axisStep;
             target.axe = normalizeAxis(target.axe + rot);
-            
-            if (appState.axisStep === 5) {
-                isFinished = true;
-            }
-            appState.axisDirectionHistory.push(direction);
+            if (appState.axisStep === 5) isFinished = true;
         }
+        appState.axisDirectionHistory.push(direction);
     }
 
-    // --- SORTIE DU TEST (VALIDATION FINALE) ---
+    // --- SORTIE OU CONTINUATION ---
+    var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
+
     if (isFinished) {
         document.getElementById('jccVisuals').classList.add('hidden');
         document.getElementById('axisControls').classList.add('hidden');
@@ -4893,31 +4930,21 @@ window.initAxisCheck = function() {
         appState.axisHelpMode = false;
         appState.axisRepeatCount = 0;
 
-        // On affiche l'axe final validé
-        updateDisplay("Axe fixé : " + target.axe + "° - Vérification finale");
-        
-        // Force la mise à jour immédiate du chiffre sur le dashboard
-        var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
         if (axeDisplay) axeDisplay.innerText = target.axe + "°";
+        updateDisplay("Axe fixé : " + target.axe + "°");
 
-        nextLetters(); 
-        say("C'est parfait. Relisez-moi cette ligne s'il vous plaît.");
-        document.getElementById('standardButtons').classList.remove('hidden');
+        say(feedbackMsg, function() {
+            nextLetters();
+            document.getElementById('standardButtons').classList.remove('hidden');
+        });
     } else {
-        // CONTINUATION : On affiche ici le nouvel axe calculé après le choix
-        if (appState.cylHigh) {
-            updateDisplay("Glissement vers : " + target.axe + "°");
-        } else {
-            updateDisplay("Nouvel Axe : " + target.axe + "°");
-        }
-
-        // On force la mise à jour du chiffre sur le dashboard pour que l'utilisateur 
-        // voie le changement dès qu'il a cliqué sur le bouton réponse.
-        var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
         if (axeDisplay) axeDisplay.innerText = target.axe + "°";
+        updateDisplay(appState.cylHigh ? "Glissement : " + target.axe + "°" : "Nouvel Axe : " + target.axe + "°");
 
-        nextLetters();
-        setTimeout(function() { runJccSequence(); }, 800);
+        say(feedbackMsg, function() {
+            nextLetters();
+            setTimeout(function() { runJccSequence(); }, 600);
+        });
     }
 };
 // --- NOUVELLES FONCTIONS DE GESTION DE FLUX (STOP/RESTART) ---
