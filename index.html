@@ -1361,16 +1361,20 @@ input[id^="fronto"] {
     margin: 0 auto;
 }
 
-#axisDecisions .btn-blue { border: 4px solid #116dff !important; color: #116dff !important; }
-#axisDecisions .btn-orange { border: 4px solid #fd7e14 !important; color: #fd7e14 !important; }
-#axisDecisions .btn-green { border: 4px solid #43A047 !important; color: #43A047 !important; }
+/* Bouton Mieux 1 (était bleu -> devient VERT) */
+#axisDecisions .btn-blue { border: 4px solid #43A047 !important; color: #43A047 !important; }
+
+/* Bouton Mieux 2 (était orange -> devient ROUGE) */
+#axisDecisions .btn-orange { border: 4px solid #EF5350 !important; color: #EF5350 !important; }
+
+/* Bouton Pareil (était vert -> devient CYAN) */
+#axisDecisions .btn-green { border: 4px solid #04ABC6 !important; color: #04ABC6 !important; }
 
 #axisDecisions .btn-decision:hover, #btnReplayAxis:hover {
     transform: scale(1.05);
 }  
 
 /* --- SÉCURITÉ ANTI-CLIGNOTEMENT (RADICALE) --- */
-/* On neutralise tous les effets de survol et d'ombre quand la classe 'locked' est présente */
 .btn-resp.locked, .btn-action.locked, .btn-timer.locked, .btn-decision.locked {
     pointer-events: none !important;
     cursor: default !important;
@@ -1379,9 +1383,9 @@ input[id^="fronto"] {
     box-shadow: none !important;
     transition: none !important;
 }
-/* On force l'état bloqué même si la souris survole le bouton */
+
 .btn-resp.locked:hover, .btn-action.locked:hover {
-    background: var(--primary-light) !important; /* Reste en couleur pâle */
+    background: var(--primary-light) !important; 
     color: var(--primary-dark) !important;
     transform: none !important;
 }
