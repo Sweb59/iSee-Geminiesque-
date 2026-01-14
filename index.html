@@ -889,61 +889,54 @@ input[id^="fronto"] {
 /* Style "Bulle" identique au test de sphère */
 /* --- Modif JCC Visuals --- */
 /* --- VISUELS JCC (CORRIGÉS) --- */
+/* --- VISUELS JCC AFFINÉS --- */
+
 .jcc-visual {
     width: 95px;
     height: 95px;
     border-radius: 50%;
-    background: #FFFFFF;
-    border: 5px solid #CFD8DC;
+    background: rgba(255, 255, 255, 0.05);
+    /* Bordure grise visible quand inactive */
+    border: 2px solid rgba(150, 150, 150, 0.4); 
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    position: relative; /* Indispensable pour le centrage des enfants */
-    opacity: 0; 
-    pointer-events: none;
-}
-
-.jcc-visual.active {
-    opacity: 1;
-    transform: scale(1.1);
-    border-color: var(--primary);
-}
-
-/* État de base des bulles (Transparentes/Désaturées) */
-.jcc-visual {
-    width: 95px;
-    height: 95px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1); /* Très transparent */
-    border: 3px solid rgba(207, 216, 220, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Transition élastique */
+    transition: all 0.4s ease-in-out;
     position: relative;
-    opacity: 0.5; /* Semi-transparent par défaut */
+    opacity: 0.5; /* Transparent avant le test */
 }
 
-/* État "Allumé" (Position Active) */
-.jcc-visual.active {
-    background: #FFFFFF;
-    opacity: 1;
-    transform: scale(1.15); /* Zoom léger */
-    border-color: #04ABC6;
-    box-shadow: 0 0 20px rgba(4, 171, 198, 0.6); /* Rayonnement Cyan */
-}
-
-/* Animation de rotation continue (sens horaire par défaut) */
+/* --- LE MOTEUR DE ROTATION --- */
 @keyframes spin-arrow {
     from { transform: translate(-50%, -50%) rotate(0deg); }
     to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
+.jcc-visual.active {
+    background: #FFFFFF;
+    opacity: 1;
+    transform: scale(1.05); 
+    border-color: #04ABC6;
+    border-width: 3px;
+    box-shadow: 0 0 15px rgba(4, 171, 198, 0.4);
+}
+
+.jcc-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4.5rem; 
+    font-weight: 900;
+    color: #04ABC6 !important;
+    z-index: 2;
+    margin: 0;
+    line-height: 1;
+}
+
 .arrow-svg {
-    width: 100px;
-    height: 100px;
+    width: 105px;
+    height: 105px;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -952,13 +945,17 @@ input[id^="fronto"] {
     overflow: visible !important;
 }
 
-/* La flèche tourne par défaut en sens horaire quand elle est active */
+/* Rotation horaire par défaut */
 .jcc-visual.active .arrow-svg {
-    animation: spin-arrow 2s linear infinite;
+    animation: spin-arrow 2.5s linear infinite;
 }
 
-/* --- MODIFICATION POUR LA POSITION 1 --- */
-/* On force le sens inverse (anti-horaire) uniquement pour la bulle 1 */
+/* Inversion de rotation pour la Position 1 */
+#visPos1.active .arrow-svg {
+    animation-direction: reverse;
+}
+
+/* Inversion de rotation pour la Position 1 */
 #visPos1.active .arrow-svg {
     animation-direction: reverse;
 }
@@ -1754,25 +1751,19 @@ input[id^="fronto"] {
     <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">Verre<br>(-0.25)</div>
 
    <div id="jccVisuals" class="jcc-container hidden">
-    <svg style="width:0; height:0; position:absolute;">
-        <defs>
-            <marker id="arrowhead-cyan" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill="#04ABC6" />
-            </marker>
-        </defs>
-    </svg>
-
     <div id="visPos1" class="jcc-visual">
         <span class="jcc-label">1</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#04ABC6" stroke-width="4" marker-end="url(#arrowhead-cyan)" />
+            <path d="M30,70 A30,30 0 1,1 70,70" fill="none" stroke="#04ABC6" stroke-width="3" stroke-linecap="round" />
+            <polyline points="38,62 30,70 38,78" fill="none" stroke="#04ABC6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
     </div>
 
     <div id="visPos2" class="jcc-visual">
         <span class="jcc-label">2</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#04ABC6" stroke-width="4" marker-end="url(#arrowhead-cyan)" />
+            <path d="M30,70 A30,30 0 1,1 70,70" fill="none" stroke="#04ABC6" stroke-width="3" stroke-linecap="round" />
+            <polyline points="62,62 70,70 62,78" fill="none" stroke="#04ABC6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
     </div>
 </div>
