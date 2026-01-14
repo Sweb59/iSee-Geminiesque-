@@ -935,7 +935,7 @@ input[id^="fronto"] {
     box-shadow: 0 0 20px rgba(4, 171, 198, 0.6); /* Rayonnement Cyan */
 }
 
-/* Animation de rotation continue pour les flèches */
+/* Animation de rotation continue (sens horaire par défaut) */
 @keyframes spin-arrow {
     from { transform: translate(-50%, -50%) rotate(0deg); }
     to { transform: translate(-50%, -50%) rotate(360deg); }
@@ -952,9 +952,15 @@ input[id^="fronto"] {
     overflow: visible !important;
 }
 
-/* La flèche ne tourne que quand la bulle est active */
+/* La flèche tourne par défaut en sens horaire quand elle est active */
 .jcc-visual.active .arrow-svg {
     animation: spin-arrow 2s linear infinite;
+}
+
+/* --- MODIFICATION POUR LA POSITION 1 --- */
+/* On force le sens inverse (anti-horaire) uniquement pour la bulle 1 */
+#visPos1.active .arrow-svg {
+    animation-direction: reverse;
 }
   /* INPUTS MODAL */
   .modal-input-grid {
