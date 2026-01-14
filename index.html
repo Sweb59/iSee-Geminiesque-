@@ -886,6 +886,13 @@ input[id^="fronto"] {
     z-index: 300;
 }
 
+/* --- SÉCURITÉ DISPARITION JCC --- */
+#jccVisuals.hidden {
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+}
+  
 /* Style "Bulle" identique au test de sphère */
 /* --- Modif JCC Visuals --- */
 /* --- VISUELS JCC (CORRIGÉS) --- */
@@ -948,7 +955,7 @@ input[id^="fronto"] {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 5.5rem; /* Augmenté pour être géant */
+    font-size: 4rem; /* Augmenté pour être géant */
     font-weight: 900;
     font-family: 'Montserrat', sans-serif;
     color: #04ABC6 !important;
@@ -4772,12 +4779,19 @@ window.initAxisCheck = function() {
                         setTimeout(function() {
                             p2.classList.remove('active'); 
                             
-                            // Rétablissement de l'axe de référence
+                            // 1. On cache les bulles 1 et 2 immédiatement après la comparaison
+                            document.getElementById('jccVisuals').classList.add('hidden');
+                            
+                            // 2. Rétablissement de l'axe de référence dans le dashboard
                             if (axeDisplay) axeDisplay.innerText = target.axe + "°";
                             
+                            // 3. Affichage des boutons de décision (Mieux 1, Mieux 2, Pareil)
                             axisDecisions.classList.remove('hidden');
                             replayBtn.classList.remove('hidden');
-                        }, 2500); 
+                            
+                            // 4. On s'assure que les flèches ne tournent plus en tâche de fond
+                            p1.classList.remove('active');
+                        }, 2500);
                     });
                 }, false);
             }, 2500); 
