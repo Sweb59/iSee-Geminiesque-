@@ -2571,6 +2571,7 @@ var appState = {
     axisStep: 20, axisDirectionHistory: [],
   // --- NOUVELLES LIGNES DE SÉCURITÉ À AJOUTER ICI ---
     axisRepeatCount: 0,
+  isFinalStep: false, // <--- AJOUTEZ CETTE LIGNE ICI
     axisHelpMode: false,
     // --------------------------------------------------
   cylHigh: false,
@@ -4721,14 +4722,17 @@ window.runJccSequence = function() {
     axisDecisions.classList.add('hidden');
     replayBtn.classList.add('hidden');
 
-    say("Vous préférez lire les lettres dans la position", function() {
+    // --- LOGIQUE DU MOT-CLÉ DYNAMIQUE ---
+    var motCle = (appState.isFinalStep) ? "la dernière position" : "la position";
+
+    say("Vous préférez lire les lettres dans " + motCle, function() {
         if (appState.cylHigh && axeDisplay) axeDisplay.innerText = pos1_val + "°";
         p1.classList.add('active'); 
 
         say("une ?", function() {
             setTimeout(function() {
                 p1.classList.remove('active'); 
-                say("Ou dans la position", function() {
+                say("Ou dans " + motCle, function() {
                     if (appState.cylHigh && axeDisplay) axeDisplay.innerText = pos2_val + "°";
                     p2.classList.add('active');
                     say("deux, ou est-ce que c'est pareil ?", function() {
@@ -4746,7 +4750,6 @@ window.runJccSequence = function() {
         }, false);
     }, false); 
 };
-
 window.handleJccChoice = function(choice) {
     if (appState.isSpeaking) return; 
 
@@ -4797,6 +4800,7 @@ window.handleJccChoice = function(choice) {
             } 
             else if (lastDirection && direction !== lastDirection) {
                 appState.axisStep = 10; 
+              appState.isFinalStep = true; // <--- AJOUTEZ CETTE LIGNE ICI
                 var rot = (choice === 'pos1') ? 10 : -10;
                 target.axe = normalizeAxis(target.axe + rot);
                 feedbackMsg = "Excellent.";
@@ -4814,6 +4818,8 @@ window.handleJccChoice = function(choice) {
     var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
 
     if (isFinished) {
+      // --- RESET DU MODE "DERNIÈRE" POUR LE PROCHAIN TEST ---
+        appState.isFinalStep = false;
         // --- PHASE DE VALIDATION ---
         appState.examPhase = "AxisVerification";
         
