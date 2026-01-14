@@ -3375,6 +3375,9 @@ window.validateSb10 = function() {
 window.finishSb10ForEye = function() {
     window.hideBaseCircle();
     var eye = appState.activeEye;
+  // --- NOUVEAU : On mémorise la meilleure ligne d'acuité pour la validation finale ---
+    appState.bestVaIndex = appState.vaIndex; 
+    // ---------------------------------------------------------------------------------
     var target = getTargetEye();
     var maxVa = ACUITY_TABLE[appState.vaIndex].va;
     
@@ -3817,6 +3820,10 @@ window.decideMinus = function(choice) {
         
         var target = getTargetEye();
         target.axe = appState.axisInitialRA; // Reset à la valeur RA
+
+      // --- NOUVEAU : ON FORCE LE RETOUR À LA LIGNE DE 10/10 ---
+            setVaToIndexClosest(1.00); 
+            // -------------------------------------------------------
         
         // Réinitialisation des paramètres techniques
         appState.axisRepeatCount = 0;
@@ -4822,6 +4829,13 @@ window.handleJccChoice = function(choice) {
         appState.isFinalStep = false;
         // --- PHASE DE VALIDATION ---
         appState.examPhase = "AxisVerification";
+
+      // --- NOUVEAU : On remet l'acuité sur la meilleure ligne validée lors de la sphère ---
+        if (appState.bestVaIndex !== undefined) {
+            appState.vaIndex = appState.bestVaIndex;
+            appState.letterIndex = 0; // On repart sur les premières lettres de cette ligne
+        }
+        // ---------------------------------------------------------------------------------
         
         // Nettoyage visuel
         document.getElementById('jccVisuals').classList.add('hidden');
