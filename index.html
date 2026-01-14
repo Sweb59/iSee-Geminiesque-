@@ -940,6 +940,8 @@ input[id^="fronto"] {
     position: absolute;
     top: 50%;
     left: 50%;
+    /* FORCE LE PIVOT AU CENTRE EXACT DU SVG */
+    transform-origin: center center; 
     transform: translate(-50%, -50%);
     z-index: 1;
     overflow: visible !important;
@@ -948,11 +950,6 @@ input[id^="fronto"] {
 /* Rotation horaire par défaut */
 .jcc-visual.active .arrow-svg {
     animation: spin-arrow 2.5s linear infinite;
-}
-
-/* Inversion de rotation pour la Position 1 */
-#visPos1.active .arrow-svg {
-    animation-direction: reverse;
 }
 
 /* Inversion de rotation pour la Position 1 */
@@ -1754,20 +1751,20 @@ input[id^="fronto"] {
     <div id="visPos1" class="jcc-visual">
         <span class="jcc-label">1</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M30,70 A30,30 0 1,1 70,70" fill="none" stroke="#04ABC6" stroke-width="3.5" stroke-linecap="round" />
-            <polyline points="30,70 45,78 50,75" fill="#04ABC6" stroke="#04ABC6" stroke-width="1" stroke-linejoin="round" />
+            <path d="M19.7,67.5 A35,35 0 1,1 80.3,67.5" fill="none" stroke="#04ABC6" stroke-width="4" stroke-linecap="round" />
+            <polygon points="19.7,67.5 25,65 35,53 23,58" fill="#04ABC6" />
         </svg>
     </div>
 
     <div id="visPos2" class="jcc-visual">
         <span class="jcc-label">2</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M30,70 A30,30 0 1,1 70,70" fill="none" stroke="#04ABC6" stroke-width="3.5" stroke-linecap="round" />
-            <polyline points="70,70 55,78 50,75" fill="#04ABC6" stroke="#04ABC6" stroke-width="1" stroke-linejoin="round" />
+            <path d="M19.7,67.5 A35,35 0 1,1 80.3,67.5" fill="none" stroke="#04ABC6" stroke-width="4" stroke-linecap="round" />
+            <polygon points="80.3,67.5 75,65 65,53 77,58" fill="#04ABC6" />
         </svg>
     </div>
 </div>
-
+      
     <div id="axisControls" class="response-area hidden" style="position: absolute; bottom: 0px; width: 100%; pointer-events: auto;">
         <div id="axisDecisions" class="decision-row hidden">
             <button class="btn-decision btn-blue" onclick="window.handleJccChoice('pos1')">Mieux 1</button>
