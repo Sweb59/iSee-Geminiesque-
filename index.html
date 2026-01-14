@@ -2475,6 +2475,9 @@ var appState = {
     baseProfile: null, 
     isSpeaking: false, // Variable de lock
 
+  // --- AJOUTEZ LA LIGNE ICI ---
+    axisIntroDone: false,
+
   // --- AJOUTEZ CES DEUX LIGNES ICI ---
     lettersBeforeAxis: 0, // Score de référence avant le test de l'axe
     axisInitialRA: 0,     // Valeur de l'axe au départ (RA) pour reset si besoin
@@ -2510,7 +2513,13 @@ var appState = {
     pendingSchober: null, // Stockage temporaire du choix Schober
 
     saved_sb05: { OD: 0, OG: 0 }, saved_sb10: { OD: 0, OG: 0 },
-    axisStep: 20, axisDirectionHistory: [], cylHigh: false,
+    axisStep: 20, axisDirectionHistory: [],
+  // --- NOUVELLES LIGNES DE SÉCURITÉ À AJOUTER ICI ---
+    axisRepeatCount: 0,
+    axisHelpMode: false,
+    // --------------------------------------------------
+  cylHigh: false,
+  
     lastInvalidInputId: null 
 };
 
@@ -3728,7 +3737,7 @@ window.decideMinus = function(choice) {
             document.getElementById('checkPlusZone').classList.add('hidden');
         
         // Sortie vers l'astigmatisme
-        say("Très bien, nous avons votre réglage.", function() {
+        say("Très bien, continuons.", function() {
             finishSb10ForEye(); 
         });
     }
@@ -3743,30 +3752,47 @@ window.decideMinus = function(choice) {
     // --- CONTROLE QUALITÉ : VÉRIFICATION DE L'AXE ---
     // =========================================================
     if (appState.examPhase === "AxisVerification") {
-        appState.isSpeaking = true;
-        updateLockUI(true);
+    appState.isSpeaking = true;
+    updateLockUI(true);
 
-        if (lettersRead < appState.lettersBeforeAxis) {
-            // ÉCHEC : La vision est moins bonne qu'au début de l'axe
-            say("C'est curieux vous voyez moins bien. Nous allons recommencer.", function() {
-                var target = getTargetEye();
-                target.axe = appState.axisInitialRA; // Reset à la valeur RA
-                appState.isSpeaking = false;
-                updateLockUI(false);
-                initAxisCheck(); // On recommence le test d'axe
-            });
-        } else {
-            // SUCCÈS : Vision égale ou meilleure
-            say("Très bien, je vous montre deux nouvelles positions.", function() {
-                appState.isSpeaking = false;
-                updateLockUI(false);
-                // On passe à l'étape suivante (Puissance du cylindre ou autre oeil)
-                window.proceedToNextStepAfterEye(appState.activeEye);
-            });
-        }
-        return; // On arrête la fonction ici pour ne pas exécuter le reste
+    if (lettersRead < appState.lettersBeforeAxis) {
+        // --- CHANGEMENT DE PHASE IMMÉDIAT (AVANT LA VOIX) ---
+        appState.examPhase = "AxisCheck"; 
+        
+        var target = getTargetEye();
+        target.axe = appState.axisInitialRA; // Reset à la valeur RA
+        
+        // Réinitialisation des paramètres techniques
+        appState.axisRepeatCount = 0;
+        appState.axisDirectionHistory = [];
+        appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
+
+        // Mise à jour visuelle instantanée du tableau de bord
+        updateDisplay("Échec de validation : retour à la mise au point de l'axe.");
+
+        // Lancement de la voix (le visuel est déjà à jour)
+        say("C'est curieux vous voyez moins bien. Nous allons recommencer.", function() {
+            appState.isSpeaking = false;
+            updateLockUI(false);
+
+            // Gestion de l'affichage des zones JCC
+            document.getElementById('standardButtons').classList.add('hidden');
+            document.getElementById('axisControls').classList.remove('hidden');
+            document.getElementById('jccVisuals').classList.remove('hidden');
+
+            // Lancement de la séquence de comparaison
+            setTimeout(function() { runJccSequence(); }, 1000);
+        });
+    } else {
+        // SUCCÈS : Vision égale ou meilleure
+        say("Très bien, je vous montre deux nouvelles positions.", function() {
+            appState.isSpeaking = false;
+            updateLockUI(false);
+            window.proceedToNextStepAfterEye(appState.activeEye);
+        });
     }
-
+    return; 
+}
     var wordsLow = ["Ok", "D'accord", "Bien"];
     var feedback = wordsLow[Math.floor(Math.random() * wordsLow.length)];
 
@@ -4580,7 +4606,7 @@ window.initAxisCheck = function() {
     appState.examPhase = "AxisCheck"; 
     var target = getTargetEye();
 
-   // 1. Mémorisation pour le contrôle qualité (APRES avoir choisi la ligne)
+    // 1. Mémorisation pour le contrôle qualité (APRES avoir choisi la ligne)
     appState.lettersBeforeAxis = appState.lastResponseCount; 
     appState.axisInitialRA = target.axe;
 
@@ -4590,18 +4616,17 @@ window.initAxisCheck = function() {
         // Si >= 10/10, on redescend au 10/10 pour la stabilité
         setVaToIndexClosest(1.00); 
     }
-    // Si < 10/10, on reste sur la ligne actuelle (comportement par défaut)
-
-   
     
     var raAxis = (appState.activeEye === 'OD') ? getVal('raOD_axe') : getVal('raOG_axe');
     appState.startAxisRA = raAxis; 
     var cyl = Math.abs(target.cyl); 
     appState.cylHigh = (cyl >= 4.50);
 
-    // Initialisation du pas de rotation
+    // Initialisation du pas de rotation et reset sécurités
     if (cyl < 2.50) appState.axisStep = 20; else appState.axisStep = 10; 
     appState.axisDirectionHistory = [];
+    appState.axisRepeatCount = 0; 
+    appState.axisHelpMode = false;
 
     // --- MISE À JOUR DE L'INTERFACE ---
     document.getElementById('axisZone').classList.remove('hidden');
@@ -4617,13 +4642,22 @@ window.initAxisCheck = function() {
     
     updateDisplay("Axe: Init sur ligne " + ACUITY_TABLE[appState.vaIndex].va);
 
-    // Lancement Vocal
+    // --- LOGIQUE D'ANNONCE DIFFÉRENCIÉE ---
     if (appState.cylHigh) { 
         alert("Cylindre Fort détecté. Méthode comparative (RA vs RA+5 / RA-5)."); 
-    } else { 
-        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer et vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. Je ferai pareil, comme cela nous seront plus ou moins synchronisés.", function() {
-            setTimeout(function() { runJccSequence(); }, 1000);
-        });
+    } else {
+        if (!appState.axisIntroDone) {
+            // CAS 1 : TOUT PREMIER OEIL
+            appState.axisIntroDone = true; 
+            say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer et vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. Je ferai pareil, comme cela nous seront plus ou moins synchronisés.", function() {
+                setTimeout(function() { runJccSequence(); }, 1000);
+            });
+        } else {
+            // CAS 2 : DEUXIÈME OEIL
+            say("Comme tout à l'heure, je vais vous montrer deux positions différentes et vous me direz laquelle vous préférez. N'oubliez pas de lire toutes les lettres dans votre tête.", function() {
+                setTimeout(function() { runJccSequence(); }, 1000);
+            });
+        }
     }
 };
   
@@ -4697,18 +4731,42 @@ window.initAxisCheck = function() {
     } else {
         // 1. Déterminer la direction actuelle
         var direction = (choice === 'pos1') ? 'cw' : 'ccw';
-        
-        // 2. Logique de réduction du pas
-        if (appState.axisDirectionHistory.length > 0) {
-            var lastDirection = appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1];
-            
-            if (direction !== lastDirection) {
-                if (appState.axisStep === 20) appState.axisStep = 10;
-                else if (appState.axisStep === 10) appState.axisStep = 5;
-            } else {
-                if (appState.axisStep === 10 && appState.axisDirectionHistory.length >= 2) {
-                    appState.axisStep = 5;
-                }
+        var lastDirection = appState.axisDirectionHistory.length > 0 ? 
+            appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
+
+        // --- SÉCURITÉ : DÉTECTION DES 3 CLICS CONSÉCUTIFS (NOUVEAU) ---
+        if (direction === lastDirection) {
+            appState.axisRepeatCount++;
+        } else {
+            appState.axisRepeatCount = 1; // Reset du compteur si changement de direction
+        }
+
+        // Si 3 clics identiques ET qu'on n'est pas déjà en mode aide (Alerte)
+        if (appState.axisRepeatCount >= 3 && !appState.axisHelpMode) {
+            appState.axisRepeatCount = 0;
+            appState.axisHelpMode = true; // On déverrouille pour permettre la poursuite après
+            appState.axisDirectionHistory = [];
+            appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10; // Reset du pas initial
+
+            // Retour à la valeur initiale du RA
+            target.axe = appState.axisInitialRA;
+            updateDisplay("Axe RA rétabli (Sécurité 3 clics)");
+
+            say("C'est curieux. Pour vous aider à mieux répondre, vous allez maintenant lire à voix hautes les lettres pour chacune des positions.", function() {
+                setTimeout(function() { runJccSequence(); }, 1000);
+            });
+            return; // On arrête l'exécution ici pour recommencer proprement
+        }
+        // -------------------------------------------------------------
+
+        // 2. Logique de réduction du pas (Standard)
+        if (lastDirection && direction !== lastDirection) {
+            if (appState.axisStep === 20) appState.axisStep = 10;
+            else if (appState.axisStep === 10) appState.axisStep = 5;
+        } else {
+            // Si on avance toujours dans le même sens, on finit par affiner quand même
+            if (appState.axisStep === 10 && appState.axisDirectionHistory.length >= 2) {
+                appState.axisStep = 5;
             }
         }
 
@@ -4731,6 +4789,10 @@ window.initAxisCheck = function() {
         document.getElementById('axisControls').classList.add('hidden');
         
         appState.examPhase = "AxisVerification";
+        // Reset des drapeaux de sécurité pour le prochain oeil ou examen
+        appState.axisHelpMode = false;
+        appState.axisRepeatCount = 0;
+      appState.axisIntroDone = false;
         
         var lineVerif = ACUITY_TABLE[appState.vaIndex].va;
         updateDisplay("Axe : " + target.axe + "° - Vérification sur ligne " + lineVerif);
