@@ -2474,6 +2474,12 @@ var appState = {
     isRunning: false, activeEye: 'OD', firstEye: 'OD', profile: null, initProfile: null, 
     baseProfile: null, 
     isSpeaking: false, // Variable de lock
+
+  // --- AJOUTEZ CES DEUX LIGNES ICI ---
+    lettersBeforeAxis: 0, // Score de référence avant le test de l'axe
+    axisInitialRA: 0,     // Valeur de l'axe au départ (RA) pour reset si besoin
+    // ----------------------------------
+  
     subj: { 
     OD: { sphere: 0, cyl: 0, axe: 0, va: "--", swebDone: false }, 
     OG: { sphere: 0, cyl: 0, axe: 0, va: "--", swebDone: false } 
@@ -3733,12 +3739,39 @@ window.decideMinus = function(choice) {
     appState.lastResponseCount = lettersRead;
     window.cleanAndSyncVA(lettersRead); 
 
+    // =========================================================
+    // --- CONTROLE QUALITÉ : VÉRIFICATION DE L'AXE ---
+    // =========================================================
+    if (appState.examPhase === "AxisVerification") {
+        appState.isSpeaking = true;
+        updateLockUI(true);
+
+        if (lettersRead < appState.lettersBeforeAxis) {
+            // ÉCHEC : La vision est moins bonne qu'au début de l'axe
+            say("C'est curieux vous voyez moins bien. Nous allons recommencer.", function() {
+                var target = getTargetEye();
+                target.axe = appState.axisInitialRA; // Reset à la valeur RA
+                appState.isSpeaking = false;
+                updateLockUI(false);
+                initAxisCheck(); // On recommence le test d'axe
+            });
+        } else {
+            // SUCCÈS : Vision égale ou meilleure
+            say("Très bien, je vous montre deux nouvelles positions.", function() {
+                appState.isSpeaking = false;
+                updateLockUI(false);
+                // On passe à l'étape suivante (Puissance du cylindre ou autre oeil)
+                window.proceedToNextStepAfterEye(appState.activeEye);
+            });
+        }
+        return; // On arrête la fonction ici pour ne pas exécuter le reste
+    }
+
     var wordsLow = ["Ok", "D'accord", "Bien"];
     var feedback = wordsLow[Math.floor(Math.random() * wordsLow.length)];
 
     // --- PHASE Sb0.2 & Sb0.5 ---
     if (appState.examPhase === "Sb0.2" || appState.examPhase === "Sb0.5") {
-        // Ajout de true pour garder le verrouillage entre le feedback et la relance
         say(feedback, function() {
             processLogic(lettersRead, 'rabbit');
             if (appState.examPhase !== "TRANSITION") {
@@ -3749,48 +3782,35 @@ window.decideMinus = function(choice) {
                 appState.isSpeaking = false;
                 updateLockUI(false);
             }
-        }, true); // <--- BLOQUE LE CLIGNOTEMENT ICI
+        }, true); 
         return;
     }
 
     // --- PHASE Sb1.0 (RECHERCHE 10/10) ---
     if (lettersRead < 3) {
-        // --- ÉTAPE A : VERROUILLAGE MANUEL IMMÉDIAT ---
         appState.isSpeaking = true; 
         updateLockUI(true); 
 
-        // On lance le feedback court
         say(feedback, function() {
-            // Le feedback est fini. Grâce au verrouillage manuel ci-dessus,
-            // les boutons RESTENT grisés ici.
-
             var isIntercepted = window.validateSb10(); 
             if (!isIntercepted) processLogic(lettersRead, 'rabbit');
 
-            // --- ÉTAPE B : PAUSE ET RELANCE ---
             setTimeout(function() {
                 if (appState.isRunning && appState.examPhase === "Sb1.0" && !appState.isCheckingGain) {
-                    
-                    // On lance la deuxième phrase
-                    // On utilise une version anonyme du lock pour être sûr
                     var prompt = (lettersRead === 0) ? 
                         "C'est normal. Je change de verre. Est-ce que c'est mieux comme ça ?" : 
                         "Je change de verre. Relisez-moi cette ligne s'il vous plaît.";
                     
                     say(prompt, function() {
-                        // --- ÉTAPE C : DÉVERROUILLAGE FINAL ---
-                        // On ne libère les boutons que quand TOUTE la phrase est finie
                         appState.isSpeaking = false;
                         updateLockUI(false);
                     });
-
                 } else {
-                    // Si aucune phrase de relance n'est lancée (changement de phase), on libère
                     appState.isSpeaking = false;
                     updateLockUI(false);
                 }
-            }, 400); // Délai de 400ms pour bien voir le changement de sphère
-        }, true); // On garde le paramètre true par sécurité
+            }, 400); 
+        }, true);
         return;
     } else { 
         say(feedback); 
@@ -4410,7 +4430,7 @@ function revertMinusLens() {
     updateDisplay("Gain insuffisant : retour à la base.");
     
     // 3. SORTIE DÉFINITIVE VERS L'ASTIGMATISME
-    say("Ce n'est pas mieux finalement, on revient à la position précédente.", function() {
+    say("Bon, finalement ce n'est pas mieux. On continue.", function() {
         // Cette ligne est cruciale : elle ferme la recherche de sphère
         finishSb10ForEye(); 
     });
@@ -4558,19 +4578,35 @@ setHTML('raOG_sph', (rOG > 0 ? "+" : "") + rOG.toFixed(2));
 // --- AXE ---
 window.initAxisCheck = function() {
     appState.examPhase = "AxisCheck"; 
-    var target = getTargetEye(); 
+    var target = getTargetEye();
+
+   // 1. Mémorisation pour le contrôle qualité (APRES avoir choisi la ligne)
+    appState.lettersBeforeAxis = appState.lastResponseCount; 
+    appState.axisInitialRA = target.axe;
+
+    // --- RÈGLE CLINIQUE : CHOIX DE LA LIGNE ---
+    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
+    if (currentVA >= 1.0) {
+        // Si >= 10/10, on redescend au 10/10 pour la stabilité
+        setVaToIndexClosest(1.00); 
+    }
+    // Si < 10/10, on reste sur la ligne actuelle (comportement par défaut)
+
+   
+    
     var raAxis = (appState.activeEye === 'OD') ? getVal('raOD_axe') : getVal('raOG_axe');
     appState.startAxisRA = raAxis; 
     var cyl = Math.abs(target.cyl); 
     appState.cylHigh = (cyl >= 4.50);
 
+    // Initialisation du pas de rotation
     if (cyl < 2.50) appState.axisStep = 20; else appState.axisStep = 10; 
     appState.axisDirectionHistory = [];
 
-    // --- CORRECTION : ON ACTIVE LES ZONES D'AFFICHAGE ---
-    document.getElementById('axisZone').classList.remove('hidden');     // AJOUT
-    document.getElementById('axisControls').classList.remove('hidden'); // AJOUT
-    document.getElementById('standardButtons').classList.add('hidden'); // AJOUT (pour cacher les chiffres 0-5)
+    // --- MISE À JOUR DE L'INTERFACE ---
+    document.getElementById('axisZone').classList.remove('hidden');
+    document.getElementById('axisControls').classList.remove('hidden');
+    document.getElementById('standardButtons').classList.add('hidden');
     
     document.getElementById('jccVisuals').classList.remove('hidden'); 
     document.getElementById('visPos1').classList.remove('active'); 
@@ -4579,17 +4615,19 @@ window.initAxisCheck = function() {
     document.getElementById('axisDecisions').classList.add('hidden'); 
     document.getElementById('btnReplayAxis').classList.add('hidden'); 
     
-    updateDisplay("Axe: Init CXJ. Cyl=" + cyl.toFixed(2));
+    updateDisplay("Axe: Init sur ligne " + ACUITY_TABLE[appState.vaIndex].va);
 
+    // Lancement Vocal
     if (appState.cylHigh) { 
         alert("Cylindre Fort détecté. Méthode comparative (RA vs RA+5 / RA-5)."); 
     } else { 
-        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer. Vous me direz avec quelle position vous préférez lire les lettres.", function() {
+        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer et vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. Je ferai pareil, comme cela nous seront plus ou moins synchronisés.", function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
     }
 };
-window.runJccSequence = function() {
+  
+  window.runJccSequence = function() {
     if (appState.isSpeaking) return; 
     
     window.hideBaseCircle();
@@ -4598,82 +4636,117 @@ window.runJccSequence = function() {
     var axisDecisions = document.getElementById('axisDecisions');
     var replayBtn = document.getElementById('btnReplayAxis');
 
-    // Reset visuel
+    // Reset visuel initial
     axisDecisions.classList.add('hidden');
     replayBtn.classList.add('hidden');
     p1.classList.remove('active');
     p2.classList.remove('active');
 
-    let startTimeP1; // Pour calculer la durée exacte d'affichage de P1
+    let startTimeP1; 
 
-    // 1. On pose la question 1
+    // 1. On pose la question pour la Position UNE
     say("Vous préférez lire les lettres dans la position une ?", function() {
-        // P1 s'allume à la fin de la phrase
+        // Le cercle 1 s'allume dès que la phrase est finie
         p1.classList.add('active');
-        startTimeP1 = Date.now(); // On lance le chrono de visibilité
+        startTimeP1 = Date.now(); 
 
-        // On laisse un temps d'observation fixe avant de lancer la suite de la phrase
+        // On laisse un temps d'observation fixe (1.5s) avant de proposer le second choix
         setTimeout(function() {
             
-            // 2. La voix lance la transition vers le "deux"
-            // Le bouton 1 est TOUJOURS ALLUMÉ ici
-            say("Ou vous préférez lire les lettres dans la position deux", function() {
-                
-                // --- INSTANT DE LA BASCULE ---
-                p1.classList.remove('active'); // Le 1 s'éteint
-                p2.classList.add('active');    // Le 2 s'allume
-                
-                let durationP1 = Date.now() - startTimeP1; // Calcul du temps total de P1
+            // 2. Annonce fusionnée pour la Position DEUX et le choix "PAREIL"
+            // On déclenche la bascule VISUELLE au milieu de la phrase (pendant le "Ou")
+            say("Ou vous préférez lire les lettres dans la position deux, ou c'est pareil ?", function() {
+                // Cette fonction s'exécute quand TOUTE la phrase est finie
+                let durationP1 = Date.now() - startTimeP1;
 
-                // On enchaîne avec la fin de la phrase
-                say("ou c'est pareil ?", function() {
-                    // La voix continue, le bouton 2 reste
-                });
-
-                // 3. Égalité du temps d'affichage
+                // 3. Égalité du temps d'affichage pour P2
+                // P2 reste allumé exactement le même temps que P1 a mis à être vu
                 setTimeout(function() {
-                    p2.classList.remove('active'); // Le 2 s'éteint après la même durée que P1
+                    p2.classList.remove('active'); 
                     
-                    // Apparition des boutons de réponse
+                    // Apparition des boutons de réponse après l'extinction
                     setTimeout(function() {
                         axisDecisions.classList.remove('hidden');
                         replayBtn.classList.remove('hidden');
                     }, 400);
 
-                }, durationP1); // Utilisation de la durée calculée
+                }, durationP1); 
             });
 
-        }, 1500); // Délai d'observation "pur" de P1 avant que la voix ne reprenne
+            // INSTANT DE LA BASCULE (Juste après le lancement du "Ou...")
+            setTimeout(function() {
+                p1.classList.remove('active');
+                p2.classList.add('active');
+            }, 300); // Petit délai pour caler la bascule sur le début de la voix
+
+        }, 1500); 
     });
-};  
+};
   window.handleJccChoice = function(choice) {
     if (appState.isSpeaking) return; 
 
-    // Cache les boutons de réponse immédiatement après le clic
     document.getElementById('axisDecisions').classList.add('hidden');
     document.getElementById('btnReplayAxis').classList.add('hidden');
 
     var target = getTargetEye();
+    var isFinished = false; 
+    
+    // --- CAS 1 : LE PATIENT DIT "PAREIL" ---
     if (choice === 'same') { 
-        alert("Axe validé ! Passage à la Puissance."); 
-        // Logique de passage à la suite ici
-        return; 
+        isFinished = true;
+    } else {
+        // 1. Déterminer la direction actuelle
+        var direction = (choice === 'pos1') ? 'cw' : 'ccw';
+        
+        // 2. Logique de réduction du pas
+        if (appState.axisDirectionHistory.length > 0) {
+            var lastDirection = appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1];
+            
+            if (direction !== lastDirection) {
+                if (appState.axisStep === 20) appState.axisStep = 10;
+                else if (appState.axisStep === 10) appState.axisStep = 5;
+            } else {
+                if (appState.axisStep === 10 && appState.axisDirectionHistory.length >= 2) {
+                    appState.axisStep = 5;
+                }
+            }
+        }
+
+        // 3. Appliquer la rotation
+        var rot = (choice === 'pos1') ? -appState.axisStep : appState.axisStep;
+        target.axe = normalizeAxis(target.axe + rot);
+        
+        // --- DETECTION CRUCIALE ---
+        // Si on vient d'appliquer une rotation de 5°, on ne relance pas le test
+        if (appState.axisStep === 5) {
+            isFinished = true;
+        }
+
+        appState.axisDirectionHistory.push(direction);
     }
 
-    // Calcul de l'axe (identique à ton code actuel)
-    var direction = (choice === 'pos1') ? 'cw' : 'ccw';
-    appState.axisDirectionHistory.push(direction);
-    
-    // ... (garde ta logique de changement d'axe et de pas de rotation) ...
-
-    var rot = (choice === 'pos1') ? -appState.axisStep : appState.axisStep;
-    target.axe = normalizeAxis(target.axe + rot);
-
-    updateDisplay("Nouvel Axe : " + target.axe + "°");
-    nextLetters();
-    
-    // Relance la séquence : les bulles réapparaîtront via runJccSequence
-    setTimeout(function() { runJccSequence(); }, 800);
+    // --- SORTIE DU TEST ---
+    if (isFinished) {
+        document.getElementById('jccVisuals').classList.add('hidden');
+        document.getElementById('axisControls').classList.add('hidden');
+        
+        appState.examPhase = "AxisVerification";
+        
+        var lineVerif = ACUITY_TABLE[appState.vaIndex].va;
+        updateDisplay("Axe : " + target.axe + "° - Vérification sur ligne " + lineVerif);
+        
+        // On génère de nouvelles lettres pour la validation finale
+        nextLetters(); 
+        
+        say("C'est parfait. Relisez-moi cette ligne s'il vous plaît.");
+        
+        document.getElementById('standardButtons').classList.remove('hidden');
+    } else {
+        // --- CONTINUATION DU TEST ---
+        updateDisplay("Nouvel Axe : " + target.axe + "° (Pas: " + appState.axisStep + "°)");
+        nextLetters();
+        setTimeout(function() { runJccSequence(); }, 800);
+    }
 };
 // --- NOUVELLES FONCTIONS DE GESTION DE FLUX (STOP/RESTART) ---
 window.restartExam = function() {
@@ -4748,7 +4821,8 @@ window.updateDisplay = function(message) {
         appState.examPhase === "Sb1.0" || 
         (appState.examPhase && appState.examPhase.includes("Check")) || 
         (appState.examPhase && appState.examPhase.includes("Swéb")) ||
-        appState.examPhase === "QuartConcaveMyope"
+        appState.examPhase === "QuartConcaveMyope"||
+    appState.examPhase === "AxisVerification" // <--- AJOUTEZ CETTE LIGNE
     );
 
     if(boxOD && boxOG) {
@@ -4790,13 +4864,37 @@ if (appState.examPhase) {
             affichagePhase = "Vérification de Swéb"; 
             break;
 
-        // On garde les autres tels qu'ils sont actuellement
-        case "QuartConcaveMyope": affichagePhase = "Test du Quart Concave"; break;
-        case "SphereCheckMinus":  affichagePhase = (appState.subj[appState.activeEye].sphere < 0) ? "Test du Quart Concave" : "Verres vérificateurs (-0.25)"; break;
-        case "SphereCheckPlus":   affichagePhase = "Verres vérificateurs (+0.25)"; break;
-        case "AxisCheck":         affichagePhase = "Mise au point de l'axe du cylindre"; break;
-        case "Balance Binoculaire": affichagePhase = "Équilibre et Confort Binoculaire"; break;
-        default:                  affichagePhase = appState.examPhase.toUpperCase();
+        // --- SPHÈRE (VÉRIFICATEURS) ---
+        case "QuartConcaveMyope": 
+            affichagePhase = "Test du Quart Concave"; 
+            break;
+            
+        case "SphereCheckMinus":  
+            affichagePhase = (appState.subj[appState.activeEye].sphere < 0) ? 
+                             "Test du Quart Concave" : 
+                             "Test des verres vérificateurs"; 
+            break;
+            
+        case "SphereCheckPlus":   
+            affichagePhase = "Test des verres vérificateurs"; 
+            break;
+
+        // --- AXE ---
+        case "AxisCheck":         
+            affichagePhase = "Mise au point de l'axe"; 
+            break;
+            
+        case "AxisVerification":  
+            affichagePhase = "Validation de l'axe"; 
+            break;
+
+        // --- FINAL ---
+        case "Balance Binoculaire": 
+            affichagePhase = "Équilibre et Confort Binoculaire"; 
+            break;
+
+        default:                  
+            affichagePhase = appState.examPhase.toUpperCase();
     }
 }
 setHTML('dispPhase', affichagePhase);
