@@ -907,52 +907,73 @@ input[id^="fronto"] {
 }
 
 /* --- LE MOTEUR DE ROTATION --- */
+/* 1. Moteur de rotation stable */
+/* 1. Moteur de rotation sans décalage */
+/* --- VISUELS JCC : STYLE DES BULLES & ANIMATION --- */
+
 @keyframes spin-arrow {
     from { transform: translate(-50%, -50%) rotate(0deg); }
     to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-.jcc-visual.active {
-    background: #FFFFFF;
-    opacity: 1;
-    transform: scale(1.05); 
-    border-color: #04ABC6;
-    border-width: 3px;
-    box-shadow: 0 0 15px rgba(4, 171, 198, 0.4);
+/* La bulle par défaut (éteinte) */
+.jcc-visual {
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05); /* Très transparent */
+    border: 2px solid rgba(150, 150, 150, 0.4); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    opacity: 0.5;
+    transition: all 0.4s ease-in-out; /* Pour un allumage fluide */
 }
 
+/* LA BULLE ACTIVE (L'EFFET GLOW & ZOOM) */
+.jcc-visual.active {
+    background: #FFFFFF !important;
+    opacity: 1 !important;
+    transform: scale(1.05); /* Effet zoom léger */
+    border-color: #04ABC6;
+    border-width: 3px;
+    /* Effet d'illumination (Glow) */
+    box-shadow: 0 0 20px rgba(4, 171, 198, 0.6), 0 0 40px rgba(4, 171, 198, 0.2);
+}
+
+/* LES CHIFFRES GÉANTS */
 .jcc-label {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 4.5rem; 
+    font-size: 5.5rem; /* Augmenté pour être géant */
     font-weight: 900;
+    font-family: 'Montserrat', sans-serif;
     color: #04ABC6 !important;
-    z-index: 2;
-    margin: 0;
+    z-index: 2; /* Devant la flèche */
     line-height: 1;
+    margin: 0;
 }
 
+/* LA FLÈCHE (STABLE) */
 .arrow-svg {
-    width: 105px;
-    height: 105px;
+    width: 95px;
+    height: 95px;
     position: absolute;
     top: 50%;
     left: 50%;
-    /* FORCE LE PIVOT AU CENTRE EXACT DU SVG */
-    transform-origin: center center; 
+    transform-origin: center center;
     transform: translate(-50%, -50%);
-    z-index: 1;
-    overflow: visible !important;
+    z-index: 1; /* Derrière le chiffre */
+    overflow: visible;
 }
 
-/* Rotation horaire par défaut */
 .jcc-visual.active .arrow-svg {
     animation: spin-arrow 2.5s linear infinite;
 }
 
-/* Inversion de rotation pour la Position 1 */
 #visPos1.active .arrow-svg {
     animation-direction: reverse;
 }
@@ -1751,16 +1772,16 @@ input[id^="fronto"] {
     <div id="visPos1" class="jcc-visual">
         <span class="jcc-label">1</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M19.7,67.5 A35,35 0 1,1 80.3,67.5" fill="none" stroke="#04ABC6" stroke-width="4" stroke-linecap="round" />
-            <polygon points="19.7,67.5 25,65 35,53 23,58" fill="#04ABC6" />
+            <path d="M8,50 A42,42 0 1,1 92,50" fill="none" stroke="#04ABC6" stroke-width="5" stroke-linecap="round" />
+            <polygon points="2,50 14,50 8,65" fill="#04ABC6" />
         </svg>
     </div>
 
     <div id="visPos2" class="jcc-visual">
         <span class="jcc-label">2</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M19.7,67.5 A35,35 0 1,1 80.3,67.5" fill="none" stroke="#04ABC6" stroke-width="4" stroke-linecap="round" />
-            <polygon points="80.3,67.5 75,65 65,53 77,58" fill="#04ABC6" />
+            <path d="M8,50 A42,42 0 1,1 92,50" fill="none" stroke="#04ABC6" stroke-width="5" stroke-linecap="round" />
+            <polygon points="86,50 98,50 92,65" fill="#04ABC6" />
         </svg>
     </div>
 </div>
