@@ -3827,7 +3827,7 @@ window.decideMinus = function(choice) {
         updateDisplay("Échec de validation : retour à la mise au point de l'axe.");
 
         // Lancement de la voix (le visuel est déjà à jour)
-        say("C'est curieux vous voyez moins bien. Nous allons recommencer.", function() {
+        say("C'est curieux vous voyez moins bien. Nous allons vérifier cela, mais pour vous aider à mieux répondre, vous allez maintenant lire les lettres à hautes voix sur chacune des deux positions.", function() {
             appState.isSpeaking = false;
             updateLockUI(false);
 
