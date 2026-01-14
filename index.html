@@ -911,29 +911,50 @@ input[id^="fronto"] {
     border-color: var(--primary);
 }
 
-/* Chiffres 1 et 2 forcés au centre */
-.jcc-label {
-    position: absolute; /* Sort du flux pour ne pas pousser l'image */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Centrage mathématique parfait */
-    font-weight: 800;
-    font-size: 2.2rem; /* Taille augmentée */
-    color: var(--text-main);
-    z-index: 2;
-    margin: 0;
-    line-height: 1;
+/* État de base des bulles (Transparentes/Désaturées) */
+.jcc-visual {
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1); /* Très transparent */
+    border: 3px solid rgba(207, 216, 220, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Transition élastique */
+    position: relative;
+    opacity: 0.5; /* Semi-transparent par défaut */
 }
 
-.arrow-svg { 
-    width: 90px; 
-    height: 90px; 
+/* État "Allumé" (Position Active) */
+.jcc-visual.active {
+    background: #FFFFFF;
+    opacity: 1;
+    transform: scale(1.15); /* Zoom léger */
+    border-color: #04ABC6;
+    box-shadow: 0 0 20px rgba(4, 171, 198, 0.6); /* Rayonnement Cyan */
+}
+
+/* Animation de rotation continue pour les flèches */
+@keyframes spin-arrow {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.arrow-svg {
+    width: 100px;
+    height: 100px;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    overflow: visible !important; 
     z-index: 1;
+    overflow: visible !important;
+}
+
+/* La flèche ne tourne que quand la bulle est active */
+.jcc-visual.active .arrow-svg {
+    animation: spin-arrow 2s linear infinite;
 }
   /* INPUTS MODAL */
   .modal-input-grid {
@@ -1726,18 +1747,26 @@ input[id^="fronto"] {
     <div id="animArrowLineMinus" class="arrow-connector-right"></div>
     <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">Verre<br>(-0.25)</div>
 
-    <div id="jccVisuals" class="jcc-container hidden">
+   <div id="jccVisuals" class="jcc-container hidden">
+    <svg style="width:0; height:0; position:absolute;">
+        <defs>
+            <marker id="arrowhead-cyan" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#04ABC6" />
+            </marker>
+        </defs>
+    </svg>
+
     <div id="visPos1" class="jcc-visual">
         <span class="jcc-label">1</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#116dff" stroke-width="6" marker-end="url(#arrowhead)" />
+            <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#04ABC6" stroke-width="4" marker-end="url(#arrowhead-cyan)" />
         </svg>
     </div>
 
     <div id="visPos2" class="jcc-visual">
         <span class="jcc-label">2</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#fd7e14" stroke-width="6" marker-end="url(#arrowhead2)" />
+            <path d="M50 10 A40 40 0 0 0 10 50" fill="none" stroke="#04ABC6" stroke-width="4" marker-end="url(#arrowhead-cyan)" />
         </svg>
     </div>
 </div>
@@ -4621,13 +4650,23 @@ window.initAxisCheck = function() {
     var cyl = Math.abs(target.cyl); 
     appState.cylHigh = (cyl >= 4.50);
 
-    // Initialisation du pas technique (5° fixe pour les forts cylindres)
+    // Initialisation du pas technique
     if (appState.cylHigh) {
         appState.axisStep = 5; 
     } else {
         appState.axisStep = (cyl < 2.50) ? 20 : 10;
     }
     
+    // --- CALCUL DES VALEURS TEMPORAIRES POUR L'ANIMATION (TOUR 1) ---
+    if (appState.cylHigh) {
+        appState.tempPos1 = target.axe; 
+        appState.tempPos2 = normalizeAxis(target.axe + 5);
+    } else {
+        appState.tempPos1 = normalizeAxis(target.axe - appState.axisStep);
+        appState.tempPos2 = normalizeAxis(target.axe + appState.axisStep);
+    }
+    // ---------------------------------------------------------------
+
     appState.axisDirectionHistory = [];
     appState.axisRepeatCount = 0; 
     appState.axisHelpMode = false;
@@ -4644,20 +4683,17 @@ window.initAxisCheck = function() {
     document.getElementById('axisDecisions').classList.add('hidden'); 
     document.getElementById('btnReplayAxis').classList.add('hidden'); 
     
-    // Affichage informatif pour l'examinateur sur le dashboard
     updateDisplay("Axe: Init " + (appState.cylHigh ? "Méthode Glissement" : "Méthode Classique"));
 
-    // --- LOGIQUE D'ANNONCE HARMONISÉE (SANS DISTINCTION PÉDAGOGIQUE) ---
+    // --- LOGIQUE D'ANNONCE HARMONISÉE ---
     if (!appState.axisIntroDone) {
-        // CAS 1 : TOUT PREMIER OEIL (Phrase standard pour tous)
         appState.axisIntroDone = true; 
-        let phraseIntro = "Je vais maintenant vous montrer deux positions différentes que vous allez comparer et vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. De mon côté e ferai pareil, comme cela nous serons plus ou moins synchronisés.";
+        let phraseIntro = "Je vais maintenant vous montrer deux positions différentes que vous allez comparer et vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. De mon côté je ferai pareil, comme cela nous serons plus ou moins synchronisés.";
             
         say(phraseIntro, function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
     } else {
-        // CAS 2 : DEUXIÈME OEIL OU RETOUR APRÈS ÉCHEC
         say("Comme tout à l'heure, je vais vous montrer deux positions différentes et vous me direz laquelle vous préférez. N'oubliez pas de lire toutes les lettres dans votre tête.", function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
@@ -4673,65 +4709,70 @@ window.initAxisCheck = function() {
     var p2 = document.getElementById('visPos2');
     var axisDecisions = document.getElementById('axisDecisions');
     var replayBtn = document.getElementById('btnReplayAxis');
-    
-    // On cible l'afficheur d'axe de la carte active (Cyan)
     var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
 
-    axisDecisions.classList.add('hidden');
-    replayBtn.classList.add('hidden');
-    p1.classList.remove('active');
-    p2.classList.remove('active');
-
-    // --- CALCUL DES VALEURS DE TEST ---
-    var pos1_val, pos2_val;
+    // --- 1. CALCUL DYNAMIQUE DU TOUR ACTUEL ---
     if (appState.cylHigh) {
-        pos1_val = target.axe; 
+        // Méthode Glissement : RA vs RA +/- 5
+        appState.tempPos1 = target.axe; 
         var lastDir = appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1];
-        var stepSign = (lastDir === 'ccw') ? 1 : (lastDir === 'cw') ? -1 : 1; 
-        pos2_val = normalizeAxis(target.axe + (5 * stepSign));
+        var stepSign = (lastDir === 'cw') ? -1 : 1; 
+        appState.tempPos2 = normalizeAxis(target.axe + (5 * stepSign));
     } else {
-        pos1_val = normalizeAxis(target.axe - appState.axisStep);
-        pos2_val = normalizeAxis(target.axe + appState.axisStep);
+        // Méthode Classique : RA - Step vs RA + Step
+        appState.tempPos1 = normalizeAxis(target.axe - appState.axisStep);
+        appState.tempPos2 = normalizeAxis(target.axe + appState.axisStep);
     }
 
-    appState.tempPos1 = pos1_val;
-    appState.tempPos2 = pos2_val;
+    var pos1_val = appState.tempPos1;
+    var pos2_val = appState.tempPos2;
+    // -------------------------------------------
 
-    let startTimeP1; 
+    // INITIALISATION VISUELLE
+    document.getElementById('jccVisuals').classList.remove('hidden');
+    p1.classList.remove('active');
+    p2.classList.remove('active');
+    axisDecisions.classList.add('hidden');
+    replayBtn.classList.add('hidden');
 
-    // --- POSITION 1 ---
-    // 1. On met à jour le texte de l'axe AVANT de parler
-    if (axeDisplay) axeDisplay.innerText = pos1_val + "°";
-    
-    say("Vous préférez lire les lettres dans la position une ?", function() {
-        // Le cercle s'allume au début de la phrase (via le callback synchrone de say)
-        p1.classList.add('active');
-        startTimeP1 = Date.now(); 
+    // --- SEQUENCE SYNCHRONISÉE MOT À MOT ---
 
-        setTimeout(function() {
-            // --- POSITION 2 ---
-            // 1. On change l'affichage visuel (Texte + Cercle)
-            if (axeDisplay) axeDisplay.innerText = pos2_val + "°";
-            p1.classList.remove('active');
-            p2.classList.add('active');
+    // ÉTAPE 1 : POSITION 1
+    say("Vous préférez la position", function() {
+        // Allumage sur le mot "un"
+        if (axeDisplay) axeDisplay.innerText = pos1_val + "°";
+        p1.classList.add('active'); 
 
-            // 2. On lance la voix
-            say("Ou vous préférez lire les lettres dans la position deux, ou c'est pareil ?", function() {
-                let durationP1 = Date.now() - startTimeP1;
+        say("un ?", function() {
+            // Temps d'observation bulle 1
+            setTimeout(function() {
+                p1.classList.remove('active'); 
 
-                setTimeout(function() {
-                    p2.classList.remove('active'); 
-                    // RÉTABLISSEMENT DE L'AXE DE RÉFÉRENCE (Non encore validé)
-                    if (axeDisplay) axeDisplay.innerText = target.axe + "°";
-                    
-                    setTimeout(function() {
-                        axisDecisions.classList.remove('hidden');
-                        replayBtn.classList.remove('hidden');
-                    }, 400);
-                }, durationP1); 
-            });
-        }, 1500); // Temps d'observation position 1
-    });
+                // ÉTAPE 2 : POSITION 2
+                say("Ou la position", function() {
+                    // Allumage sur le mot "deux"
+                    if (axeDisplay) axeDisplay.innerText = pos2_val + "°";
+                    p2.classList.add('active');
+
+                    say("deux ?", function() {
+                        // Temps d'observation bulle 2
+                        setTimeout(function() {
+                            p2.classList.remove('active'); 
+                            
+                            // ÉTAPE 3 : CONCLUSION
+                            say("Ou est-ce que c'est pareil ?", function() {
+                                // Rétablissement de l'axe de référence
+                                if (axeDisplay) axeDisplay.innerText = target.axe + "°";
+                                
+                                axisDecisions.classList.remove('hidden');
+                                replayBtn.classList.remove('hidden');
+                            });
+                        }, 1200); 
+                    });
+                }, false);
+            }, 1000);
+        }, false);
+    }, false); 
 };
   window.handleJccChoice = function(choice) {
     if (appState.isSpeaking) return; 
