@@ -4714,66 +4714,58 @@ window.initAxisCheck = function() {
     var replayBtn = document.getElementById('btnReplayAxis');
     var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
 
-    // --- 1. CALCUL DYNAMIQUE UNIVERSEL ET INVERSÉ DU TOUR ACTUEL ---
+    // --- 1. CALCUL DYNAMIQUE UNIVERSEL ET INVERSÉ ---
     if (appState.cylHigh) {
-        // MÉTHODE GLISSEMENT : Pos 1 (Référence) vs Pos 2 (Proposition +/- 5)
         appState.tempPos1 = target.axe; 
         var lastDir = appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1];
         var stepSign = (lastDir === 'ccw') ? 1 : -1; 
         appState.tempPos2 = normalizeAxis(target.axe + (5 * stepSign));
     } else {
-        // MÉTHODE CLASSIQUE : Pos 1 (AUGMENTÉE +) vs Pos 2 (DIMINUÉE -)
         appState.tempPos1 = normalizeAxis(target.axe + appState.axisStep);
         appState.tempPos2 = normalizeAxis(target.axe - appState.axisStep);
     }
 
     var pos1_val = appState.tempPos1;
     var pos2_val = appState.tempPos2;
-    // ---------------------------------------------------------------
 
-    // INITIALISATION VISUELLE : Bulles transparentes, boutons cachés
+    // INITIALISATION VISUELLE
     document.getElementById('jccVisuals').classList.remove('hidden');
     p1.classList.remove('active');
     p2.classList.remove('active');
     axisDecisions.classList.add('hidden');
     replayBtn.classList.add('hidden');
 
-    // --- SEQUENCE SYNCHRONISÉE MOT À MOT AVEC PAUSE DE 2s ---
+    // --- SEQUENCE SYNCHRONISÉE (2.5s d'observation) ---
 
     // ÉTAPE 1 : POSITION 1
     say("Vous préférez la position", function() {
-        // Allumage précis sur le mot "un" (début du segment audio suivant)
         if (axeDisplay) axeDisplay.innerText = pos1_val + "°";
         p1.classList.add('active'); 
 
-        say("un ?", function() {
-            // TEMPS D'OBSERVATION AUGMENTÉ À 2 SECONDES
+        say("une ?", function() {
+            // Pause d'observation Position 1 (2.5s)
             setTimeout(function() {
                 p1.classList.remove('active'); 
 
-                // ÉTAPE 2 : POSITION 2
+                // ÉTAPE 2 : POSITION 2 + ENCHAÎNEMENT VOCAL
                 say("Ou la position", function() {
-                    // Allumage précis sur le mot "deux"
                     if (axeDisplay) axeDisplay.innerText = pos2_val + "°";
                     p2.classList.add('active');
 
-                    say("deux ?", function() {
-                        // TEMPS D'OBSERVATION AUGMENTÉ À 2 SECONDES
+                    say("deux, ou est-ce que c'est pareil ?", function() {
+                        // Pause d'observation Position 2 (2.5s)
                         setTimeout(function() {
                             p2.classList.remove('active'); 
                             
-                            // ÉTAPE 3 : CONCLUSION
-                            say("Ou est-ce que c'est pareil ?", function() {
-                                // Rétablissement de l'axe de référence APRES les 2 secondes
-                                if (axeDisplay) axeDisplay.innerText = target.axe + "°";
-                                
-                                axisDecisions.classList.remove('hidden');
-                                replayBtn.classList.remove('hidden');
-                            });
-                        }, 2500); // 2 secondes pour lire la position 2
+                            // Rétablissement de l'axe de référence
+                            if (axeDisplay) axeDisplay.innerText = target.axe + "°";
+                            
+                            axisDecisions.classList.remove('hidden');
+                            replayBtn.classList.remove('hidden');
+                        }, 2500); 
                     });
                 }, false);
-            }, 25000); // 2 secondes pour lire la position 1
+            }, 2500); 
         }, false);
     }, false); 
 };
@@ -5304,7 +5296,7 @@ window.restoreBinocularBalance = function() {
     if (!appState.axisIntroDone) {
         appState.axisIntroDone = true; 
         // Phrase standard pour tout le monde au premier oeil
-        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer. Vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. De mon côté je ferai pareil, comme cela nous serons plus ou moins synchronisés.", function() {
+        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer. Vous me direz avec laquelle vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. De mon côté je ferai pareil, comme cela nous serons plus ou moins synchronisés.", function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
     } else {
