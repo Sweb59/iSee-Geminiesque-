@@ -4765,35 +4765,38 @@ window.initAxisCheck = function() {
 
     // ÉTAPE 1 : POSITION 1
     say("Vous préférez la position", function() {
-        if (axeDisplay) axeDisplay.innerText = pos1_val + "°";
+        // MODIFICATION : On n'affiche le chiffre que si cylHigh est vrai
+        if (appState.cylHigh && axeDisplay) {
+            axeDisplay.innerText = pos1_val + "°";
+        }
+        
         p1.classList.add('active'); 
 
         say("une ?", function() {
-            // Pause d'observation Position 1 (2.5s)
             setTimeout(function() {
                 p1.classList.remove('active'); 
 
                 // ÉTAPE 2 : POSITION 2 + ENCHAÎNEMENT VOCAL
                 say("Ou la position", function() {
-                    if (axeDisplay) axeDisplay.innerText = pos2_val + "°";
+                    // MODIFICATION : On n'affiche le chiffre que si cylHigh est vrai
+                    if (appState.cylHigh && axeDisplay) {
+                        axeDisplay.innerText = pos2_val + "°";
+                    }
+                    
                     p2.classList.add('active');
 
                     say("deux, ou est-ce que c'est pareil ?", function() {
-                        // Pause d'observation Position 2 (2.5s)
                         setTimeout(function() {
                             p2.classList.remove('active'); 
                             
-                            // 1. On cache les bulles 1 et 2 immédiatement après la comparaison
                             document.getElementById('jccVisuals').classList.add('hidden');
                             
-                            // 2. Rétablissement de l'axe de référence dans le dashboard
+                            // On rétablit toujours l'axe de référence à la fin (Dashboard stable)
                             if (axeDisplay) axeDisplay.innerText = target.axe + "°";
                             
-                            // 3. Affichage des boutons de décision (Mieux 1, Mieux 2, Pareil)
                             axisDecisions.classList.remove('hidden');
                             replayBtn.classList.remove('hidden');
                             
-                            // 4. On s'assure que les flèches ne tournent plus en tâche de fond
                             p1.classList.remove('active');
                         }, 2500);
                     });
@@ -4890,12 +4893,29 @@ window.initAxisCheck = function() {
         appState.axisHelpMode = false;
         appState.axisRepeatCount = 0;
 
+        // On affiche l'axe final validé
         updateDisplay("Axe fixé : " + target.axe + "° - Vérification finale");
+        
+        // Force la mise à jour immédiate du chiffre sur le dashboard
+        var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
+        if (axeDisplay) axeDisplay.innerText = target.axe + "°";
+
         nextLetters(); 
         say("C'est parfait. Relisez-moi cette ligne s'il vous plaît.");
         document.getElementById('standardButtons').classList.remove('hidden');
     } else {
-        updateDisplay("Nouvel Axe : " + target.axe + "°");
+        // CONTINUATION : On affiche ici le nouvel axe calculé après le choix
+        if (appState.cylHigh) {
+            updateDisplay("Glissement vers : " + target.axe + "°");
+        } else {
+            updateDisplay("Nouvel Axe : " + target.axe + "°");
+        }
+
+        // On force la mise à jour du chiffre sur le dashboard pour que l'utilisateur 
+        // voie le changement dès qu'il a cliqué sur le bouton réponse.
+        var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
+        if (axeDisplay) axeDisplay.innerText = target.axe + "°";
+
         nextLetters();
         setTimeout(function() { runJccSequence(); }, 800);
     }
