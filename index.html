@@ -4606,14 +4606,13 @@ window.initAxisCheck = function() {
     appState.examPhase = "AxisCheck"; 
     var target = getTargetEye();
 
-    // 1. Mémorisation pour le contrôle qualité (APRES avoir choisi la ligne)
+    // 1. Mémorisation pour le contrôle qualité
     appState.lettersBeforeAxis = appState.lastResponseCount; 
     appState.axisInitialRA = target.axe;
 
     // --- RÈGLE CLINIQUE : CHOIX DE LA LIGNE ---
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
     if (currentVA >= 1.0) {
-        // Si >= 10/10, on redescend au 10/10 pour la stabilité
         setVaToIndexClosest(1.00); 
     }
     
@@ -4622,8 +4621,7 @@ window.initAxisCheck = function() {
     var cyl = Math.abs(target.cyl); 
     appState.cylHigh = (cyl >= 4.50);
 
-    // Initialisation du pas de rotation et reset sécurités
-    // --- MODIFICATION : PAS DE 5 FIXE POUR LES CYLINDRES FORTS ---
+    // Initialisation du pas technique (5° fixe pour les forts cylindres)
     if (appState.cylHigh) {
         appState.axisStep = 5; 
     } else {
@@ -4646,21 +4644,20 @@ window.initAxisCheck = function() {
     document.getElementById('axisDecisions').classList.add('hidden'); 
     document.getElementById('btnReplayAxis').classList.add('hidden'); 
     
+    // Affichage informatif pour l'examinateur sur le dashboard
     updateDisplay("Axe: Init " + (appState.cylHigh ? "Méthode Glissement" : "Méthode Classique"));
 
-    // --- LOGIQUE D'ANNONCE DIFFÉRENCIÉE ---
+    // --- LOGIQUE D'ANNONCE HARMONISÉE (SANS DISTINCTION PÉDAGOGIQUE) ---
     if (!appState.axisIntroDone) {
-        // CAS 1 : TOUT PREMIER OEIL
+        // CAS 1 : TOUT PREMIER OEIL (Phrase standard pour tous)
         appState.axisIntroDone = true; 
-        let phraseIntro = appState.cylHigh ? 
-            "Cylindre important détecté. Nous allons chercher votre axe de précision de proche en proche. Je vais vous montrer deux positions et vous me direz celle que vous préférez. Lisez bien les lettres dans votre tête." :
-            "Je vais maintenant vous montrer deux positions différentes que vous allez comparer et vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. Je ferai pareil, comme cela nous seront plus ou moins synchronisés.";
+        let phraseIntro = "Je vais maintenant vous montrer deux positions différentes que vous allez comparer et vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. De mon côté e ferai pareil, comme cela nous serons plus ou moins synchronisés.";
             
         say(phraseIntro, function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
     } else {
-        // CAS 2 : DEUXIÈME OEIL
+        // CAS 2 : DEUXIÈME OEIL OU RETOUR APRÈS ÉCHEC
         say("Comme tout à l'heure, je vais vous montrer deux positions différentes et vous me direz laquelle vous préférez. N'oubliez pas de lire toutes les lettres dans votre tête.", function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
@@ -4752,7 +4749,6 @@ window.initAxisCheck = function() {
     if (choice === 'same') { 
         isFinished = true;
     } else {
-        // Déterminer la direction (Pos1 = Sens Horaire / Pos2 = Anti-Horaire)
         var direction = (choice === 'pos1') ? 'cw' : 'ccw';
         var lastDirection = appState.axisDirectionHistory.length > 0 ? 
             appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
@@ -4768,7 +4764,6 @@ window.initAxisCheck = function() {
             appState.axisRepeatCount = 0;
             appState.axisHelpMode = true; 
             appState.axisDirectionHistory = [];
-            // Reset du pas selon la puissance
             appState.axisStep = (appState.cylHigh) ? 5 : (Math.abs(target.cyl) < 2.50 ? 20 : 10);
 
             target.axe = appState.axisInitialRA;
@@ -4782,17 +4777,12 @@ window.initAxisCheck = function() {
 
         // --- CAS 2 : LOGIQUE DE CALCUL DE L'AXE ---
         if (appState.cylHigh) {
-            // === MÉTHODE CYLINDRE FORT (GLISSEMENT) ===
             if (choice === 'pos2') {
-                // Le patient préfère la nouvelle proposition : on glisse l'axe vers elle
                 target.axe = appState.tempPos2; 
             } else {
-                // Le patient préfère rester sur la Position 1 (Axe déjà validé)
-                // Dans cette méthode, si on préfère "1", c'est qu'on a trouvé l'axe idéal
                 isFinished = true;
             }
         } else {
-            // === MÉTHODE CLASSIQUE (ENCADREMENT) ===
             if (lastDirection && direction !== lastDirection) {
                 if (appState.axisStep === 20) appState.axisStep = 10;
                 else if (appState.axisStep === 10) appState.axisStep = 5;
@@ -4811,24 +4801,33 @@ window.initAxisCheck = function() {
         appState.axisDirectionHistory.push(direction);
     }
 
-    // --- SORTIE OU CONTINUATION ---
+    // --- SORTIE DU TEST (VOTRE DEMANDE PRÉCISE) ---
     if (isFinished) {
-        // Nettoyage UI
+        // 1. Masquage des éléments du Cylindre Croisé
         document.getElementById('jccVisuals').classList.add('hidden');
         document.getElementById('axisControls').classList.add('hidden');
         
-        // Changement de phase immédiat pour le badge
+        // 2. Changement de phase pour activer le contrôle qualité dans handleResponse
         appState.examPhase = "AxisVerification";
+        
+        // 3. Reset des drapeaux de sécurité
         appState.axisHelpMode = false;
         appState.axisRepeatCount = 0;
         
+        // 4. Mise à jour de l'affichage du dashboard
         var lineVerif = ACUITY_TABLE[appState.vaIndex].va;
-        updateDisplay("Axe : " + target.axe + "° - Vérification sur ligne " + lineVerif);
+        updateDisplay("Axe fixé : " + target.axe + "° - Vérification finale");
         
+        // 5. Changement des lettres pour la validation
         nextLetters(); 
+        
+        // 6. Demande vocale de lecture
         say("C'est parfait. Relisez-moi cette ligne s'il vous plaît.");
+        
+        // 7. Retour aux boutons de score (0-5)
         document.getElementById('standardButtons').classList.remove('hidden');
     } else {
+        // CONTINUATION DU TEST
         updateDisplay("Nouvel Axe : " + target.axe + "°");
         nextLetters();
         setTimeout(function() { runJccSequence(); }, 800);
@@ -5258,6 +5257,21 @@ window.restoreBinocularBalance = function() {
     // Note: Ici vous pourrez ajouter l'affichage des boutons pour les tests 
     // d'équilibre bioculaire ou de phorie.
 };
+
+  function lancerAnnonceAxe() {
+    if (!appState.axisIntroDone) {
+        appState.axisIntroDone = true; 
+        // Phrase standard pour tout le monde au premier oeil
+        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer et vous me direz avec quelle position vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. De mon côté je ferai pareil, comme cela nous serons plus ou moins synchronisés.", function() {
+            setTimeout(function() { runJccSequence(); }, 1000);
+        });
+    } else {
+        // Phrase de rappel pour le second oeil ou après échec
+        say("Comme tout à l'heure, je vais vous montrer deux positions différentes et vous me direz laquelle vous préférez. N'oubliez pas de lire toutes les lettres dans votre tête.", function() {
+            setTimeout(function() { runJccSequence(); }, 1000);
+        });
+    }
+}
 </script>
 
   
