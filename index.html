@@ -4673,8 +4673,10 @@ window.initAxisCheck = function() {
     var p2 = document.getElementById('visPos2');
     var axisDecisions = document.getElementById('axisDecisions');
     var replayBtn = document.getElementById('btnReplayAxis');
+    
+    // On cible l'afficheur d'axe de la carte active (Cyan)
+    var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
 
-    // Reset visuel initial
     axisDecisions.classList.add('hidden');
     replayBtn.classList.add('hidden');
     p1.classList.remove('active');
@@ -4682,58 +4684,53 @@ window.initAxisCheck = function() {
 
     // --- CALCUL DES VALEURS DE TEST ---
     var pos1_val, pos2_val;
-
     if (appState.cylHigh) {
-        // MÉTHODE GLISSEMENT (Forte Puissance) : Axe RA vs Axe RA + 5° (ou -5°)
         pos1_val = target.axe; 
-        
-        // On détermine le sens du glissement : 
-        // Si le patient a déjà choisi une direction, on continue. Sinon, par défaut +5.
         var lastDir = appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1];
         var stepSign = (lastDir === 'ccw') ? 1 : (lastDir === 'cw') ? -1 : 1; 
-        
         pos2_val = normalizeAxis(target.axe + (5 * stepSign));
     } else {
-        // MÉTHODE CLASSIQUE : Encadrement (Axe - Step vs Axe + Step)
         pos1_val = normalizeAxis(target.axe - appState.axisStep);
         pos2_val = normalizeAxis(target.axe + appState.axisStep);
     }
 
-    // On mémorise les axes testés pour que handleJccChoice sache quoi appliquer
     appState.tempPos1 = pos1_val;
     appState.tempPos2 = pos2_val;
 
     let startTimeP1; 
 
-    // 1. Présentation de la Position UNE
+    // --- POSITION 1 ---
+    // 1. On met à jour le texte de l'axe AVANT de parler
+    if (axeDisplay) axeDisplay.innerText = pos1_val + "°";
+    
     say("Vous préférez lire les lettres dans la position une ?", function() {
+        // Le cercle s'allume au début de la phrase (via le callback synchrone de say)
         p1.classList.add('active');
         startTimeP1 = Date.now(); 
 
         setTimeout(function() {
-            // 2. Présentation de la Position DEUX
+            // --- POSITION 2 ---
+            // 1. On change l'affichage visuel (Texte + Cercle)
+            if (axeDisplay) axeDisplay.innerText = pos2_val + "°";
+            p1.classList.remove('active');
+            p2.classList.add('active');
+
+            // 2. On lance la voix
             say("Ou vous préférez lire les lettres dans la position deux, ou c'est pareil ?", function() {
                 let durationP1 = Date.now() - startTimeP1;
 
-                // 3. Extinction de P2 après une durée égale à P1
                 setTimeout(function() {
                     p2.classList.remove('active'); 
+                    // RÉTABLISSEMENT DE L'AXE DE RÉFÉRENCE (Non encore validé)
+                    if (axeDisplay) axeDisplay.innerText = target.axe + "°";
                     
                     setTimeout(function() {
                         axisDecisions.classList.remove('hidden');
                         replayBtn.classList.remove('hidden');
                     }, 400);
-
                 }, durationP1); 
             });
-
-            // INSTANT DE LA BASCULE VISUELLE
-            setTimeout(function() {
-                p1.classList.remove('active');
-                p2.classList.add('active');
-            }, 300); 
-
-        }, 1500); 
+        }, 1500); // Temps d'observation position 1
     });
 };
   window.handleJccChoice = function(choice) {
@@ -4775,28 +4772,46 @@ window.initAxisCheck = function() {
             return;
         }
 
-        // --- CAS 2 : LOGIQUE DE CALCUL DE L'AXE ---
-        if (appState.cylHigh) {
-            if (choice === 'pos2') {
-                target.axe = appState.tempPos2; 
-            } else {
-                isFinished = true;
-            }
+       // --- CAS 2 : LOGIQUE DE CALCUL DE L'AXE ---
+if (appState.cylHigh) {
+    // === MÉTHODE CYLINDRE FORT (GLISSEMENT) ===
+    if (choice === 'pos2') {
+        // Le patient préfère la nouvelle proposition (ex: RA + 5°)
+        target.axe = appState.tempPos2; 
+        appState.axisDirectionHistory.push(direction);
+    } 
+    else if (choice === 'pos1') {
+        // --- LOGIQUE D'INVERSION / DEMI-TOUR ---
+        // Si c'est le TOUT PREMIER CHOIX et qu'il préfère l'axe RA (Position 1)
+        if (appState.axisDirectionHistory.length === 0) {
+            updateDisplay("Inversion : recherche vers les valeurs opposées (RA - 5°)");
+            // On enregistre une direction 'cw' (sens horaire) pour forcer le -5 au prochain runJccSequence
+            appState.axisDirectionHistory.push('cw'); 
+            setTimeout(function() { runJccSequence(); }, 800);
+            return; // On stoppe ici pour relancer la séquence immédiatement
         } else {
-            if (lastDirection && direction !== lastDirection) {
-                if (appState.axisStep === 20) appState.axisStep = 10;
-                else if (appState.axisStep === 10) appState.axisStep = 5;
-            } else if (appState.axisStep === 10 && appState.axisDirectionHistory.length >= 2) {
-                appState.axisStep = 5;
-            }
-
-            var rot = (choice === 'pos1') ? -appState.axisStep : appState.axisStep;
-            target.axe = normalizeAxis(target.axe + rot);
-            
-            if (appState.axisStep === 5) {
-                isFinished = true;
-            }
+            // Si ce n'est pas le premier choix, cela veut dire qu'on a trouvé l'équilibre entre deux positions
+            isFinished = true;
         }
+    }
+} else {
+    // === MÉTHODE CLASSIQUE (ENCADREMENT POUR CYLINDRE FAIBLE) ===
+    // Cette partie reste totalement étanche et inchangée pour vos axes standards
+    if (lastDirection && direction !== lastDirection) {
+        if (appState.axisStep === 20) appState.axisStep = 10;
+        else if (appState.axisStep === 10) appState.axisStep = 5;
+    } else if (appState.axisStep === 10 && appState.axisDirectionHistory.length >= 2) {
+        appState.axisStep = 5;
+    }
+
+    var rot = (choice === 'pos1') ? -appState.axisStep : appState.axisStep;
+    target.axe = normalizeAxis(target.axe + rot);
+    
+    if (appState.axisStep === 5) {
+        isFinished = true;
+    }
+    appState.axisDirectionHistory.push(direction);
+}
 
         appState.axisDirectionHistory.push(direction);
     }
