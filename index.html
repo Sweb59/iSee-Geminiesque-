@@ -1389,7 +1389,52 @@ input[id^="fronto"] {
     color: var(--primary-dark) !important;
     transform: none !important;
 }
-  
+ /* --- BULLES SPÉCIFIQUES POUR L'AXE (CYLINDRE FORT) --- */
+
+/* On réutilise les propriétés de .anim-bubble mais en forçant le style Cyan */
+.axis-bubble {
+    width: 90px; height: 90px; /* Même taille que anim-bubble */
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: absolute;
+    z-index: 250;
+    
+    /* COULEUR CYAN DEMANDÉE */
+    background: #E0F6F8; 
+    border: 3px solid #04ABC6; 
+    color: #006064;
+}
+
+/* Positionnement identique aux bulles de sphère */
+.axis-base-pos {
+    /* Identique à bubble-base */
+    z-index: 10;
+}
+
+.axis-target-plus-pos {
+    /* Identique à bubble-target (Gauche) */
+    right: 50%; margin-right: 45px;
+    transform: translateX(-110px);
+}
+
+.axis-target-minus-pos {
+    /* Identique à bubble-target-minus (Droite) */
+    left: 50%; margin-left: 45px;
+}
+
+/* Texte à l'intérieur des bulles */
+.axis-bubble span {
+    font-size: 1.2rem;
+    display: inline-block; /* Meilleur contrôle de l'alignement */
+    white-space: nowrap;   /* Interdit absolument au "°" de passer à la ligne */
+}
 </style>
 </head>
 <body onload="window.startAppSequence()">
@@ -1783,12 +1828,26 @@ input[id^="fronto"] {
          </div>
          
          <div id="dataSection" style="display:none;"></div> 
-    </div><div id="schemaContainer">
+    </div>
+    <div id="schemaContainer">
     <div id="animTargetCircle" class="anim-bubble bubble-target">Verre<br>(+0.25)</div>
     <div id="animArrowLine" class="arrow-connector"></div>
     <div id="animBaseCircle" class="anim-bubble bubble-base">Sphère<br>testée</div>
     <div id="animArrowLineMinus" class="arrow-connector-right"></div>
     <div id="animTargetCircleMinus" class="anim-bubble bubble-target-minus">Verre<br>(-0.25)</div>
+      <div id="animAxisBase" class="axis-bubble axis-base-pos hidden">
+    AXE<br><span id="txtAxisBaseVal">--</span>
+</div>
+
+<div id="animAxisPlus" class="axis-bubble axis-target-plus-pos hidden">
+    AXE<br><span id="txtAxisPlusVal">--</span>
+</div>
+
+<div id="animAxisMinus" class="axis-bubble axis-target-minus-pos hidden">
+    AXE<br><span id="txtAxisMinusVal">--</span>
+</div>
+
+      
 
    <div id="jccVisuals" class="jcc-container hidden">
     <div id="visPos1" class="jcc-visual">
@@ -4733,113 +4792,192 @@ window.initAxisCheck = function() {
     lancerAnnonceAxe();
 };
 
+  // --- MISE À JOUR DYNAMIQUE DES BULLES D'AXE ---
+// --- MISE À JOUR DYNAMIQUE DES BULLES (SOURCE : CARTE SUBJ) ---
+window.updateAxisBubbles = function() {
+    var eye = appState.activeEye;
+    // On cible l'élément de texte de la carte subjective (ex: disp_subjOD_axe)
+    var axeCard = document.getElementById('disp_subj' + eye + '_axe');
+    
+    if (!axeCard) return;
+
+    // 1. On récupère la valeur affichée dans la carte (ex: "90°")
+    // parseInt permet d'extraire le nombre même s'il y a le symbole °
+    var currentAxisNum = parseInt(axeCard.innerText) || 0;
+
+    // 2. On met à jour la bulle de BASE (Position 1)
+    // Elle prend TOUJOURS ce qui est écrit dans la carte au moment de l'appel
+    document.getElementById('txtAxisBaseVal').innerText = currentAxisNum + "°";
+
+    // 3. Calcul de la valeur de TEST (Position 2)
+    // On se base sur le nombre extrait de la carte pour calculer le décalage de 5°
+    var shift = (appState.highCylDirection === "minus") ? -5 : 5;
+    var testAxis = normalizeAxis(currentAxisNum + shift);
+    
+    // 4. On remplit la bulle satellite correspondante
+    if (appState.highCylDirection === "minus") {
+        document.getElementById('txtAxisMinusVal').innerText = testAxis + "°";
+    } else {
+        document.getElementById('txtAxisPlusVal').innerText = testAxis + "°";
+    }
+    
+    // 5. Mise à jour synchronisée des boutons de décision
+    // Le bouton "Mieux 1" (Vert) correspond à la carte actuelle
+    // Le bouton "Mieux 2" (Rouge) correspond au test calculé
+    document.querySelector('.btn-blue').innerHTML = "AXE<br>" + currentAxisNum + "°";
+    document.querySelector('.btn-orange').innerHTML = "AXE<br>" + testAxis + "°";
+};
+  
 window.runJccSequence = function() {
-    if (appState.isSpeaking) return; 
-    window.hideBaseCircle();
-    var target = getTargetEye();
-    var p1 = document.getElementById('visPos1'); 
-    var p2 = document.getElementById('visPos2');
+    if (appState.isSpeaking) return;
+    
+    // 1. Nettoyage initial
+    window.hideBaseCircle(); 
+    document.getElementById('jccVisuals').classList.add('hidden');
+    
     var axisDecisions = document.getElementById('axisDecisions');
     var replayBtn = document.getElementById('btnReplayAxis');
-    var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
-
-    if (appState.cylHigh) {
-        appState.tempPos1 = target.axe; 
-        var lastDir = appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1];
-        var stepSign = (lastDir === 'ccw') ? 1 : -1; 
-        appState.tempPos2 = normalizeAxis(target.axe + (5 * stepSign));
-    } else {
-        appState.tempPos1 = normalizeAxis(target.axe + appState.axisStep);
-        appState.tempPos2 = normalizeAxis(target.axe - appState.axisStep);
-    }
-
-    var pos1_val = appState.tempPos1;
-    var pos2_val = appState.tempPos2;
-
-    document.getElementById('jccVisuals').classList.remove('hidden');
-    p1.classList.remove('active');
-    p2.classList.remove('active');
     axisDecisions.classList.add('hidden');
     replayBtn.classList.add('hidden');
 
-    // --- LOGIQUE DU MOT-CLÉ DYNAMIQUE ---
+    // 2. Mise à jour des valeurs dans les bulles (et boutons)
+    window.updateAxisBubbles();
+
+    // 3. Récupération des éléments
+    var baseBubble = document.getElementById('animAxisBase');
+    var plusBubble = document.getElementById('animAxisPlus');
+    var minusBubble = document.getElementById('animAxisMinus');
+    var arrowPlus = document.getElementById('animArrowLine');
+    var arrowMinus = document.getElementById('animArrowLineMinus');
+
+    // Cible de la carte subjective (ex: disp_subjOD_axe)
+    var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
+    
+    // On récupère les valeurs numériques déjà formatées dans les bulles
+    var valBase = document.getElementById('txtAxisBaseVal').innerText;
+    var valTest = (appState.highCylDirection === "minus") ? 
+                  document.getElementById('txtAxisMinusVal').innerText : 
+                  document.getElementById('txtAxisPlusVal').innerText;
+
+    // Reset visuel
+    baseBubble.classList.add('hidden');
+    plusBubble.classList.add('hidden');
+    minusBubble.classList.add('hidden');
+    baseBubble.style.boxShadow = "none";
+
     var motCle = (appState.isFinalStep) ? "la dernière position" : "la position";
 
+    // --- DÉBUT DE LA SÉQUENCE ANIMÉE ---
     say("Vous préférez lire les lettres dans " + motCle, function() {
-        if (appState.cylHigh && axeDisplay) axeDisplay.innerText = pos1_val + "°";
-        p1.classList.add('active'); 
-
+        
+        // --- POSITION 1 ---
+        // Mise à jour de la CARTE seulement si cylindre fort
+        if (appState.cylHigh && axeDisplay) axeDisplay.innerText = valBase;
+        
+        baseBubble.classList.remove('hidden');
+        baseBubble.classList.add('visible');
+        baseBubble.style.boxShadow = "0 0 25px rgba(4, 171, 198, 0.8)";
+        
         say("une ?", function() {
             setTimeout(function() {
-                p1.classList.remove('active'); 
+                baseBubble.style.boxShadow = "none";
+                
                 say("Ou dans " + motCle, function() {
-                    if (appState.cylHigh && axeDisplay) axeDisplay.innerText = pos2_val + "°";
-                    p2.classList.add('active');
+                    
+                    // --- POSITION 2 ---
+                    // Mise à jour de la CARTE seulement si cylindre fort
+                    if (appState.cylHigh && axeDisplay) axeDisplay.innerText = valTest;
+
+                    if (appState.highCylDirection === "minus") {
+                        minusBubble.classList.remove('hidden');
+                        minusBubble.classList.add('visible');
+                        arrowMinus.classList.add('active');
+                    } else {
+                        plusBubble.classList.remove('hidden');
+                        plusBubble.classList.add('visible');
+                        arrowPlus.classList.add('active');
+                    }
+
                     say("deux, ou est-ce que c'est pareil ?", function() {
                         setTimeout(function() {
-                            p2.classList.remove('active'); 
-                            document.getElementById('jccVisuals').classList.add('hidden');
-                            if (axeDisplay) axeDisplay.innerText = target.axe + "°";
+                            // Nettoyage visuel
+                            arrowPlus.classList.remove('active');
+                            arrowMinus.classList.remove('active');
+                            baseBubble.classList.add('hidden');
+                            plusBubble.classList.add('hidden');
+                            minusBubble.classList.add('hidden');
+                            
+                            // RETOUR À LA BASE (Attente réponse) : Seulement pour cylindre fort
+                            if (appState.cylHigh && axeDisplay) axeDisplay.innerText = valBase;
+                            
+                            // Affichage des contrôles
                             axisDecisions.classList.remove('hidden');
                             replayBtn.classList.remove('hidden');
-                            p1.classList.remove('active');
                         }, 2500);
                     });
-                }, false);
-            }, 2500); 
-        }, false);
-    }, false); 
+                });
+            }, 1000); 
+        });
+    });
 };
 window.handleJccChoice = function(choice) {
     if (appState.isSpeaking) return; 
 
+    // --- 1. NETTOYAGE IMMÉDIAT DES INTERFACES ET BULLES ---
     document.getElementById('axisDecisions').classList.add('hidden');
     document.getElementById('btnReplayAxis').classList.add('hidden');
+    
+    // On cache les bulles d'axe (Cylindre Fort)
+    var bBase = document.getElementById('animAxisBase');
+    var bPlus = document.getElementById('animAxisPlus');
+    var bMinus = document.getElementById('animAxisMinus');
+    if(bBase) bBase.classList.add('hidden');
+    if(bPlus) bPlus.classList.add('hidden');
+    if(bMinus) bMinus.classList.add('hidden');
+    
+    // On cache aussi les flèches
+    var aPlus = document.getElementById('animArrowLine');
+    var aMinus = document.getElementById('animArrowLineMinus');
+    if(aPlus) aPlus.classList.remove('active');
+    if(aMinus) aMinus.classList.remove('active');
 
     var target = getTargetEye();
     var isFinished = false; 
     var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
 
     // =========================================================
-    // 1. LOGIQUE SPÉCIFIQUE : CYLINDRE FORT (BALAYAGE 5°)
+    // 2. LOGIQUE SPÉCIFIQUE : CYLINDRE FORT (BALAYAGE 5°)
     // =========================================================
     if (appState.cylHigh) {
         if (choice === 'pos2') {
-            // Le patient préfère la nouvelle position : on avance de 5° dans la direction actuelle
+            // Le patient préfère la nouvelle position : on avance de 5°
             if (appState.highCylDirection === null) appState.highCylDirection = "plus";
             
-            target.axe = appState.tempPos2; // On valide le nouvel axe
-            appState.tempPos1 = target.axe; // L'axe actuel devient la référence (Position 1)
+            target.axe = appState.tempPos2; 
+            appState.tempPos1 = target.axe; 
             
-            // On calcule la position suivante (Position 2)
             var step = (appState.highCylDirection === "plus") ? 5 : -5;
             appState.tempPos2 = normalizeAxis(target.axe + step);
         } 
         else if (choice === 'pos1' || choice === 'same') {
-            // Si le patient préfère la référence (Position 1) ou dit "pareil"
-            
             if (appState.highCylDirection === null && choice === 'pos1') {
-                // CAS PARTICULIER : Au tout début, il préfère le RA (Pos1) au RA+5 (Pos2)
-                // On bascule donc pour tester l'autre côté : RA vs RA-5
+                // Basculement vers le côté négatif si le RA initial était meilleur que RA+5
                 appState.highCylDirection = "minus";
                 appState.tempPos1 = appState.axisInitialRA; 
                 appState.tempPos2 = normalizeAxis(appState.axisInitialRA - 5);
-                // Note : On ne met pas isFinished à true, le code va relancer un tour
             } else {
-                // Dans tous les autres cas (déjà en cours de recherche ou "pareil"), on s'arrête
                 isFinished = true;
             }
         }
     } 
     // =========================================================
-    // 2. LOGIQUE STANDARD : CYLINDRE NORMAL (20 -> 10 -> 5)
+    // 3. LOGIQUE STANDARD : CYLINDRE NORMAL (20 -> 10 -> 5)
     // =========================================================
     else {
         var direction = (choice === 'pos1') ? 'ccw' : 'cw';
         var lastDirection = appState.axisDirectionHistory.length > 0 ? 
             appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
 
-        // --- VERROU DE SÉCURITÉ (RETOUR RA) ---
         if (direction === lastDirection) appState.axisRepeatCount++;
         else appState.axisRepeatCount = 1;
 
@@ -4849,8 +4987,11 @@ window.handleJccChoice = function(choice) {
             appState.axisDirectionHistory = [];
             target.axe = appState.axisInitialRA;
             appState.axisStep = (Math.abs(target.cyl) < 2.50 ? 20 : 10);
+            
+            // Sync visuelle RA
             if (axeDisplay) axeDisplay.innerText = target.axe + "°";
             updateDisplay("RA rétabli : " + target.axe + "°");
+            
             say("D'accord, vérifions cela ensemble. Pour vous aider à mieux répondre, vous allez maintenant lire à voix haute les lettres pour chacune des positions.", function() {
                 setTimeout(function() { runJccSequence(); }, 1000);
             });
@@ -4880,32 +5021,29 @@ window.handleJccChoice = function(choice) {
     }
 
     // =========================================================
-    // 3. SORTIE OU RELANCE (UNIFIÉ)
+    // 4. SORTIE OU RELANCE (UNIFIÉ & OPTIMISÉ)
     // =========================================================
     if (isFinished) {
         appState.isFinalStep = false;
         appState.examPhase = "AxisVerification";
-
         if (appState.bestVaIndex !== undefined) {
             appState.vaIndex = appState.bestVaIndex;
             appState.letterIndex = 0; 
         }
-        
         document.getElementById('jccVisuals').classList.add('hidden');
         document.getElementById('axisControls').classList.add('hidden');
         document.getElementById('standardButtons').classList.remove('hidden');
 
+        // Validation finale dans la carte
         if (axeDisplay) axeDisplay.innerText = target.axe + "°";
         updateDisplay("Validation de l'axe : " + target.axe + "°");
-
-        say("Vérifions tout cela. Lisez moi cette ligne.", function() {
-            nextLetters(); 
-        });
-
+        
+        say("Vérifions tout cela. Lisez-moi cette ligne.", function() { nextLetters(); });
     } else {
+        // --- MISE À JOUR PRIORITAIRE DE LA CARTE ---
         if (axeDisplay) axeDisplay.innerText = target.axe + "°";
         updateDisplay("Nouvel Axe : " + target.axe + "°");
-
+        
         say("D'accord.", function() {
             nextLetters();
             setTimeout(function() { runJccSequence(); }, 800);
@@ -5338,6 +5476,20 @@ window.restoreBinocularBalance = function() {
 };
 
   function lancerAnnonceAxe() {
+    var target = getTargetEye();
+    var cylPower = Math.abs(target.cyl);
+    var isVeryHighCyl = (cylPower >= 4.50);
+
+    // --- LOGIQUE D'AFFICHAGE CONDITIONNEL ---
+    // Si c'est un cylindre fort, on cache les anciens cercles JCC pendant l'intro
+    // pour laisser la place aux futures bulles Cyan dynamiques.
+    if (isVeryHighCyl) {
+        document.getElementById('jccVisuals').classList.add('hidden');
+    } else {
+        // Pour les cylindres standards, on garde l'affichage transparent habituel
+        document.getElementById('jccVisuals').classList.remove('hidden');
+    }
+
     if (!appState.axisIntroDone) {
         appState.axisIntroDone = true; 
         // Phrase standard pour tout le monde au premier oeil
