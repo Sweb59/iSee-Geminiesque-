@@ -4844,14 +4844,11 @@ window.updateAxisBubbles = function() {
 window.runJccSequence = function() {
     if (appState.isSpeaking) return;
     
-    // 1. NETTOYAGE SÉLECTIF
+    // 1. ÉTAT INITIAL : Veille
     window.hideBaseCircle(); 
-    
-    // On ne cache jccVisuals ici QUE si c'est un cylindre fort
     if (appState.cylHigh) {
         document.getElementById('jccVisuals').classList.add('hidden');
     } else {
-        // En mode standard, on s'assure qu'ils sont affichés mais "éteints"
         document.getElementById('jccVisuals').classList.remove('hidden');
         document.getElementById('visPos1').classList.remove('active');
         document.getElementById('visPos2').classList.remove('active');
@@ -4863,9 +4860,6 @@ window.runJccSequence = function() {
     var bBase = document.getElementById('animAxisBase');
     var bPlus = document.getElementById('animAxisPlus');
     var bMinus = document.getElementById('animAxisMinus');
-    if(bBase) bBase.classList.add('hidden');
-    if(bPlus) bPlus.classList.add('hidden');
-    if(bMinus) bMinus.classList.add('hidden');
 
     // 2. PRÉPARATION DES DONNÉES
     window.updateAxisBubbles();
@@ -4880,28 +4874,24 @@ window.runJccSequence = function() {
     // --- DÉBUT DE LA SÉQUENCE ANIMÉE ---
     say("Vous préférez lire les lettres dans " + motCle, function() {
         
-        // --- POSITION 1 ---
+        // --- POSITION 1 S'ALLUME ---
         if (appState.cylHigh) {
             if (axeDisplay) axeDisplay.innerText = valBase;
             if (bBase) { bBase.classList.remove('hidden'); bBase.style.boxShadow = "0 0 25px rgba(4, 171, 198, 0.8)"; }
         } else {
-            // Allumage du bouton 1
             document.getElementById('visPos1').classList.add('active');
         }
         
         say("une ?", function() {
+            // PAUSE D'OBSERVATION POSITION 1 (2 secondes)
             setTimeout(function() {
-                // Extinction Position 1 (devient transparent mais RESTE visible)
-                if (appState.cylHigh) {
-                    if (bBase) bBase.style.boxShadow = "none";
-                } else {
-                    document.getElementById('visPos1').classList.remove('active');
-                }
                 
+                // On commence la phrase de transition, le bouton 1 RESTE allumé
                 say("Ou dans " + motCle, function() {
                     
-                    // --- POSITION 2 ---
+                    // --- BASCULE EXACTE : Extinction 1 / Allumage 2 ---
                     if (appState.cylHigh) {
+                        if (bBase) bBase.style.boxShadow = "none";
                         if (axeDisplay) axeDisplay.innerText = valTest;
                         if (appState.highCylDirection === "minus") {
                              if(bMinus) bMinus.classList.remove('hidden');
@@ -4911,34 +4901,37 @@ window.runJccSequence = function() {
                              document.getElementById('animArrowLine').classList.add('active');
                         }
                     } else {
-                        // Allumage du bouton 2
+                        document.getElementById('visPos1').classList.remove('active');
                         document.getElementById('visPos2').classList.add('active');
                     }
 
-                    say("deux, ou est-ce que c'est pareil ?", function() {
-                        setTimeout(function() {
-                            // --- NETTOYAGE FINAL ET DISPARITION DES BOUTONS 1&2 ---
-                            if (!appState.cylHigh) {
-                                document.getElementById('visPos2').classList.remove('active');
-                                // On ne les cache que maintenant pour laisser la place aux boutons de réponse
-                                document.getElementById('jccVisuals').classList.add('hidden');
-                            } else {
-                                // Nettoyage Cylindre Fort
-                                document.getElementById('animArrowLine').classList.remove('active');
-                                document.getElementById('animArrowLineMinus').classList.remove('active');
-                                if(bBase) bBase.classList.add('hidden');
-                                if(bPlus) bPlus.classList.add('hidden');
-                                if(bMinus) bMinus.classList.add('hidden');
-                                if (axeDisplay) axeDisplay.innerText = valBase; 
-                            }
-                            
-                            // Affichage des contrôles de réponse
-                            document.getElementById('axisDecisions').classList.remove('hidden');
-                            document.getElementById('btnReplayAxis').classList.remove('hidden');
-                        }, 2500);
-                    });
+                    // --- POSITION 2 : DÉBUT DU CHRONO DE 2s IMMÉDIAT ---
+                    // On lance la voix et le timer de fermeture en parallèle
+                    say("deux, ou c'est pareil ?");
+
+                    setTimeout(function() {
+                        // --- FIN DES 2 SECONDES CHRONO POUR LA POSITION 2 ---
+                        if (!appState.cylHigh) {
+                            document.getElementById('visPos2').classList.remove('active');
+                            document.getElementById('jccVisuals').classList.add('hidden');
+                        } else {
+                            document.getElementById('animArrowLine').classList.remove('active');
+                            document.getElementById('animArrowLineMinus').classList.remove('active');
+                            if(bBase) bBase.classList.add('hidden');
+                            if(bPlus) bPlus.classList.add('hidden');
+                            if(bMinus) bMinus.classList.add('hidden');
+                            if (axeDisplay) axeDisplay.innerText = valBase; 
+                        }
+                        
+                        // Affichage des contrôles de réponse
+                        document.getElementById('axisDecisions').classList.remove('hidden');
+                        document.getElementById('btnReplayAxis').classList.remove('hidden');
+                        
+                    }, 3000); // <--- Le bouton 2 s'éteint 2s après son allumage, peu importe la voix
+
                 });
-            }, 1000); 
+
+            }, 1000); // <--- Le bouton 1 s'éteint 2s après son allumage (via le callback suivant)
         });
     });
 };
