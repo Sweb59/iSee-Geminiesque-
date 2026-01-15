@@ -1418,15 +1418,19 @@ input[id^="fronto"] {
     z-index: 10;
 }
 
+/* BULLE DE GAUCHE (RA+5°) - Symétrie -110px */
 .axis-target-plus-pos {
-    /* Identique à bubble-target (Gauche) */
-    right: 50%; margin-right: 45px;
+    right: 50%; 
+    margin-right: 45px;
     transform: translateX(-110px);
 }
 
+/* BULLE DE DROITE (RA-5°) - Symétrie +110px */
 .axis-target-minus-pos {
-    /* Identique à bubble-target-minus (Droite) */
-    left: 50%; margin-left: 45px;
+    left: 50%; 
+    margin-left: 45px;
+    /* On utilise translateX positif pour l'écarter vers la droite */
+    transform: translateX(110px); 
 }
 
 /* Texte à l'intérieur des bulles */
