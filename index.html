@@ -4769,7 +4769,7 @@ window.handleJccChoice = function(choice) {
     var lastDirection = appState.axisDirectionHistory.length > 0 ? 
         appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
 
-    // --- 1. VERROU DE SÉCURITÉ ---
+    // --- 1. VERROU DE SÉCURITÉ (RETOUR RA) ---
     if (direction === lastDirection) appState.axisRepeatCount++;
     else appState.axisRepeatCount = 1;
 
@@ -4790,32 +4790,16 @@ window.handleJccChoice = function(choice) {
         return;
     }
 
-    // --- 2. LOGIQUE DE CALCUL ---
+    // --- 2. LOGIQUE DE CALCUL (20 -> 10 -> FINALE 5) ---
     var feedbackMsg = "";
 
     if (choice === 'same') {
         isFinished = true;
     } else {
-        // --- CAS A : CYLINDRE FORT (Méthode Symétrique RA-5 / RA+5) ---
         if (appState.cylHigh) {
-            if (choice === 'pos1') { 
-                if (appState.axisDirectionHistory.length === 0) {
-                    appState.axisDirectionHistory.push('ccw'); 
-                    updateDisplay("RA préféré : vérification opposée...");
-                    say("Bien. Regardons encore une autre position.", function() {
-                        setTimeout(function() { runJccSequence(); }, 800);
-                    });
-                    return; 
-                } else {
-                    isFinished = true; // RA préféré aux deux côtés
-                }
-            } else { 
-                target.axe = appState.tempPos2; // Préfère le décalage
-                isFinished = true;
-            }
-        } 
-        // --- CAS B : CYLINDRE NORMAL (Encadrement 20 -> 10 -> 5) ---
-        else {
+            if (choice === 'pos2') target.axe = appState.tempPos2; 
+            else isFinished = true;
+        } else {
             if (appState.axisStep === 10 && lastDirection) {
                 var finalRot = (choice === 'pos1') ? 5 : -5;
                 target.axe = normalizeAxis(target.axe + finalRot);
@@ -4823,7 +4807,7 @@ window.handleJccChoice = function(choice) {
             } 
             else if (lastDirection && direction !== lastDirection) {
                 appState.axisStep = 10; 
-                appState.isFinalStep = true; 
+              appState.isFinalStep = true; // <--- AJOUTEZ CETTE LIGNE ICI
                 var rot = (choice === 'pos1') ? 10 : -10;
                 target.axe = normalizeAxis(target.axe + rot);
                 feedbackMsg = "Excellent.";
@@ -4836,40 +4820,6 @@ window.handleJccChoice = function(choice) {
         }
         appState.axisDirectionHistory.push(direction);
     }
-
-    // --- 3. SORTIE (Validation sur VA réelle) OU RELANCE ---
-    var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
-
-    if (isFinished) {
-        appState.isFinalStep = false;
-        appState.examPhase = "AxisVerification";
-        
-        // CORRECTION BUG ACUITÉ : On remet la ligne validée à la Sb1.0
-        if (appState.bestVaIndex !== undefined) {
-            appState.vaIndex = appState.bestVaIndex;
-            appState.letterIndex = 0; 
-        }
-
-        document.getElementById('jccVisuals').classList.add('hidden');
-        document.getElementById('axisControls').classList.add('hidden');
-        document.getElementById('standardButtons').classList.remove('hidden');
-
-        if (axeDisplay) axeDisplay.innerText = target.axe + "°";
-        updateDisplay("Validation de l'axe : " + target.axe + "°");
-
-        say("Vérifions tout cela. Lisez moi cette ligne.", function() {
-            nextLetters(); 
-        });
-    } else {
-        if (axeDisplay) axeDisplay.innerText = target.axe + "°";
-        updateDisplay("Nouvel Axe : " + target.axe + "°");
-
-        say(feedbackMsg, function() {
-            nextLetters();
-            setTimeout(function() { runJccSequence(); }, 800);
-        });
-    }
-};
 
     // --- 3. SORTIE OU RELANCE ---
     var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
