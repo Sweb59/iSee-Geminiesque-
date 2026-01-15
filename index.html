@@ -4806,7 +4806,7 @@ window.updateAxisBubbles = function() {
     // 1. On récupère la valeur affichée dans la carte (ex: "90°")
     var currentAxisNum = parseInt(axeCard.innerText) || 0;
 
-    // 2. On met à jour la bulle de BASE (Position 1 au centre)
+    // 2. On met à jour la bulle de BASE (Position 1 au centre) - Utile uniquement si cylHigh, mais sans incidence sinon
     document.getElementById('txtAxisBaseVal').innerText = currentAxisNum + "°";
 
     // 3. Calcul de la valeur de TEST (Position 2 satellite)
@@ -4820,24 +4820,29 @@ window.updateAxisBubbles = function() {
         document.getElementById('txtAxisPlusVal').innerText = testAxis + "°";
     }
     
-    // 5. MISE À JOUR DES BOUTONS (Rouge à Gauche / Vert à Droite)
-    // .btn-orange = Rouge (Gauche via CSS row-reverse)
-    // .btn-blue   = Vert (Droite via CSS row-reverse)
-    var btnRedLeft = document.querySelector('.btn-orange'); 
-    var btnGreenRight = document.querySelector('.btn-blue'); 
+    // 5. MISE À JOUR DES BOUTONS RÉPONSES
+    // .btn-orange = Gauche (via CSS row-reverse)
+    // .btn-blue   = Droite (via CSS row-reverse)
+    var btnRedLeft = document.querySelector('#axisDecisions .btn-orange'); 
+    var btnGreenRight = document.querySelector('#axisDecisions .btn-blue'); 
 
-    if (appState.highCylDirection === "minus") {
-        // --- SENS MOINS (Balayage vers la droite) ---
-        // Le bouton Rouge (Gauche) affiche l'axe actuel (Stagnation)
-        // Le bouton Vert (Droite) affiche le test Axe-5 (Progrès)
-        btnRedLeft.innerHTML = "AXE<br>" + currentAxisNum + "°";
-        btnGreenRight.innerHTML = "AXE<br>" + testAxis + "°";
+    if (appState.cylHigh) {
+        // --- MODE CYLINDRE TRÈS FORT (>= 4.50) ---
+        // On affiche les valeurs numériques sur les boutons
+        if (appState.highCylDirection === "minus") {
+            // SENS MOINS : Rouge(Gauche)=Base, Vert(Droite)=Test-5
+            btnRedLeft.innerHTML = "AXE<br>" + currentAxisNum + "°";
+            btnGreenRight.innerHTML = "AXE<br>" + testAxis + "°";
+        } else {
+            // SENS PLUS (ou initial) : Rouge(Gauche)=Test+5, Vert(Droite)=Base
+            btnRedLeft.innerHTML = "AXE<br>" + testAxis + "°";
+            btnGreenRight.innerHTML = "AXE<br>" + currentAxisNum + "°";
+        }
     } else {
-        // --- SENS PLUS (Balayage vers la gauche) ---
-        // Le bouton Rouge (Gauche) affiche le test Axe+5 (Progrès)
-        // Le bouton Vert (Droite) affiche l'axe actuel (Stagnation)
-        btnRedLeft.innerHTML = "AXE<br>" + testAxis + "°";
-        btnGreenRight.innerHTML = "AXE<br>" + currentAxisNum + "°";
+        // --- MODE STANDARD (0.25 à 4.25) ---
+        // On restaure les labels textuels classiques
+        btnRedLeft.innerHTML = "Mieux 1";
+        btnGreenRight.innerHTML = "Mieux 2";
     }
 };
   
