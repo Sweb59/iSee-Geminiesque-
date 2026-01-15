@@ -2454,7 +2454,7 @@ window.initVoices = function() {
     // On cherche dans l'ordre de préférence décroissant
     var bestVoice = voices.find(v => v.name.includes('Google français')) || 
                     voices.find(v => v.name.includes('Microsoft Denise')) ||
-                    voices.find(v => v.name.includes('Aurélie')) || // Voix haute qualité Edge
+                    voices.find(v => v.name.includes('Aurélie')) ||
                     voices.find(v => v.name.includes('Thomas')) ||
                     voices.find(v => v.lang.includes('fr'));
 
@@ -2540,7 +2540,17 @@ var ACUITY_TABLE = [
     { va: 1.60, lines: ["Z R N V U", "U R N P E"] },
     { va: 2.00, lines: ["V H F D Z", "R N U F D"] }
 ];
-
+// --- COUPEZ-COLLEZ CE BLOC ICI ---
+window.speechSynthesis.getVoices();
+if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = function() {
+        window.speechSynthesis.getVoices();
+        // Relance la détection pour ne pas afficher la modale si les voix HD arrivent avec 1s de retard
+        if(window.checkVocalEngine) window.checkVocalEngine();
+    };
+}
+// ---------------------------------
+  
 var appState = {
     isRunning: false, activeEye: 'OD', firstEye: 'OD', profile: null, initProfile: null, 
     baseProfile: null, 
@@ -5343,38 +5353,44 @@ window.restoreBinocularBalance = function() {
 }
 
 window.checkVocalEngine = function() {
-    var voices = window.speechSynthesis.getVoices();
+    var voices = window.speechSynthesis.getVoices(); // Ligne rétablie
     if (voices.length === 0) return; 
 
     var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    
+    // On vérifie la présence de vos deux voix favorites (Premium)
+    var hasGoogle = voices.some(v => v.name.includes("Google français"));
+    var hasDenise = voices.some(v => v.name.includes("Microsoft Denise"));
     var hasAurelie = voices.some(v => v.name.includes("Aurélie"));
-    var hasHQ = voices.some(v => v.name.includes("Google") || v.name.includes("Online") || v.name.includes("Natural"));
     
     var modal = document.getElementById('modalVocalWarning');
     var modalTitle = document.getElementById('vocalModalTitle');
     var modalText = document.getElementById('vocalModalText');
 
-    if (isMac && !hasAurelie) {
-        modalTitle.innerText = "Optimisation Vocale Mac";
-        modalText.innerHTML = `La voix premium <strong>"Aurélie"</strong> n'est pas détectée.<br><br>
-            Pour une meilleure expérience patient, nous vous recommandons de l'activer :<br>
-            <ol style="margin-top:10px; line-height:1.6; text-align:left;">
-                <li>Réglages Système > Accessibilité</li>
-                <li>Contenu énoncé > Voix système</li>
-                <li>Téléchargez <strong>Aurélie</strong> (version améliorée)</li>
-            </ol>`;
-        modal.classList.remove('hidden');
-    } 
-    else if (!isMac && !hasHQ) {
-        modalTitle.innerText = "Optimisation Vocale Windows";
-        modalText.innerHTML = `La qualité vocale peut être améliorée.<br><br>
-            Pour obtenir une voix plus humaine sur Windows :<br>
-            <ul style="margin-top:10px; line-height:1.6; text-align:left;">
-                <li>Utilisez <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong>.</li>
-                <li>Assurez-vous d'être connecté à Internet.</li>
-                <li>Ou installez les voix "Naturelles" dans les paramètres Windows.</li>
-            </ul>`;
-        modal.classList.remove('hidden');
+    // SCÉNARIO : Ni Google, ni Denise ne sont présentes
+    if (!hasGoogle && !hasDenise) {
+        if (isMac) {
+            if (!hasAurelie) {
+                modalTitle.innerText = "Optimisation Vocale Mac";
+                modalText.innerHTML = `La qualité vocale peut être grandement améliorée.<br><br>
+                    Pour une clarté optimale lors des tests, nous vous recommandons :<br>
+                    <ul style="margin-top:10px; line-height:1.6; text-align:left;">
+                        <li>Utilisez <strong>Google Chrome</strong> (voix haute définition).</li>
+                        <li>Ou activez <strong>Aurélie</strong> (Réglages Système > Accessibilité > Contenu énoncé).</li>
+                    </ul>`;
+                modal.classList.remove('hidden');
+            }
+        } else {
+            modalTitle.innerText = "Optimisation Vocale Windows";
+            modalText.innerHTML = `La voix actuelle est limitée (Hortense).<br><br>
+                Pour obtenir une voix plus naturelle et fluide :<br>
+                <ul style="margin-top:10px; line-height:1.6; text-align:left;">
+                    <li>Utilisez <strong>Google Chrome</strong> (pour la voix Google).</li>
+                    <li>Ou utilisez <strong>Microsoft Edge</strong> (pour la voix Denise).</li>
+                    <li>Vérifiez votre connexion Internet pour charger les voix HD.</li>
+                </ul>`;
+            modal.classList.remove('hidden');
+        }
     }
 };
 
