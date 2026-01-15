@@ -1320,8 +1320,8 @@ input[id^="fronto"] {
     display: flex;
     gap: 20px;
     justify-content: center;
+    flex-direction: row-reverse; /* <--- AJOUTE CETTE LIGNE */
 }
-
 /* Style des 3 boutons de choix (Mieux 1, Mieux 2, Pareil) */
 #axisDecisions .btn-decision {
     width: 65px !important;
@@ -1362,10 +1362,10 @@ input[id^="fronto"] {
 }
 
 /* Bouton Mieux 1 (était bleu -> devient VERT) */
-#axisDecisions .btn-blue { border: 4px solid #43A047 !important; color: #43A047 !important; }
+#axisDecisions .btn-blue { border: 4px solid #EF5350 !important; color: #EF5350 !important; }
 
 /* Bouton Mieux 2 (était orange -> devient ROUGE) */
-#axisDecisions .btn-orange { border: 4px solid #EF5350 !important; color: #EF5350 !important; }
+#axisDecisions .btn-orange { border: 4px solid #43A047 !important; color: #43A047 !important; }
 
 /* Bouton Pareil (était vert -> devient CYAN) */
 #axisDecisions .btn-green { border: 4px solid #04ABC6 !important; color: #04ABC6 !important; }
@@ -4794,6 +4794,7 @@ window.initAxisCheck = function() {
 
   // --- MISE À JOUR DYNAMIQUE DES BULLES D'AXE ---
 // --- MISE À JOUR DYNAMIQUE DES BULLES (SOURCE : CARTE SUBJ) ---
+// --- MISE À JOUR DYNAMIQUE DES BULLES ET BOUTONS (SOURCE : CARTE SUBJ) ---
 window.updateAxisBubbles = function() {
     var eye = appState.activeEye;
     // On cible l'élément de texte de la carte subjective (ex: disp_subjOD_axe)
@@ -4802,30 +4803,41 @@ window.updateAxisBubbles = function() {
     if (!axeCard) return;
 
     // 1. On récupère la valeur affichée dans la carte (ex: "90°")
-    // parseInt permet d'extraire le nombre même s'il y a le symbole °
     var currentAxisNum = parseInt(axeCard.innerText) || 0;
 
-    // 2. On met à jour la bulle de BASE (Position 1)
-    // Elle prend TOUJOURS ce qui est écrit dans la carte au moment de l'appel
+    // 2. On met à jour la bulle de BASE (Position 1 au centre)
     document.getElementById('txtAxisBaseVal').innerText = currentAxisNum + "°";
 
-    // 3. Calcul de la valeur de TEST (Position 2)
-    // On se base sur le nombre extrait de la carte pour calculer le décalage de 5°
+    // 3. Calcul de la valeur de TEST (Position 2 satellite)
     var shift = (appState.highCylDirection === "minus") ? -5 : 5;
     var testAxis = normalizeAxis(currentAxisNum + shift);
     
-    // 4. On remplit la bulle satellite correspondante
+    // 4. On remplit la bulle satellite correspondante (Plus à gauche, Minus à droite)
     if (appState.highCylDirection === "minus") {
         document.getElementById('txtAxisMinusVal').innerText = testAxis + "°";
     } else {
         document.getElementById('txtAxisPlusVal').innerText = testAxis + "°";
     }
     
-    // 5. Mise à jour synchronisée des boutons de décision
-    // Le bouton "Mieux 1" (Vert) correspond à la carte actuelle
-    // Le bouton "Mieux 2" (Rouge) correspond au test calculé
-    document.querySelector('.btn-blue').innerHTML = "AXE<br>" + currentAxisNum + "°";
-    document.querySelector('.btn-orange').innerHTML = "AXE<br>" + testAxis + "°";
+    // 5. MISE À JOUR DES BOUTONS (Rouge à Gauche / Vert à Droite)
+    // .btn-orange = Rouge (Gauche via CSS row-reverse)
+    // .btn-blue   = Vert (Droite via CSS row-reverse)
+    var btnRedLeft = document.querySelector('.btn-orange'); 
+    var btnGreenRight = document.querySelector('.btn-blue'); 
+
+    if (appState.highCylDirection === "minus") {
+        // --- SENS MOINS (Balayage vers la droite) ---
+        // Le bouton Rouge (Gauche) affiche l'axe actuel (Stagnation)
+        // Le bouton Vert (Droite) affiche le test Axe-5 (Progrès)
+        btnRedLeft.innerHTML = "AXE<br>" + currentAxisNum + "°";
+        btnGreenRight.innerHTML = "AXE<br>" + testAxis + "°";
+    } else {
+        // --- SENS PLUS (Balayage vers la gauche) ---
+        // Le bouton Rouge (Gauche) affiche le test Axe+5 (Progrès)
+        // Le bouton Vert (Droite) affiche l'axe actuel (Stagnation)
+        btnRedLeft.innerHTML = "AXE<br>" + testAxis + "°";
+        btnGreenRight.innerHTML = "AXE<br>" + currentAxisNum + "°";
+    }
 };
   
 window.runJccSequence = function() {
@@ -4927,7 +4939,6 @@ window.handleJccChoice = function(choice) {
     document.getElementById('axisDecisions').classList.add('hidden');
     document.getElementById('btnReplayAxis').classList.add('hidden');
     
-    // On cache les bulles d'axe (Cylindre Fort)
     var bBase = document.getElementById('animAxisBase');
     var bPlus = document.getElementById('animAxisPlus');
     var bMinus = document.getElementById('animAxisMinus');
@@ -4935,7 +4946,6 @@ window.handleJccChoice = function(choice) {
     if(bPlus) bPlus.classList.add('hidden');
     if(bMinus) bMinus.classList.add('hidden');
     
-    // On cache aussi les flèches
     var aPlus = document.getElementById('animArrowLine');
     var aMinus = document.getElementById('animArrowLineMinus');
     if(aPlus) aPlus.classList.remove('active');
@@ -4944,28 +4954,35 @@ window.handleJccChoice = function(choice) {
     var target = getTargetEye();
     var isFinished = false; 
     var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
+    var currentAxisNum = parseInt(axeDisplay.innerText);
 
     // =========================================================
     // 2. LOGIQUE SPÉCIFIQUE : CYLINDRE FORT (BALAYAGE 5°)
     // =========================================================
     if (appState.cylHigh) {
-        if (choice === 'pos2') {
-            // Le patient préfère la nouvelle position : on avance de 5°
-            if (appState.highCylDirection === null) appState.highCylDirection = "plus";
-            
-            target.axe = appState.tempPos2; 
-            appState.tempPos1 = target.axe; 
-            
-            var step = (appState.highCylDirection === "plus") ? 5 : -5;
-            appState.tempPos2 = normalizeAxis(target.axe + step);
+        // --- SENS PLUS (OU INITIAL) ---
+        if (appState.highCylDirection === null || appState.highCylDirection === "plus") {
+            // Dans ce sens : ROUGE (pos2/Gauche) = Progrès (+5) / VERT (pos1/Droite) = Stagnation
+            if (choice === 'pos2') { 
+                appState.highCylDirection = "plus";
+                target.axe = normalizeAxis(currentAxisNum + 5);
+            } else if (choice === 'pos1') { 
+                if (appState.highCylDirection === null) {
+                    // Refus du premier +5 -> On bascule vers le sens MOINS
+                    appState.highCylDirection = "minus"; 
+                    target.axe = currentAxisNum; // On reste sur la base pour comparer à RA-5 au tour suivant
+                } else {
+                    isFinished = true; // Déjà en balayage Plus, le retour à la base finit le test
+                }
+            } else { isFinished = true; } // Choix "Pareil"
         } 
-        else if (choice === 'pos1' || choice === 'same') {
-            if (appState.highCylDirection === null && choice === 'pos1') {
-                // Basculement vers le côté négatif si le RA initial était meilleur que RA+5
-                appState.highCylDirection = "minus";
-                appState.tempPos1 = appState.axisInitialRA; 
-                appState.tempPos2 = normalizeAxis(appState.axisInitialRA - 5);
-            } else {
+        // --- SENS MOINS ---
+        else if (appState.highCylDirection === "minus") {
+            // Dans ce sens : VERT (pos1/Droite) = Progrès (-5) / ROUGE (pos2/Gauche) = Stagnation
+            if (choice === 'pos1') { 
+                target.axe = normalizeAxis(currentAxisNum - 5);
+            } else { 
+                // Choix ROUGE (Axe actuel) ou Pareil -> Fin
                 isFinished = true;
             }
         }
@@ -4978,20 +4995,14 @@ window.handleJccChoice = function(choice) {
         var lastDirection = appState.axisDirectionHistory.length > 0 ? 
             appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
 
-        if (direction === lastDirection) appState.axisRepeatCount++;
-        else appState.axisRepeatCount = 1;
-
         if (appState.axisRepeatCount >= 3 && !appState.axisHelpMode) {
             appState.axisRepeatCount = 0;
             appState.axisHelpMode = true; 
             appState.axisDirectionHistory = [];
             target.axe = appState.axisInitialRA;
             appState.axisStep = (Math.abs(target.cyl) < 2.50 ? 20 : 10);
-            
-            // Sync visuelle RA
             if (axeDisplay) axeDisplay.innerText = target.axe + "°";
             updateDisplay("RA rétabli : " + target.axe + "°");
-            
             say("D'accord, vérifions cela ensemble. Pour vous aider à mieux répondre, vous allez maintenant lire à voix haute les lettres pour chacune des positions.", function() {
                 setTimeout(function() { runJccSequence(); }, 1000);
             });
@@ -5021,7 +5032,7 @@ window.handleJccChoice = function(choice) {
     }
 
     // =========================================================
-    // 4. SORTIE OU RELANCE (UNIFIÉ & OPTIMISÉ)
+    // 4. SORTIE OU RELANCE
     // =========================================================
     if (isFinished) {
         appState.isFinalStep = false;
@@ -5034,13 +5045,12 @@ window.handleJccChoice = function(choice) {
         document.getElementById('axisControls').classList.add('hidden');
         document.getElementById('standardButtons').classList.remove('hidden');
 
-        // Validation finale dans la carte
         if (axeDisplay) axeDisplay.innerText = target.axe + "°";
         updateDisplay("Validation de l'axe : " + target.axe + "°");
         
         say("Vérifions tout cela. Lisez-moi cette ligne.", function() { nextLetters(); });
     } else {
-        // --- MISE À JOUR PRIORITAIRE DE LA CARTE ---
+        // MISE À JOUR PRIORITAIRE DE LA CARTE AVANT LA RELANCE
         if (axeDisplay) axeDisplay.innerText = target.axe + "°";
         updateDisplay("Nouvel Axe : " + target.axe + "°");
         
