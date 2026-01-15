@@ -2938,26 +2938,30 @@ window.setHandedness = function(handEye) {
 };
 
 window.handleSchoberAnswer = function(reponse) {
-    // 1. Fermer la modale
+    // 1. Fermer la modale de question
     document.getElementById('modalSchoberQuestion').classList.add('hidden');
 
-    // Fonction déverrouillage
-    var unlockButtons = function() {
-        var schoberBtns = document.querySelectorAll('.btn-schober');
-        schoberBtns.forEach(function(btn) {
-            btn.style.pointerEvents = 'auto'; 
-            btn.style.opacity = '1';          
-            btn.style.filter = 'none';        
-            btn.style.cursor = 'pointer';     
-        });
-    };
-
     if (reponse === 'oui') {
-        unlockButtons();
+        // --- VALIDATION DIRECTE DU PREMIER BOUTON (Vision Simultanée) ---
+        // On pré-remplit les données du choix n°1
+        window.confirmSchoberSelection(1, 'bino', 'AUTO');
+        
+        // On valide immédiatement sans attendre de confirmation manuelle supplémentaire
+        window.validateSchober();
+        
     } else {
+        // --- CAS DU NON : ON LAISSE L'UTILISATEUR CHOISIR PARMI LES BOUTONS ---
         var phraseNon = "Alors, que voyez-vous exactement ? La croix seule ? Le cercle seul ? Tantôt la croix, tantôt le cercle ? Dites moi.";
+        
         say(phraseNon, function() {
-            unlockButtons();
+            // On déverrouille l'accès visuel et technique aux boutons Schober
+            var schoberBtns = document.querySelectorAll('.btn-schober');
+            schoberBtns.forEach(function(btn) {
+                btn.style.pointerEvents = 'auto'; 
+                btn.style.opacity = '1';          
+                btn.style.filter = 'none';        
+                btn.style.cursor = 'pointer';     
+            });
         });
     }
 };
