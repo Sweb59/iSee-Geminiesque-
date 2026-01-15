@@ -1592,6 +1592,17 @@ input[id^="fronto"] {
     </div>
 </div>
 
+<div id="modalVocalWarning" class="modal-overlay hidden">
+    <div class="modal-content" style="border-top: 5px solid #FFA726;">
+        <h2 id="vocalModalTitle" style="color:#EF6C00; border:none; font-size:1.4rem;">Optimisation Vocale</h2>
+        
+        <div id="vocalModalText" class="modal-text" style="text-align:left; font-size:1rem;">
+            </div>
+        
+        <button class="btn-action btn-validate" style="background:#EF6C00;" onclick="document.getElementById('modalVocalWarning').classList.add('hidden')">CONTINUER</button>
+    </div>
+</div>
+  
   <div id="modalCylTranspose" class="modal-overlay hidden">
     <div class="modal-content" style="border-top: 5px solid #FFA726; max-width: 500px;">
         <h2 style="color:#EF6C00; border:none; font-size:1.4rem; margin-top:0;">Cylindre Positif Détecté</h2>
@@ -2429,23 +2440,28 @@ window.initVoices = function() {
   function say(textOrArray, callback, keepLocked) {
     if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
 
-    // Verrouillage immédiat dès qu'on commence à parler
     appState.isSpeaking = true;
     updateLockUI(true);
 
     var text = Array.isArray(textOrArray) ? textOrArray[Math.floor(Math.random() * textOrArray.length)] : textOrArray;
     var u = new SpeechSynthesisUtterance(text);
-    u.lang = 'fr-FR'; u.rate = 1.0; 
-    
+    u.lang = 'fr-FR'; 
+    u.rate = 0.95; // Vitesse optimale pour la compréhension clinique
+
     var voices = window.speechSynthesis.getVoices();
-    var bestVoice = voices.find(v => v.lang.includes('fr') && (v.name.includes('Google') || v.name.includes('Thomas')));
-    if (!bestVoice) bestVoice = voices.find(v => v.lang.includes('fr'));
+
+    // --- STRATÉGIE DE SÉLECTION DE VOIX ---
+    // On cherche dans l'ordre de préférence décroissant
+    var bestVoice = voices.find(v => v.name.includes('Aurélie')) || 
+                    voices.find(v => v.name.includes('Google français')) ||
+                    voices.find(v => v.name.includes('Microsoft Denise')) || // Voix haute qualité Edge
+                    voices.find(v => v.name.includes('Thomas')) ||
+                    voices.find(v => v.lang.includes('fr'));
+
     if (bestVoice) u.voice = bestVoice;
 
     u.onend = function() {
-        // --- LOGIQUE ANTI-CLIGNOTEMENT ---
         if (keepLocked) {
-            // On force le maintien du verrouillage pour la phrase suivante
             appState.isSpeaking = true;
             updateLockUI(true);
         } else {
@@ -5300,7 +5316,46 @@ window.restoreBinocularBalance = function() {
         });
     }
 }
-</script>
+
+window.checkVocalEngine = function() {
+    var voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) return; 
+
+    var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    var hasAurelie = voices.some(v => v.name.includes("Aurélie"));
+    var hasHQ = voices.some(v => v.name.includes("Google") || v.name.includes("Online") || v.name.includes("Natural"));
+    
+    var modal = document.getElementById('modalVocalWarning');
+    var modalTitle = document.getElementById('vocalModalTitle');
+    var modalText = document.getElementById('vocalModalText');
+
+    if (isMac && !hasAurelie) {
+        modalTitle.innerText = "Optimisation Vocale Mac";
+        modalText.innerHTML = `La voix premium <strong>"Aurélie"</strong> n'est pas détectée.<br><br>
+            Pour une meilleure expérience patient, nous vous recommandons de l'activer :<br>
+            <ol style="margin-top:10px; line-height:1.6; text-align:left;">
+                <li>Réglages Système > Accessibilité</li>
+                <li>Contenu énoncé > Voix système</li>
+                <li>Téléchargez <strong>Aurélie</strong> (version améliorée)</li>
+            </ol>`;
+        modal.classList.remove('hidden');
+    } 
+    else if (!isMac && !hasHQ) {
+        modalTitle.innerText = "Optimisation Vocale Windows";
+        modalText.innerHTML = `La qualité vocale peut être améliorée.<br><br>
+            Pour obtenir une voix plus humaine sur Windows :<br>
+            <ul style="margin-top:10px; line-height:1.6; text-align:left;">
+                <li>Utilisez <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong>.</li>
+                <li>Assurez-vous d'être connecté à Internet.</li>
+                <li>Ou installez les voix "Naturelles" dans les paramètres Windows.</li>
+            </ul>`;
+        modal.classList.remove('hidden');
+    }
+};
+
+// Déclencheurs de vérification
+window.speechSynthesis.onvoiceschanged = window.checkVocalEngine;
+setTimeout(window.checkVocalEngine, 1500);</script>
 
   
   
