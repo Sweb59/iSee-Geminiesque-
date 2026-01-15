@@ -1857,7 +1857,7 @@ input[id^="fronto"] {
     <div id="visPos1" class="jcc-visual">
         <span class="jcc-label">1</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M8,50 A42,42 0 1,1 92,50" fill="none" stroke="#04ABC6" stroke-width="5" stroke-linecap="round" />
+            <path d="M50,8 A42,42 0 0,0 8,50" fill="none" stroke="#04ABC6" stroke-width="5" stroke-linecap="round" />
             <polygon points="2,50 14,50 8,65" fill="#04ABC6" />
         </svg>
     </div>
@@ -1865,7 +1865,7 @@ input[id^="fronto"] {
     <div id="visPos2" class="jcc-visual">
         <span class="jcc-label">2</span>
         <svg class="arrow-svg" viewBox="0 0 100 100">
-            <path d="M8,50 A42,42 0 1,1 92,50" fill="none" stroke="#04ABC6" stroke-width="5" stroke-linecap="round" />
+            <path d="M50,8 A42,42 0 0,1 92,50" fill="none" stroke="#04ABC6" stroke-width="5" stroke-linecap="round" />
             <polygon points="86,50 98,50 92,65" fill="#04ABC6" />
         </svg>
     </div>
@@ -3590,11 +3590,9 @@ function initSphereCheckPlus(skipIntro) {
     document.getElementById('decisionsMinus').classList.add('hidden');
 
     if (skipIntro) {
-        // --- ON NE DIT RIEN, ON LANCE JUSTE LE TEST ---
         nextLetters(); 
         window.triggerFogCheck(); 
     } else {
-        // --- INTRODUCTION LONGUE UNIQUEMENT LA PREMIÈRE FOIS ---
         setTimeout(function() { 
             say("C'est pas mal, mais on va essayer de faire un peu mieux", function() { 
                 nextLetters(); 
@@ -4037,13 +4035,8 @@ window.decideMinus = function(choice) {
     }
     // ----------------------------------------------------------
 
+    var currentVA = ACUITY_TABLE[appState.vaIndex].va;  
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
-    // --- AJOUT DE LA RÈGLE DU GAIN ---
-    
-    // ---------------------------------
-    
-    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
-    // ... reste de la fonction
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
     var currentTxt = ACUITY_TABLE[appState.vaIndex].lines[appState.letterIndex % 8]; if(!currentTxt) currentTxt = ACUITY_TABLE[appState.vaIndex].lines[0];
     var totalLetters = currentTxt.split(' ').length; var isSmallLine = totalLetters < 5;
@@ -4851,39 +4844,36 @@ window.updateAxisBubbles = function() {
 window.runJccSequence = function() {
     if (appState.isSpeaking) return;
     
-    // 1. Nettoyage initial
+    // 1. NETTOYAGE SÉLECTIF
     window.hideBaseCircle(); 
-    document.getElementById('jccVisuals').classList.add('hidden');
     
-    var axisDecisions = document.getElementById('axisDecisions');
-    var replayBtn = document.getElementById('btnReplayAxis');
-    axisDecisions.classList.add('hidden');
-    replayBtn.classList.add('hidden');
+    // On ne cache jccVisuals ici QUE si c'est un cylindre fort
+    if (appState.cylHigh) {
+        document.getElementById('jccVisuals').classList.add('hidden');
+    } else {
+        // En mode standard, on s'assure qu'ils sont affichés mais "éteints"
+        document.getElementById('jccVisuals').classList.remove('hidden');
+        document.getElementById('visPos1').classList.remove('active');
+        document.getElementById('visPos2').classList.remove('active');
+    }
 
-    // 2. Mise à jour des valeurs dans les bulles (et boutons)
+    document.getElementById('axisDecisions').classList.add('hidden'); 
+    document.getElementById('btnReplayAxis').classList.add('hidden'); 
+    
+    var bBase = document.getElementById('animAxisBase');
+    var bPlus = document.getElementById('animAxisPlus');
+    var bMinus = document.getElementById('animAxisMinus');
+    if(bBase) bBase.classList.add('hidden');
+    if(bPlus) bPlus.classList.add('hidden');
+    if(bMinus) bMinus.classList.add('hidden');
+
+    // 2. PRÉPARATION DES DONNÉES
     window.updateAxisBubbles();
-
-    // 3. Récupération des éléments
-    var baseBubble = document.getElementById('animAxisBase');
-    var plusBubble = document.getElementById('animAxisPlus');
-    var minusBubble = document.getElementById('animAxisMinus');
-    var arrowPlus = document.getElementById('animArrowLine');
-    var arrowMinus = document.getElementById('animArrowLineMinus');
-
-    // Cible de la carte subjective (ex: disp_subjOD_axe)
     var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
-    
-    // On récupère les valeurs numériques déjà formatées dans les bulles
     var valBase = document.getElementById('txtAxisBaseVal').innerText;
     var valTest = (appState.highCylDirection === "minus") ? 
                   document.getElementById('txtAxisMinusVal').innerText : 
                   document.getElementById('txtAxisPlusVal').innerText;
-
-    // Reset visuel
-    baseBubble.classList.add('hidden');
-    plusBubble.classList.add('hidden');
-    minusBubble.classList.add('hidden');
-    baseBubble.style.boxShadow = "none";
 
     var motCle = (appState.isFinalStep) ? "la dernière position" : "la position";
 
@@ -4891,48 +4881,60 @@ window.runJccSequence = function() {
     say("Vous préférez lire les lettres dans " + motCle, function() {
         
         // --- POSITION 1 ---
-        // Mise à jour de la CARTE seulement si cylindre fort
-        if (appState.cylHigh && axeDisplay) axeDisplay.innerText = valBase;
-        
-        baseBubble.classList.remove('hidden');
-        baseBubble.classList.add('visible');
-        baseBubble.style.boxShadow = "0 0 25px rgba(4, 171, 198, 0.8)";
+        if (appState.cylHigh) {
+            if (axeDisplay) axeDisplay.innerText = valBase;
+            if (bBase) { bBase.classList.remove('hidden'); bBase.style.boxShadow = "0 0 25px rgba(4, 171, 198, 0.8)"; }
+        } else {
+            // Allumage du bouton 1
+            document.getElementById('visPos1').classList.add('active');
+        }
         
         say("une ?", function() {
             setTimeout(function() {
-                baseBubble.style.boxShadow = "none";
+                // Extinction Position 1 (devient transparent mais RESTE visible)
+                if (appState.cylHigh) {
+                    if (bBase) bBase.style.boxShadow = "none";
+                } else {
+                    document.getElementById('visPos1').classList.remove('active');
+                }
                 
                 say("Ou dans " + motCle, function() {
                     
                     // --- POSITION 2 ---
-                    // Mise à jour de la CARTE seulement si cylindre fort
-                    if (appState.cylHigh && axeDisplay) axeDisplay.innerText = valTest;
-
-                    if (appState.highCylDirection === "minus") {
-                        minusBubble.classList.remove('hidden');
-                        minusBubble.classList.add('visible');
-                        arrowMinus.classList.add('active');
+                    if (appState.cylHigh) {
+                        if (axeDisplay) axeDisplay.innerText = valTest;
+                        if (appState.highCylDirection === "minus") {
+                             if(bMinus) bMinus.classList.remove('hidden');
+                             document.getElementById('animArrowLineMinus').classList.add('active');
+                        } else {
+                             if(bPlus) bPlus.classList.remove('hidden');
+                             document.getElementById('animArrowLine').classList.add('active');
+                        }
                     } else {
-                        plusBubble.classList.remove('hidden');
-                        plusBubble.classList.add('visible');
-                        arrowPlus.classList.add('active');
+                        // Allumage du bouton 2
+                        document.getElementById('visPos2').classList.add('active');
                     }
 
                     say("deux, ou est-ce que c'est pareil ?", function() {
                         setTimeout(function() {
-                            // Nettoyage visuel
-                            arrowPlus.classList.remove('active');
-                            arrowMinus.classList.remove('active');
-                            baseBubble.classList.add('hidden');
-                            plusBubble.classList.add('hidden');
-                            minusBubble.classList.add('hidden');
+                            // --- NETTOYAGE FINAL ET DISPARITION DES BOUTONS 1&2 ---
+                            if (!appState.cylHigh) {
+                                document.getElementById('visPos2').classList.remove('active');
+                                // On ne les cache que maintenant pour laisser la place aux boutons de réponse
+                                document.getElementById('jccVisuals').classList.add('hidden');
+                            } else {
+                                // Nettoyage Cylindre Fort
+                                document.getElementById('animArrowLine').classList.remove('active');
+                                document.getElementById('animArrowLineMinus').classList.remove('active');
+                                if(bBase) bBase.classList.add('hidden');
+                                if(bPlus) bPlus.classList.add('hidden');
+                                if(bMinus) bMinus.classList.add('hidden');
+                                if (axeDisplay) axeDisplay.innerText = valBase; 
+                            }
                             
-                            // RETOUR À LA BASE (Attente réponse) : Seulement pour cylindre fort
-                            if (appState.cylHigh && axeDisplay) axeDisplay.innerText = valBase;
-                            
-                            // Affichage des contrôles
-                            axisDecisions.classList.remove('hidden');
-                            replayBtn.classList.remove('hidden');
+                            // Affichage des contrôles de réponse
+                            document.getElementById('axisDecisions').classList.remove('hidden');
+                            document.getElementById('btnReplayAxis').classList.remove('hidden');
                         }, 2500);
                     });
                 });
@@ -4940,6 +4942,7 @@ window.runJccSequence = function() {
         });
     });
 };
+  
 window.handleJccChoice = function(choice) {
     if (appState.isSpeaking) return; 
 
@@ -5496,32 +5499,35 @@ window.restoreBinocularBalance = function() {
   function lancerAnnonceAxe() {
     var target = getTargetEye();
     var cylPower = Math.abs(target.cyl);
-    var isVeryHighCyl = (cylPower >= 4.50);
+    
+    // 1. Détermination du mode (Standard vs Fort)
+    appState.cylHigh = (cylPower >= 4.50);
 
-    // --- LOGIQUE D'AFFICHAGE CONDITIONNEL ---
-    // Si c'est un cylindre fort, on cache les anciens cercles JCC pendant l'intro
-    // pour laisser la place aux futures bulles Cyan dynamiques.
-    if (isVeryHighCyl) {
+    // 2. Gestion de la visibilité initiale
+    if (appState.cylHigh) {
+        // Mode Fort : On cache les cercles SVG
         document.getElementById('jccVisuals').classList.add('hidden');
     } else {
-        // Pour les cylindres standards, on garde l'affichage transparent habituel
+        // Mode Standard : On affiche les cercles 1 & 2
         document.getElementById('jccVisuals').classList.remove('hidden');
+        
+        // SÉCURITÉ : On s'assure qu'ils sont en mode "veille" (transparents)
+        document.getElementById('visPos1').classList.remove('active');
+        document.getElementById('visPos2').classList.remove('active');
     }
 
+    // 3. Lancement de la voix et de la séquence
     if (!appState.axisIntroDone) {
         appState.axisIntroDone = true; 
-        // Phrase standard pour tout le monde au premier oeil
         say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer. Vous me direz avec laquelle vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. De mon côté je ferai pareil, comme cela nous serons plus ou moins synchronisés.", function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
     } else {
-        // Phrase de rappel pour le second oeil ou après échec
         say("Comme tout à l'heure, je vais vous montrer deux positions différentes et vous me direz laquelle vous préférez. N'oubliez pas de lire toutes les lettres dans votre tête.", function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
     }
 }
-
 window.checkVocalEngine = function() {
     var voices = window.speechSynthesis.getVoices(); // Ligne rétablie
     if (voices.length === 0) return; 
