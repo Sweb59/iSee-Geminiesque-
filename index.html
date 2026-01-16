@@ -3222,7 +3222,7 @@ window.validateSb02 = function() {
     if (eye === 'OD') appState.sb02_OD_ok = true; 
     else appState.sb02_OG_ok = true;
 
-    say("Bien, on va de l'autre côté.", function() {
+    say("On passe sur l'autre oel.", function() {
         if (appState.sb02_OD_ok && appState.sb02_OG_ok) { 
             initSb05(); 
         } 
@@ -3964,11 +3964,10 @@ window.decideMinus = function(choice) {
         }
 
         updateDisplay("Mise au point de l'axe validée.");
-        say("Parfait. Je vous montre, maintenant, deux nouvelles positions", function() {
-            appState.isSpeaking = false; updateLockUI(false);
-            window.proceedToNextStepAfterEye(appState.activeEye);
-        });
-        return; 
+        // On libère la parole et on lance la puissance
+        appState.isSpeaking = false; updateLockUI(false);
+        window.initCylinderPowerCheck(); 
+        return;
     }
 
     // --- 2. DÉTECTION PRÉVENTIVE DES ALERTES (SENTINELLES) ---
@@ -4112,7 +4111,7 @@ if (appState.examPhase === "Vérification de Swéb") {
         appState.isCheckingGain = false;
         appState.subj[appState.activeEye].va = ACUITY_TABLE[appState.vaIndex].va;
         
-        say("C'est parfait, votre acuité augmente déjà. Vérifions si on peut encore faire mieux.", function() {
+        say("Bien. Voyons si on peut encore faire mieux.", function() {
             initSphereCheckPlus(true); // Rebouclage immédiat
         });
         return;
@@ -4159,13 +4158,13 @@ if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
         // --- LOGIQUE DE SORTIE DIFFÉRENCIÉE ---
         if (target.sphere < 0) {
             // MYOPE : Validation immédiate et sortie (votre règle)
-            say("C'est parfait, ce verre est validé. Nous avons terminé la sphère.", function() {
+            say("C'est parfait, on continue", function() {
                 finishSb10ForEye(); 
             });
         } else {
             // HYPERMÉTROPE : On continue vers le +0.25 SAUF si on est au max du tableau
             if (currentVA >= 2.0) {
-                say("Parfait, votre vision est maximale. La recherche de sphère est terminée.", function() {
+                say("Parfait, on continue.", function() {
                     finishSb10ForEye(); 
                 });
             } else {
@@ -4182,7 +4181,7 @@ if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
         appState.examPhase = "Vérification de Swéb_CUMUL_FINAL";
         nextLetters();
         updateDisplay("Vérification de Swéb (Gain cumulé sur ligne N)");
-        say("D'accord. c'est un peu difficle; lisez moi ces lettres là s'il vous plaît.");
+        say("D'accord. C'est un peu difficle; lisez moi ces lettres là s'il vous plaît.");
     } else {
         // ÉCHEC TOTAL : On rend le verre et on finit la sphère
         revertMinusLens();
@@ -5037,7 +5036,8 @@ window.handleJccChoice = function(choice) {
     var currentAxisNum = parseInt(axeDisplay.innerText);
 
     if (choice === 'same') {
-        isFinished = true;
+    isFinished = true;
+    var direction = 'same';
     } else {
         var direction = (choice === 'pos1') ? 'cw' : 'ccw';
         var lastDirection = appState.axisDirectionHistory.length > 0 ? 
@@ -5059,10 +5059,12 @@ window.handleJccChoice = function(choice) {
                 } else { isFinished = true; }
             } 
             else if (appState.highCylDirection === "minus") {
-                if (choice === 'pos1') { target.axe = normalizeAxis(currentAxisNum - 5); } 
+                if (choice === 'pos2') { target.axe = normalizeAxis(currentAxisNum - 5); } 
                 else { isFinished = true; }
             }
         } 
+        // =========================================================
+        // AUTRES CAS
         // =========================================================
         else {
             var cylValue = Math.abs(target.cyl);
@@ -5070,88 +5072,91 @@ window.handleJccChoice = function(choice) {
             // --- SCÉNARIO 1 : CYLINDRE MOYEN (2.50 à 4.25) -> 10° puis 5° FIN DIRECTE ---
             if (cylValue >= 2.50) {
                 if (lastDirection && direction !== lastDirection) {
-                    // C'est le renversement : on applique l'ultime rotation de 5° et on SORT
                     target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 5 : -5));
                     isFinished = true; 
                 } else {
-                    // Tant qu'on reste dans le même sens, on tourne de 10°
                     target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 10 : -10));
                 }
             } 
             // --- SCÉNARIO 2 : CYLINDRE FAIBLE (< 2.50) -> 20-10-5 COMPLET ---
             else {
                 if (appState.isFinalStep) {
-                    // On a déjà annoncé "la dernière position", donc le choix actuel finit le test
                     target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 5 : -5));
                     isFinished = true;
                 } else {
                     if (lastDirection && direction !== lastDirection) {
-                        // Premier renversement (venant de 20°)
                         if (appState.axisStep === 20) {
                             appState.axisStep = 10;
                             target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 10 : -10));
-                            // On prépare le pas de 5 pour le tour suivant (avec le mot "dernière")
                             appState.axisStep = 5;
                             appState.isFinalStep = true; 
                         } 
-                        // Renversement venant déjà d'un 10°
                         else if (appState.axisStep === 10) {
                             target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 5 : -5));
                             isFinished = true;
                         }
                     } else {
-                        // Continuation dans le même sens (20° ou 10°)
                         target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? appState.axisStep : -appState.axisStep));
                     }
                 }
             }
         }
-        appState.axisDirectionHistory.push(direction);
+        
     }
 
+    
     // =========================================================
-    // 4. SORTIE OU RELANCE (VALIDATION DE L'AXE)
+    // 4. SORTIE OU RELANCE (LOGIQUE DE PHRASES SPÉCIFIQUES)
     // =========================================================
+    
+    // --- CAS A : COURT-CIRCUIT IMMÉDIAT (Si "Pareil" cliqué en premier) ---
+    if (isFinished && appState.axisDirectionHistory.length === 0) {
+        document.getElementById('jccVisuals').classList.add('hidden');
+        document.getElementById('axisControls').classList.add('hidden');
+        document.getElementById('standardButtons').classList.remove('hidden');
+        
+        updateDisplay("Axe RA conservé : " + target.axe + "°");
+        say("Parfait.", function() {
+            window.initCylinderPowerCheck(); 
+        });
+        return;
+    }
+
+    // --- CAS B : FIN D'ENTONNOIR OU "PAREIL" TARDIF ---
     if (isFinished) {
         appState.isFinalStep = false;
-        appState.examPhase = "AxisVerification";
-        
-        // Nettoyage de l'interface JCC et retour aux boutons de score
         document.getElementById('jccVisuals').classList.add('hidden');
         document.getElementById('axisControls').classList.add('hidden');
         document.getElementById('standardButtons').classList.remove('hidden');
 
         if (axeDisplay) axeDisplay.innerText = target.axe + "°";
         updateDisplay("Validation de l'axe : " + target.axe + "°");
-        
-        // --- LOGIQUE DE RATTRAPAGE DE LIGNE SI VA > 1.0 ---
-        var vaInitiale = appState.initialSb10VA; 
 
-        if (vaInitiale > 1.0) {
-            // Le patient est performant (>10/10), on remonte sur sa ligne réelle
-            setVaToIndexClosest(vaInitiale); 
-            updateDisplay("Contrôle sur ligne de référence haute : " + vaInitiale);
-            say("Bien. Vérifions maintenant la précision sur votre meilleure ligne.", function() { 
-                nextLetters(); 
-            });
-        } else {
-            // Cas standard (VA <= 1.0) : on reste sur la ligne affichée (Sb1.0 ou 1.0)
-            say("Vérifions tout cela. Lisez-moi cette ligne.", function() { 
-                nextLetters(); 
-            });
-        }
+        var vaInitiale = appState.initialSb10VA; 
         
-    } else {
-        // MISE À JOUR ET RELANCE DE LA COMPARAISON
+        say("Parfait.", function() {
+            if (vaInitiale > 1.0) {
+                setVaToIndexClosest(vaInitiale); 
+                updateDisplay("Contrôle sur ligne haute : " + vaInitiale);
+                say("Bien. Vérifions maintenant la précision sur votre meilleure ligne.", function() { nextLetters(); });
+            } else {
+                say("Vérifions tout cela. Lisez-moi cette ligne.", function() { nextLetters(); });
+            }
+        });
+    } 
+    // --- CAS C : LE TEST CONTINUE (RELANCE) ---
+    else {
+        var feedbackAxe = appState.isFinalStep ? "Excellent." : "Bien.";
+
         if (axeDisplay) axeDisplay.innerText = target.axe + "°";
         updateDisplay("Nouvel Axe : " + target.axe + "°");
         
-        // Si appState.isFinalStep est true, runJccSequence dira "la dernière position"
-        say("D'accord.", function() {
+        say(feedbackAxe, function() {
             nextLetters();
             setTimeout(function() { runJccSequence(); }, 800);
         });
     }
+  appState.axisDirectionHistory.push(direction);
 };
 // --- NOUVELLES FONCTIONS DE GESTION DE FLUX (STOP/RESTART) ---
 window.restartExam = function() {
@@ -5654,7 +5659,29 @@ window.checkVocalEngine = function() {
 
 // Déclencheurs de vérification
 window.speechSynthesis.onvoiceschanged = window.checkVocalEngine;
-setTimeout(window.checkVocalEngine, 1500);</script>
+setTimeout(window.checkVocalEngine, 1500);
+
+window.initCylinderPowerCheck = function() {
+    appState.examPhase = "CylinderPowerCheck";
+    updateDisplay("Mise au point de la puissance (Ébauche)");
+
+    // C'est cette fonction qui annonce maintenant la phrase
+    say("Je vous montre, maintenant, deux nouvelles positions", function() {
+        var currentEye = appState.activeEye;
+        var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
+        var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
+
+        if (!appState.isMonocularExam && !isOtherEyeDone) {
+            // Si on doit faire le deuxième œil, on y va après 1s
+            setTimeout(function() { window.proceedToNextStepAfterEye(currentEye); }, 1000);
+        } else {
+            // Sinon fin de l'astigmatisme
+            say("Bien. Passons à la suite.");
+            updateDisplay("Fin de l'astigmatisme.");
+        }
+    });
+};
+</script>
 
   
   
