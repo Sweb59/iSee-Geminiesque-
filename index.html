@@ -3904,91 +3904,90 @@ window.decideMinus = function(choice) {
     appState.lastResponseCount = lettersRead;
     window.cleanAndSyncVA(lettersRead); 
 
+    // --- 1. GESTION SPÉCIFIQUE PHASE AXE ---
     if (appState.examPhase === "AxisVerification") {
-    appState.isSpeaking = true;
-    updateLockUI(true);
+        appState.isSpeaking = true;
+        updateLockUI(true);
 
-    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
-    var refLetters = appState.initialLettersCount; // Score exact de la Sb1.0
-    var refVA = appState.initialSb10VA;           // VA initiale (ex: 0.6)
+        var currentVA = ACUITY_TABLE[appState.vaIndex].va;
+        var refLetters = appState.initialLettersCount; 
+        var refVA = appState.initialSb10VA;
 
-       // --- 1. SÉCURITÉ DE REBOND : COMPARAISON STRICTE DU NOMBRE DE LETTRES ---
-    // On compare lettersRead (score actuel) à refLetters (score mémorisé Sb1.0)
-    if (lettersRead < refLetters) {
-        appState.examPhase = "AxisCheck"; 
-        var target = getTargetEye();
-        
-        // REBOND : Retour à l'axe initial du RA
-        target.axe = appState.axisInitialRA; 
-        
-        // INTERFACE : On masque les scores et on remet les boutons d'axe
-        document.getElementById('standardButtons').classList.add('hidden');
-        document.getElementById('axisControls').classList.remove('hidden');
-        
-        if (appState.cylHigh) {
-            document.getElementById('jccVisuals').classList.add('hidden');
-        } else {
-            document.getElementById('jccVisuals').classList.remove('hidden');
+        if (lettersRead < refLetters) {
+            appState.examPhase = "AxisCheck"; 
+            var target = getTargetEye();
+            target.axe = appState.axisInitialRA; 
+            document.getElementById('standardButtons').classList.add('hidden');
+            document.getElementById('axisControls').classList.remove('hidden');
+            if (appState.cylHigh) {
+                document.getElementById('jccVisuals').classList.add('hidden');
+            } else {
+                document.getElementById('jccVisuals').classList.remove('hidden');
+            }
+            setVaToIndexClosest(refVA); 
+            appState.axisDirectionHistory = [];
+            appState.isFinalStep = false;
+            if (appState.cylHigh) {
+                appState.axisStep = 5;
+                appState.highCylDirection = null;
+            } else {
+                appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
+            }
+            updateDisplay("Échec validation (" + lettersRead + "/" + refLetters + " lettres). Retour Axe RA.");
+            say("Vous semblez voir moins bien que tout à l'heure. On va vérifiez cela ensemble. Pour vous aider dans vos réponses, vous allez cette fois-ci lire les lettres à voix haute.", function() {
+                appState.isSpeaking = false; 
+                updateLockUI(false);
+                setTimeout(function() { runJccSequence(); }, 1000);
+            });
+            return; 
         }
 
-        // On réaffiche la ligne exacte de la Sb1.0 (ex: 0.6) pour la nouvelle recherche
-        setVaToIndexClosest(refVA); 
-        
-        // Réinitialisation technique
-        appState.axisDirectionHistory = [];
-        appState.isFinalStep = false;
-        if (appState.cylHigh) {
-            appState.axisStep = 5;
-            appState.highCylDirection = null;
-        } else {
-            appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
+        if (refVA < 1.0) {
+            if (lettersRead >= 3) {
+                appState.subj[appState.activeEye].va = currentVA;
+                if (currentVA < 1.0) {
+                    goNextLine();
+                    updateDisplay("Gain d'acuité : test de la ligne " + ACUITY_TABLE[appState.vaIndex].va);
+                    say("Très bien. Essayons la ligne suivante.", function() {
+                        appState.isSpeaking = false; updateLockUI(false); nextLetters(); 
+                    });
+                    return;
+                }
+            }
+        } else if (currentVA < refVA) {
+            setVaToIndexClosest(refVA); 
+            updateDisplay("Contrôle sur ligne de référence : " + refVA);
+            say("Vérifions cela.", function() {
+                appState.isSpeaking = false; updateLockUI(false); nextLetters(); 
+            });
+            return;
         }
 
-        updateDisplay("Échec validation (" + lettersRead + "/" + refLetters + " lettres). Retour Axe RA.");
-        
-        say("Vous semblez voir moins bien que tout à l'heure. On va vérifiez cela ensemble. Pour vous aider dans vos réponses, vous allez cette fois-ci lire les lettres à voix haute.", function() {
-            appState.isSpeaking = false; 
-            updateLockUI(false);
-            // Relance automatique de la mise au point
-            setTimeout(function() { runJccSequence(); }, 1000);
+        updateDisplay("Mise au point de l'axe validée.");
+        say("Parfait. Je vous montre, maintenant, deux nouvelles positions", function() {
+            appState.isSpeaking = false; updateLockUI(false);
+            window.proceedToNextStepAfterEye(appState.activeEye);
         });
         return; 
     }
-    // --- 2. VALIDATION ET RATTRAPAGE D'ACUITÉ ---
+
+    // --- 2. DÉTECTION PRÉVENTIVE DES ALERTES (SENTINELLES) ---
+    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
+    var target = getTargetEye();
+    var raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
     
-    // Cas A : On était sous 10/10 -> On tente de remonter tant que c'est l'axe est bon
-    if (refVA < 1.0) {
-        if (lettersRead >= 3) {
-            appState.subj[appState.activeEye].va = currentVA; // Enregistre le progrès
-            
-            if (currentVA < 1.0) {
-                goNextLine(); // Tente la ligne N+1
-                updateDisplay("Gain d'acuité : test de la ligne " + ACUITY_TABLE[appState.vaIndex].va);
-                say("Très bien. Essayons la ligne suivante.", function() {
-                    appState.isSpeaking = false; updateLockUI(false); nextLetters(); 
-                });
-                return;
-            }
-        }
-    } 
-    // Cas B : On était déjà à 10/10 ou plus -> On vérifie juste la ligne réelle validée avant l'axe
-    else if (currentVA < refVA) {
-        setVaToIndexClosest(refVA); 
-        updateDisplay("Contrôle sur ligne de référence : " + refVA);
-        say("Vérifions cela.", function() {
-            appState.isSpeaking = false; updateLockUI(false); nextLetters(); 
-        });
-        return;
+    // Check Alerte Débrouillage Limite (Sb0.2)
+    var isFogAlertPending = (appState.examPhase === "Sb0.2" && lettersRead < 3 && (target.sphere - 0.25 < raSph));
+    // Check Alerte TQS Limite (Sb0.5)
+    var isTqsAlertPending = (appState.examPhase === "Sb0.5" && currentVA === 0.60 && lettersRead >= 3 && appState.tqsFogCount >= 2);
+
+    if (isFogAlertPending || isTqsAlertPending) {
+        // ON EXECUTE LA LOGIQUE MAIS ON RESTE MUET (Pas de say)
+        processLogic(lettersRead, 'rabbit');
+        return; // ON SORT POUR ÉVITER LES MESSAGES VOCAUX CI-DESSOUS
     }
 
-    // --- 3. SORTIE DÉFINITIVE SI TOUT EST VALIDÉ ---
-    updateDisplay("Mise au point de l'axe validée.");
-    say("Parfait. Je vous montre, maintenant, deux nouvelles positions", function() {
-        appState.isSpeaking = false; updateLockUI(false);
-        window.proceedToNextStepAfterEye(appState.activeEye);
-    });
-    return; 
-}
+    // --- 3. FEEDBACK VOCAL STANDARD ---
     var wordsLow = ["Ok", "D'accord", "Bien"];
     var feedback = wordsLow[Math.floor(Math.random() * wordsLow.length)];
 
@@ -4014,9 +4013,22 @@ window.decideMinus = function(choice) {
         updateLockUI(true); 
 
         say(feedback, function() {
+            // 1. Détection préventive du plateau d'acuité
+            // Si le compteur est déjà à 2, le clic actuel va déclencher l'alerte
+            var willTriggerPlateau = (appState.sb10_line_defog >= 2);
+
+            // 2. Exécution de la logique
             var isIntercepted = window.validateSb10(); 
             if (!isIntercepted) processLogic(lettersRead, 'rabbit');
 
+            // 3. SILENCE SI ALERTE : Si l'alerte s'affiche, on arrête tout ici
+            if (willTriggerPlateau) {
+                appState.isSpeaking = false;
+                updateLockUI(false);
+                return; // Empêche le setTimeout ci-dessous de s'exécuter
+            }
+
+            // 4. RELANCE VOCALE STANDARD (uniquement si pas de plateau)
             setTimeout(function() {
                 if (appState.isRunning && appState.examPhase === "Sb1.0" && !appState.isCheckingGain) {
                     var prompt = (lettersRead === 0) ? 
