@@ -3549,9 +3549,9 @@ window.proceedToNextStepAfterEye = function(completedEye) {
         
         applySb10Logic(); 
         updateDisplay("Bascule vers " + otherEye + " (Oeil " + completedEye + " brouillé à RA+0.75)");
-        say("Bien, nous passons à l'examen de l'autre œil.");
+        say("Bien, nous passons à l'examen de l'autre œil. Lisez moi ces lettres s'il vous plaît.");
     } else {
-        say("L'examen monoculaire est terminé. Passons à la suite.");
+        say("Bien. Passons à la suite.");
         updateDisplay("Phase Monoculaire Terminée");
     }
 };
@@ -3654,7 +3654,7 @@ async function triggerFogCheck() {
     var arrow = document.getElementById('animArrowLine');
     var targetBubble = document.getElementById('animTargetCircle');
 
-    say("Vous préférez comme ça ?");
+    say("Vous préférez voir les lettres comme ça ?");
     await wait(2500); 
 
     say("Ou si je fais ça ?");
@@ -3934,7 +3934,7 @@ window.decideMinus = function(choice) {
                 appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
             }
             updateDisplay("Échec validation (" + lettersRead + "/" + refLetters + " lettres). Retour Axe RA.");
-            say("Vous semblez voir moins bien que tout à l'heure. On va vérifiez cela ensemble. Pour vous aider dans vos réponses, vous allez cette fois-ci lire les lettres à voix haute.", function() {
+            say("D'accord. On va vérifiez cela ensemble. Pour vous aider dans vos réponses, vous allez cette fois-ci lire les lettres à voix haute.", function() {
                 appState.isSpeaking = false; 
                 updateLockUI(false);
                 setTimeout(function() { runJccSequence(); }, 1000);
@@ -4032,8 +4032,8 @@ window.decideMinus = function(choice) {
             setTimeout(function() {
                 if (appState.isRunning && appState.examPhase === "Sb1.0" && !appState.isCheckingGain) {
                     var prompt = (lettersRead === 0) ? 
-                        "C'est normal. Je change de verre. Est-ce que c'est mieux comme ça ?" : 
-                        "Je change de verre. Relisez-moi cette ligne s'il vous plaît.";
+                        "D'accord. Et si je vais ça, est-ce que c'est mieux ?" : 
+                        "Ok. Relisez-moi cette ligne s'il vous plaît.";
                     
                     say(prompt, function() {
                         appState.isSpeaking = false;
@@ -4659,7 +4659,7 @@ function revertMinusLens() {
     updateDisplay("Gain insuffisant : retour à la base.");
     
     // 3. SORTIE DÉFINITIVE VERS L'ASTIGMATISME
-    say("Bon, finalement ce n'est pas mieux. On continue.", function() {
+    say("Ok. On continue.", function() {
         // Cette ligne est cruciale : elle ferme la recherche de sphère
         finishSb10ForEye(); 
     });
@@ -5601,11 +5601,11 @@ window.restoreBinocularBalance = function() {
     // 3. Lancement de la voix et de la séquence
     if (!appState.axisIntroDone) {
         appState.axisIntroDone = true; 
-        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer. Vous me direz avec laquelle vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. De mon côté je ferai pareil, comme cela nous serons plus ou moins synchronisés.", function() {
+        say("Je vais maintenant vous montrer deux positions différentes que vous allez comparer. Vous me direz avec laquelle de ces deux positions vous préférez lire les lettres. Pour cela, il faut que vous lisiez toutes les lettres dans votre tête. De mon côté je ferai pareil, comme cela nous serons plus ou moins synchronisés.", function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
     } else {
-        say("Comme tout à l'heure, je vais vous montrer deux positions différentes et vous me direz laquelle vous préférez. N'oubliez pas de lire toutes les lettres dans votre tête.", function() {
+        say("Comme tout à l'heure, je vais vous montrer deux positions différentes et vous me direz laquelle des deux vous préférez. N'oubliez pas de lire toutes les lettres dans votre tête.", function() {
             setTimeout(function() { runJccSequence(); }, 1000);
         });
     }
