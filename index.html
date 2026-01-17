@@ -5133,12 +5133,14 @@ window.handleJccChoice = function(choice) {
         updateDisplay("Validation de l'axe : " + target.axe + "°");
 
         var vaInitiale = appState.initialSb10VA; 
-        
+
+      nextLetters(); 
+        updateDisplay("Validation visuelle lancée");
         say("Parfait.", function() {
             if (vaInitiale > 1.0) {
                 setVaToIndexClosest(vaInitiale); 
                 updateDisplay("Contrôle sur ligne haute : " + vaInitiale);
-                say("Bien. Vérifions maintenant la précision sur votre meilleure ligne.", function() { nextLetters(); });
+                say("Bien. Vérifions cela. Lisez-moi ces lettres.", function() { nextLetters(); });
             } else {
                 say("Vérifions tout cela. Lisez-moi cette ligne.", function() { nextLetters(); });
             }
@@ -5152,7 +5154,6 @@ window.handleJccChoice = function(choice) {
         updateDisplay("Nouvel Axe : " + target.axe + "°");
         
         say(feedbackAxe, function() {
-            nextLetters();
             setTimeout(function() { runJccSequence(); }, 800);
         });
     }
