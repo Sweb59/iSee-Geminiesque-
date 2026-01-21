@@ -5047,87 +5047,78 @@ window.handleJccChoice = function(choice) {
     var currentAxisNum = parseInt(axeDisplay.innerText);
 
     if (choice === 'same') {
-    isFinished = true;
-    var direction = 'same';
+        isFinished = true;
+        var direction = 'same';
     } else {
         var direction = (choice === 'pos1') ? 'cw' : 'ccw';
         var lastDirection = appState.axisDirectionHistory.length > 0 ? 
             appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
 
-        // =========================================================
-        // CAS A : CYLINDRE TRÈS FORT (>= 4.50)
-        // =========================================================
-        if (appState.cylHigh) {
-           if (appState.highCylDirection === null || appState.highCylDirection === "plus") {
-            if (choice === 'pos2') { 
-                appState.highCylDirection = "plus";
-                target.axe = normalizeAxis(currentAxisNum + 5);
-            } else if (choice === 'pos1') { 
-                if (appState.highCylDirection === null) {
-                    appState.highCylDirection = "minus"; 
-                    target.axe = currentAxisNum; // MAINTIEN STRICT DU RA
-                } else { 
-                    target.axe = currentAxisNum; // FORCE L'AXE À NE PAS BOUGER
-                    isFinished = true; 
-                }
-            } else { 
-                target.axe = currentAxisNum;
-                isFinished = true; 
-            }
-        }
-            else if (appState.highCylDirection === "minus") {
-            if (choice === 'pos2') { 
-                // Le patient veut descendre : on applique le -5°
-                target.axe = normalizeAxis(currentAxisNum - 5); 
-            } else { 
-                // LE PATIENT PRÉFÈRE LA BASE (Pos 1) : 
-                // On force l'axe à rester sur la valeur actuelle (45 ou 40)
-                target.axe = currentAxisNum; 
-                isFinished = true; 
-            }
-        }
-        } 
-        // =========================================================
-        // AUTRES CAS
-        // =========================================================
-        else {
-            var cylValue = Math.abs(target.cyl);
+        let newAxe = currentAxisNum; 
 
-            // --- SCÉNARIO 1 : CYLINDRE MOYEN (2.50 à 4.25) -> 10° puis 5° FIN DIRECTE ---
-            if (cylValue >= 2.50) {
-                if (lastDirection && direction !== lastDirection) {
-                    target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 5 : -5));
-                    isFinished = true; 
-                } else {
-                    target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 10 : -10));
+        if (appState.cylHigh) {
+            // --- LOGIQUE CYLINDRE FORT (PLACEMENT DYNAMIQUE) ---
+            if (appState.highCylDirection === null) {
+                // PREMIER TEST (Axe Base à DROITE / Axe+5 à GAUCHE)
+                if (choice === 'pos2') { // A choisi le bouton de GAUCHE (Axe+5)
+                    appState.highCylDirection = "plus";
+                    newAxe = currentAxisNum + 5;
+                } else { // A choisi le bouton de DROITE (Axe Base)
+                    appState.highCylDirection = "minus"; 
+                    newAxe = currentAxisNum; // On reste à 45 pour tester le côté -5
                 }
             } 
-            // --- SCÉNARIO 2 : CYLINDRE FAIBLE (< 2.50) -> 20-10-5 COMPLET ---
-            else {
+            else if (appState.highCylDirection === "plus") {
+                // TUNNEL PLUS (Axe Base à DROITE / Axe+5 à GAUCHE)
+                if (choice === 'pos2') { // A choisi Axe+5 (Gauche)
+                    newAxe = currentAxisNum + 5;
+                } else { // A choisi la base à DROITE (pos1) : FIN
+                    newAxe = currentAxisNum;
+                    isFinished = true; 
+                }
+            } 
+            else if (appState.highCylDirection === "minus") {
+                // TUNNEL MOINS (Axe Base à GAUCHE / Axe-5 à DROITE)
+                if (choice === 'pos1') { // A choisi le bouton de DROITE (Axe-5)
+                    newAxe = currentAxisNum - 5; 
+                } else { // A choisi la base à GAUCHE (pos2) : FIN
+                    newAxe = currentAxisNum;
+                    isFinished = true; 
+                }
+            }
+        } 
+        else {
+            // --- LOGIQUE ENTONNOIR STANDARD (CYLINDRE < 4.50) ---
+            var cylValue = Math.abs(target.cyl);
+            if (cylValue >= 2.50) {
+                if (lastDirection && direction !== lastDirection) {
+                    newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
+                    isFinished = true; 
+                } else {
+                    newAxe = target.axe + (direction === 'ccw' ? 10 : -10);
+                }
+            } else {
                 if (appState.isFinalStep) {
-                    target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 5 : -5));
+                    newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
                     isFinished = true;
                 } else {
                     if (lastDirection && direction !== lastDirection) {
                         if (appState.axisStep === 20) {
                             appState.axisStep = 10;
-                            target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 10 : -10));
+                            newAxe = target.axe + (direction === 'ccw' ? 10 : -10);
+                        } else if (appState.axisStep === 10) {
                             appState.axisStep = 5;
-                            appState.isFinalStep = true; 
-                        } 
-                        else if (appState.axisStep === 10) {
-                            target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? 5 : -5));
-                            isFinished = true;
+                            appState.isFinalStep = true;
+                            newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
                         }
                     } else {
-                        target.axe = normalizeAxis(target.axe + (direction === 'ccw' ? appState.axisStep : -appState.axisStep));
+                        newAxe = target.axe + (direction === 'ccw' ? appState.axisStep : -appState.axisStep);
                     }
                 }
             }
         }
-        
+        target.axe = normalizeAxis(newAxe);
     }
-
     
     // =========================================================
     // 4. SORTIE OU RELANCE (LOGIQUE DE PHRASES SPÉCIFIQUES)
