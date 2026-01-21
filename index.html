@@ -3905,71 +3905,82 @@ window.decideMinus = function(choice) {
     window.cleanAndSyncVA(lettersRead); 
 
     // --- 1. GESTION SPÉCIFIQUE PHASE AXE ---
-    if (appState.examPhase === "AxisVerification") {
-        appState.isSpeaking = true;
-        updateLockUI(true);
+    // --- 1. GESTION SPÉCIFIQUE PHASE AXE (VALIDATION) ---
+if (appState.examPhase === "AxisVerification") {
+    appState.isSpeaking = true;
+    updateLockUI(true);
 
-        var currentVA = ACUITY_TABLE[appState.vaIndex].va;
-        var refLetters = appState.initialLettersCount; 
-        var refVA = appState.initialSb10VA;
+    var refLetters = appState.initialLettersCount; 
+    var refVA = appState.initialSb10VA;
+    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
-        if (lettersRead < refLetters) {
-            appState.examPhase = "AxisCheck"; 
-            var target = getTargetEye();
-            target.axe = appState.axisInitialRA; 
-            document.getElementById('standardButtons').classList.add('hidden');
-            document.getElementById('axisControls').classList.remove('hidden');
-            if (appState.cylHigh) {
-                document.getElementById('jccVisuals').classList.add('hidden');
-            } else {
-                document.getElementById('jccVisuals').classList.remove('hidden');
-            }
-            setVaToIndexClosest(refVA); 
-            appState.axisDirectionHistory = [];
-            appState.isFinalStep = false;
-            if (appState.cylHigh) {
-                appState.axisStep = 5;
-                appState.highCylDirection = null;
-            } else {
-                appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
-            }
-            updateDisplay("Échec validation (" + lettersRead + "/" + refLetters + " lettres). Retour Axe RA.");
-            say("D'accord. On va vérifiez cela ensemble. Pour vous aider dans vos réponses, vous allez cette fois-ci lire les lettres à voix haute.", function() {
-                appState.isSpeaking = false; 
-                updateLockUI(false);
-                setTimeout(function() { runJccSequence(); }, 1000);
-            });
-            return; 
+    // --- CAS D'ÉCHEC : DÉGRADATION DÉTECTÉE (LE REBOND) ---
+    if (lettersRead < refLetters) {
+        appState.examPhase = "AxisCheck"; 
+        var target = getTargetEye();
+        
+        // REBOND : Retour à l'axe initial de l'Auto-Réfractomètre
+        target.axe = appState.axisInitialRA; 
+        
+        document.getElementById('standardButtons').classList.add('hidden');
+        document.getElementById('axisControls').classList.remove('hidden');
+        
+        // CONFORT : On force le retour à 10/10 pour le test à voix haute
+        setVaToIndexClosest(1.00); 
+        
+        // RESET des paramètres de recherche JCC
+        appState.axisDirectionHistory = [];
+        appState.isFinalStep = false;
+        appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
+        
+        if (appState.cylHigh) {
+            appState.axisStep = 5;
+            appState.highCylDirection = null;
+            document.getElementById('jccVisuals').classList.add('hidden');
+        } else {
+            document.getElementById('jccVisuals').classList.remove('hidden');
         }
 
-        if (refVA < 1.0) {
-            if (lettersRead >= 3) {
-                appState.subj[appState.activeEye].va = currentVA;
-                if (currentVA < 1.0) {
-                    goNextLine();
-                    updateDisplay("Gain d'acuité : test de la ligne " + ACUITY_TABLE[appState.vaIndex].va);
-                    say("Très bien. Essayons la ligne suivante.", function() {
-                        appState.isSpeaking = false; updateLockUI(false); nextLetters(); 
-                    });
-                    return;
-                }
-            }
-        } else if (currentVA < refVA) {
-            setVaToIndexClosest(refVA); 
-            updateDisplay("Contrôle sur ligne de référence : " + refVA);
-            say("Vérifions cela.", function() {
+        updateDisplay("Échec validation (" + lettersRead + "/" + refLetters + "). Retour Axe RA.");
+
+        // ANNONCE DE RUPTURE : On impose la lecture à voix haute
+        say("D'accord. On va vérifier cela ensemble. Pour vous aider dans vos réponses, vous allez cette fois-ci lire les lettres à voix haute.", function() {
+            appState.isSpeaking = false; 
+            updateLockUI(false);
+            // Relance de la séquence JCC après 1s
+            setTimeout(function() { runJccSequence(); }, 1000);
+        });
+        return; 
+    }
+
+    // --- CAS DE RÉUSSITE OU PROGRESSION ---
+    if (refVA < 1.0 && lettersRead >= 3) {
+        appState.subj[appState.activeEye].va = currentVA;
+        if (currentVA < 1.0) {
+            goNextLine();
+            updateDisplay("Gain d'acuité : test de la ligne " + ACUITY_TABLE[appState.vaIndex].va);
+            say("Très bien. Essayons la ligne suivante.", function() {
                 appState.isSpeaking = false; updateLockUI(false); nextLetters(); 
             });
             return;
         }
-
-        updateDisplay("Mise au point de l'axe validée.");
-        // On libère la parole et on lance la puissance
-        appState.isSpeaking = false; updateLockUI(false);
-        window.initCylinderPowerCheck(); 
+    } 
+    else if (currentVA < refVA) {
+        setVaToIndexClosest(refVA); 
+        updateDisplay("Contrôle sur ligne de référence : " + refVA);
+        say("Vérifions cela.", function() {
+            appState.isSpeaking = false; updateLockUI(false); nextLetters(); 
+        });
         return;
     }
 
+    // VALIDATION FINALE : On passe à la puissance
+    updateDisplay("Mise au point de l'axe validée.");
+    appState.isSpeaking = false; 
+    updateLockUI(false);
+    window.initCylinderPowerCheck(); 
+    return;
+}
     // --- 2. DÉTECTION PRÉVENTIVE DES ALERTES (SENTINELLES) ---
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
     var target = getTargetEye();
@@ -5047,21 +5058,34 @@ window.handleJccChoice = function(choice) {
         // CAS A : CYLINDRE TRÈS FORT (>= 4.50)
         // =========================================================
         if (appState.cylHigh) {
-            if (appState.highCylDirection === null || appState.highCylDirection === "plus") {
-                if (choice === 'pos2') { 
-                    appState.highCylDirection = "plus";
-                    target.axe = normalizeAxis(currentAxisNum + 5);
-                } else if (choice === 'pos1') { 
-                    if (appState.highCylDirection === null) {
-                        appState.highCylDirection = "minus"; 
-                        target.axe = currentAxisNum; 
-                    } else { isFinished = true; }
-                } else { isFinished = true; }
-            } 
-            else if (appState.highCylDirection === "minus") {
-                if (choice === 'pos2') { target.axe = normalizeAxis(currentAxisNum - 5); } 
-                else { isFinished = true; }
+           if (appState.highCylDirection === null || appState.highCylDirection === "plus") {
+            if (choice === 'pos2') { 
+                appState.highCylDirection = "plus";
+                target.axe = normalizeAxis(currentAxisNum + 5);
+            } else if (choice === 'pos1') { 
+                if (appState.highCylDirection === null) {
+                    appState.highCylDirection = "minus"; 
+                    target.axe = currentAxisNum; // MAINTIEN STRICT DU RA
+                } else { 
+                    target.axe = currentAxisNum; // FORCE L'AXE À NE PAS BOUGER
+                    isFinished = true; 
+                }
+            } else { 
+                target.axe = currentAxisNum;
+                isFinished = true; 
             }
+        }
+            else if (appState.highCylDirection === "minus") {
+            if (choice === 'pos2') { 
+                // Le patient veut descendre : on applique le -5°
+                target.axe = normalizeAxis(currentAxisNum - 5); 
+            } else { 
+                // LE PATIENT PRÉFÈRE LA BASE (Pos 1) : 
+                // On force l'axe à rester sur la valeur actuelle (45 ou 40)
+                target.axe = currentAxisNum; 
+                isFinished = true; 
+            }
+        }
         } 
         // =========================================================
         // AUTRES CAS
@@ -5123,29 +5147,32 @@ window.handleJccChoice = function(choice) {
     }
 
     // --- CAS B : FIN D'ENTONNOIR OU "PAREIL" TARDIF ---
-    if (isFinished) {
-        appState.isFinalStep = false;
-        document.getElementById('jccVisuals').classList.add('hidden');
-        document.getElementById('axisControls').classList.add('hidden');
-        document.getElementById('standardButtons').classList.remove('hidden');
+if (isFinished) {
+    appState.isFinalStep = false;
+    appState.examPhase = "AxisVerification"; // Active la surveillance des erreurs dans handleResponse
 
-        if (axeDisplay) axeDisplay.innerText = target.axe + "°";
-        updateDisplay("Validation de l'axe : " + target.axe + "°");
+    // 1. Nettoyage de l'interface (on cache les outils JCC)
+    document.getElementById('jccVisuals').classList.add('hidden');
+    document.getElementById('axisControls').classList.add('hidden');
+    document.getElementById('standardButtons').classList.remove('hidden');
 
-        var vaInitiale = appState.initialSb10VA; 
+    // 2. Mise à jour de l'axe sur la carte subjective
+    if (axeDisplay) axeDisplay.innerText = target.axe + "°";
 
-      nextLetters(); 
-        updateDisplay("Validation visuelle lancée");
-        say("Parfait.", function() {
-            if (vaInitiale > 1.0) {
-                setVaToIndexClosest(vaInitiale); 
-                updateDisplay("Contrôle sur ligne haute : " + vaInitiale);
-                say("Bien. Vérifions cela. Lisez-moi ces lettres.", function() { nextLetters(); });
-            } else {
-                say("Vérifions tout cela. Lisez-moi cette ligne.", function() { nextLetters(); });
-            }
-        });
-    } 
+    // 3. Préparation de la ligne de test (ex: 12.5/10)
+    var vaInitiale = appState.initialSb10VA; 
+    setVaToIndexClosest(vaInitiale); 
+
+    // 4. Changement des lettres IMMÉDIAT (le patient voit du neuf tout de suite)
+    nextLetters(); 
+
+    // 5. Mise à jour globale de l'affichage (important pour rafraîchir le tableau de lettres)
+    updateDisplay("Validation de l'axe : " + target.axe + "° sur ligne " + vaInitiale);
+
+    // 6. Lancement de la voix (le patient lit pendant que l'écran est déjà prêt)
+    say("Parfait. Bien. Vérifions tout cela. Lisez-moi cette ligne s'il vous plaît.");
+  return; // <--- AJOUTEZ CETTE LIGNE ICI POUR STOPPER LA DÉRIVE
+}
     // --- CAS C : LE TEST CONTINUE (RELANCE) ---
     else {
         var feedbackAxe = appState.isFinalStep ? "Excellent." : "Bien.";
