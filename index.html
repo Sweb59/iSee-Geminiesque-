@@ -5119,7 +5119,38 @@ window.handleJccChoice = function(choice) {
         }
         target.axe = normalizeAxis(newAxe);
     }
-    
+
+  // =========================================================
+    // VERROU DE SÉCURITÉ : DÉTECTION RÉPÉTITION (VOIX HAUTE)
+    // =========================================================
+    var lastDir = appState.axisDirectionHistory.length > 0 ? appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
+
+    if (direction !== 'same' && direction === lastDir && !appState.axisHelpMode) {
+        appState.axisRepeatCount = (appState.axisRepeatCount || 0) + 1;
+        
+        // Si 2 clics consécutifs dans le même sens (total de 3 positions identiques)
+        if (appState.axisRepeatCount >= 2) {
+            appState.axisHelpMode = true; // Active le mode voix haute pour ce tour
+            appState.axisRepeatCount = 0;
+            
+            // RESET : Retour à l'axe RA initial
+            target.axe = appState.axisInitialRA;
+            appState.axisDirectionHistory = [];
+            appState.highCylDirection = null;
+            appState.isFinalStep = false;
+            appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
+            if (appState.cylHigh) appState.axisStep = 5;
+
+            updateDisplay("Sécurité répétition : retour RA.");
+
+            say("Vérifions cela. Pour vous aider dans vos réponses, vous allez maintenant me lire les lettres à voix haute.", function() {
+                setTimeout(function() { runJccSequence(); }, 1000);
+            });
+            return; // On arrête la fonction ici
+        }
+    } else if (direction !== lastDir) {
+        appState.axisRepeatCount = 0; // Reset si le patient change de sens
+    }
     // =========================================================
     // 4. SORTIE OU RELANCE (LOGIQUE DE PHRASES SPÉCIFIQUES)
     // =========================================================
