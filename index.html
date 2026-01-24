@@ -5274,79 +5274,64 @@ window.handleJccChoice = function(choice) {
         var direction = 'same';
     } else {
         var direction = (choice === 'pos1') ? 'cw' : 'ccw';
+        
+        // 1. On identifie le clic précédent
         var lastDirection = appState.axisDirectionHistory.length > 0 ? 
             appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
 
-        let newAxe = currentAxisNum; 
+        // 2. On enregistre le nouveau clic
+        appState.axisDirectionHistory.push(direction);
 
+        let newAxe = currentAxisNum;
+
+        // --- LOGIQUE CYLINDRE FORT (CONSERVÉE) ---
         if (appState.cylHigh) {
-            // --- LOGIQUE CYLINDRE FORT (PLACEMENT DYNAMIQUE) ---
             if (appState.highCylDirection === null) {
-                // PREMIER TEST (Axe Base à DROITE / Axe+5 à GAUCHE)
-                if (choice === 'pos2') { // A choisi le bouton de GAUCHE (Axe+5)
-                    appState.highCylDirection = "plus";
-                    newAxe = currentAxisNum + 5;
-                } else { // A choisi le bouton de DROITE (Axe Base)
-                    appState.highCylDirection = "minus"; 
-                    newAxe = currentAxisNum; // On reste à 45 pour tester le côté -5
-                }
+                if (choice === 'pos2') { appState.highCylDirection = "plus"; newAxe = currentAxisNum + 5; }
+                else { appState.highCylDirection = "minus"; newAxe = currentAxisNum; }
             } 
             else if (appState.highCylDirection === "plus") {
-                // TUNNEL PLUS (Axe Base à DROITE / Axe+5 à GAUCHE)
-                if (choice === 'pos2') { // A choisi Axe+5 (Gauche)
-                    newAxe = currentAxisNum + 5;
-                } else { // A choisi la base à DROITE (pos1) : FIN
-                    newAxe = currentAxisNum;
-                    isFinished = true; 
-                }
+                if (choice === 'pos2') { newAxe = currentAxisNum + 5; }
+                else { newAxe = currentAxisNum; isFinished = true; }
             } 
             else if (appState.highCylDirection === "minus") {
-                // TUNNEL MOINS (Axe Base à GAUCHE / Axe-5 à DROITE)
-                if (choice === 'pos1') { // A choisi le bouton de DROITE (Axe-5)
-                    newAxe = currentAxisNum - 5; 
-                } else { // A choisi la base à GAUCHE (pos2) : FIN
-                    newAxe = currentAxisNum;
-                    isFinished = true; 
-                }
+                if (choice === 'pos1') { newAxe = currentAxisNum - 5; }
+                else { newAxe = currentAxisNum; isFinished = true; }
             }
         } 
+        // --- LOGIQUE ENTONNOIR STANDARD CORRIGÉE ---
         else {
-            // --- LOGIQUE ENTONNOIR STANDARD (CYLINDRE < 4.50) ---
-            var cylValue = Math.abs(target.cyl);
-            if (cylValue >= 2.50) {
+            // RÈGLE : Si on a déjà eu un changement de sens, on finit au prochain coup (pas de 5°)
+            if (appState.isFinalStep) {
+                newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
+                isFinished = true;
+            } 
+            else {
+                // Détection du PREMIER changement de sens
                 if (lastDirection && direction !== lastDirection) {
-                    newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
-                    isFinished = true; 
-                } else {
-                    newAxe = target.axe + (direction === 'ccw' ? 10 : -10);
-                }
-            } else {
-                if (appState.isFinalStep) {
-                    newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
-                    isFinished = true;
-                } else {
-                    if (lastDirection && direction !== lastDirection) {
-                        if (appState.axisStep === 20) {
-                            appState.axisStep = 10;
-                            newAxe = target.axe + (direction === 'ccw' ? 10 : -10);
-                        } else if (appState.axisStep === 10) {
-                            appState.axisStep = 5;
-                            appState.isFinalStep = true;
-                            newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
-                        }
+                    appState.isFinalStep = true; // On arme le verrouillage pour le coup suivant
+                    var cylValue = Math.abs(target.cyl);
+                    
+                    if (cylValue >= 2.50) {
+                        // Cylindres moyens : 5° et fin immédiate
+                        newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
+                        isFinished = true;
                     } else {
-                        newAxe = target.axe + (direction === 'ccw' ? appState.axisStep : -appState.axisStep);
+                        // Cylindres faibles : On passe à 10° et on attend le clic de clôture
+                        newAxe = target.axe + (direction === 'ccw' ? 10 : -10);
                     }
+                } else {
+                    // Recherche initiale (avant tout rebond)
+                    newAxe = target.axe + (direction === 'ccw' ? appState.axisStep : -appState.axisStep);
                 }
             }
         }
         target.axe = normalizeAxis(newAxe);
     }
-
   // =========================================================
     // VERROU DE SÉCURITÉ : DÉTECTION RÉPÉTITION (VOIX HAUTE)
     // =========================================================
-    var lastDir = appState.axisDirectionHistory.length > 0 ? appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
+    var lastDir = appState.axisDirectionHistory.length > 1 ? appState.axisDirectionHistory[appState.axisDirectionHistory.length - 2] : null;
 
     if (direction !== 'same' && direction === lastDir && !appState.axisHelpMode) {
         appState.axisRepeatCount = (appState.axisRepeatCount || 0) + 1;
@@ -5429,7 +5414,7 @@ if (isFinished) {
             setTimeout(function() { runJccSequence(); }, 800);
         });
     }
-  appState.axisDirectionHistory.push(direction);
+  
 };
 // --- NOUVELLES FONCTIONS DE GESTION DE FLUX (STOP/RESTART) ---
 window.restartExam = function() {
