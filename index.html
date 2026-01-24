@@ -1314,6 +1314,8 @@ input[id^="fronto"] {
     align-items: center;
     gap: 15px;
     margin-top: 20px;
+  z-index: 5000 !important; 
+    pointer-events: auto !important;
 }
 
 #axisDecisions {
@@ -5143,7 +5145,7 @@ window.runJccSequence = function() {
     say("Vous préférez lire les lettres dans la position", function() {
         if (bPlus) { 
             bPlus.classList.remove('hidden'); 
-            bPlus.style.display = "flex"; // FORCE L'AFFICHAGE FLEX
+            bPlus.style.display = "flex"; 
             bPlus.style.opacity = "1";
         }
         
@@ -5153,26 +5155,46 @@ window.runJccSequence = function() {
                     if (bPlus) { bPlus.style.display = "none"; bPlus.classList.add('hidden'); }
                     if (bMinus) { 
                         bMinus.classList.remove('hidden'); 
-                        bMinus.style.display = "flex"; // FORCE L'AFFICHAGE FLEX
+                        bMinus.style.display = "flex"; 
                         bMinus.style.opacity = "1";
                     }
 
                     say("deux, ou c'est pareil ?", function() {
+                         // --- FIN DE SÉQUENCE ---
                          setTimeout(function() {
                             if (bMinus) {
                                 bMinus.style.display = "none";
                                 bMinus.classList.add('hidden');
                             }
-                            // RÉAPPARITION DES BOUTONS DE DÉCISION (Mieux 1, Mieux 2, Pareil)
-                            document.getElementById('axisDecisions').classList.remove('hidden');
-                            document.getElementById('btnReplayAxis').classList.remove('hidden');
-                        }, 2500);
+
+                            // 1. On montre le conteneur principal des contrôles
+                            var axisCtrl = document.getElementById('axisControls');
+                            if (axisCtrl) {
+                                axisCtrl.classList.remove('hidden');
+                                axisCtrl.style.display = "block";
+                            }
+
+                            // 2. On montre la ligne des boutons
+                            var axisDec = document.getElementById('axisDecisions');
+                            if (axisDec) {
+                                axisDec.classList.remove('hidden');
+                                axisDec.style.display = "flex";
+                            }
+
+                            // 3. On montre le bouton Retester
+                            var btnReplay = document.getElementById('btnReplayAxis');
+                            if (btnReplay) {
+                                btnReplay.classList.remove('hidden');
+                                btnReplay.style.display = "flex";
+                            }
+                        }, 2000);
                     });
                 });
             }, 1000); 
         });
     });
-};
+}; // <-- L'accolade qui manquait était ici
+                  
 window.processCylinderPowerDecision = function(choice) {
     // 1. NETTOYAGE VISUEL IMMÉDIAT
     document.getElementById('axisDecisions').classList.add('hidden');
