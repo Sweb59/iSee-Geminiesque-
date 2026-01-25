@@ -5212,38 +5212,12 @@ window.processCylinderPowerDecision = function(choice) {
 
     var target = getTargetEye();
 
-    // --- RÈGLE N°1 : LE RA (Uniquement au 1er clic) ---
-    if (appState.cylPowerStep === 1) {
-        if (choice === 'pos2') { 
-            var currentVA = ACUITY_TABLE[appState.vaIndex].va;
-            var lettersRead = appState.lastResponseCount;
-            var cadence = appState.lastCadenceUsed;
-
-            if (currentVA >= 1.0 && lettersRead >= 5 && cadence === 'rabbit') {
-                say("C'est parfait, on reste comme ça.");
-                window.finishCylinderPower(); 
-                return;
-            } else {
-                appState.cylPowerStep = 2; 
-                appState.isCylSphereTest = true;
-                say("Ok, vérifions cela.", function() {
-                    target.sphere -= 0.25; 
-                    updateDisplay("Sphère test -0.25 ajoutée");
-                    setTimeout(window.runCylinderPowerSequence, 1000);
-                });
-                return;
-            }
-        }
-        // Si clic sur "Mieux 1" ou "Pareil", on libère le test pour les règles générales
-        appState.cylPowerStep = 3; 
-    }
-
-    // --- RÈGLE N°1 (SUITE) : RÉSULTAT DE LA SPHÈRE TEST ---
+    // --- ÉTAPE A : GESTION DU RÉSULTAT DE LA SPHÈRE TEST (-0.25) ---
     if (appState.isCylSphereTest) {
-        target.sphere += 0.25; 
+        target.sphere += 0.25; // On retire la sphère test quoi qu'il arrive
         appState.isCylSphereTest = false; 
         
-        if (choice === 'pos2') { 
+        if (choice === 'pos2') { // Il confirme vouloir plus de cylindre avec le test
             target.cyl -= 0.25; 
             appState.cylTotalModifs++;
             appState.cylBalanceCounter -= 0.25;
@@ -5252,23 +5226,42 @@ window.processCylinderPowerDecision = function(choice) {
             updateDisplay("RA Dépassé : Cylindre augmenté");
             say("Bien.", function() { setTimeout(window.runCylinderPowerSequence, 1000); });
         } else {
+            // Refus de la sphère test -> On arrête là
             window.finishCylinderPower(); 
         }
         return;
     }
 
-    // --- RÈGLES GÉNÉRALES (Dès la 2ème réponse ou si Mieux 1 au départ) ---
-    
-    // 1. CAS : RÉPONSE "PAREIL"
+    // --- ÉTAPE B : TRAITEMENT DES RÉPONSES STANDARDS ---
     if (choice === 'same') {
         window.finishCylinderPower();
         return;
     }
 
-    // 2. CAS : RÉPONSE "MIEUX 1" (+0.25) OU "MIEUX 2" (-0.25)
+    // Définition du changement
     var change = (choice === 'pos1') ? 0.25 : -0.25;
     var decisionType = (choice === 'pos1') ? 'plus' : 'minus';
 
+    // --- ÉTAPE C : RÈGLE DU RA (Uniquement au 1er clic sur Mieux 2) ---
+    if (appState.cylPowerStep === 1 && choice === 'pos2') {
+        var currentVA = ACUITY_TABLE[appState.vaIndex].va;
+        if (currentVA >= 1.0 && appState.lastResponseCount >= 5 && appState.lastCadenceUsed === 'rabbit') {
+            say("C'est parfait, on reste comme ça.");
+            window.finishCylinderPower(); 
+            return;
+        } else {
+            appState.cylPowerStep = 2; 
+            appState.isCylSphereTest = true;
+            say("Ok, vérifions cela.", function() {
+                target.sphere -= 0.25; 
+                updateDisplay("Sphère test -0.25 ajoutée");
+                setTimeout(window.runCylinderPowerSequence, 1000);
+            });
+            return;
+        }
+    }
+
+    // --- ÉTAPE D : APPLICATION DU CHANGEMENT (Mieux 1 ou Mieux 2 suite) ---
     // Règle Anti-boucle
     if (appState.lastCylDecision === 'plus' && decisionType === 'minus') {
         updateDisplay("Hésitation : arrêt");
@@ -5276,24 +5269,25 @@ window.processCylinderPowerDecision = function(choice) {
         return;
     }
 
-    // --- APPLICATION DU CHANGEMENT ET MISE À JOUR ÉCRAN ---
+    // Modification physique et visuelle
     target.cyl += change;
     appState.cylTotalModifs++;
     appState.cylBalanceCounter += change;
     appState.cylPowerChangeSum += change;
     appState.lastCylDecision = decisionType;
+    appState.cylPowerStep = 3; // On sort définitivement du mode "RA"
 
-    // On force la mise à jour visuelle du cylindre sur la carte subjective
     updateDisplay("Modification Cylindre : " + target.cyl.toFixed(2));
 
-    // Check retour Axe (seuil 0.75)
+    // --- ÉTAPE E : VÉRIFICATION DES SEUILS ---
+    // Check retour Axe (0.75)
     if (Math.abs(appState.cylPowerChangeSum) >= 0.75) {
         appState.cylPowerChangeSum = 0;
         say("Ok, vérifions à nouveau l'axe.", function() { initAxisCheck(); });
         return;
     }
 
-    // Check Équilibre Sphère (seuil 0.50)
+    // Check Équilibre Sphère (0.50)
     if (Math.abs(appState.cylBalanceCounter) >= 0.50) {
         appState.cylBalanceCounter = 0;
         if (target.sphere > 0) {
@@ -5307,7 +5301,7 @@ window.processCylinderPowerDecision = function(choice) {
         }
     }
 
-    // RELANCE DU TEST POUR AFFINER
+    // RELANCE DE LA SÉQUENCE POUR AFFINER
     say("Bien.", function() {
         document.getElementById('axisControls').classList.add('hidden');
         setTimeout(window.runCylinderPowerSequence, 1000);
@@ -5315,13 +5309,14 @@ window.processCylinderPowerDecision = function(choice) {
 };
   window.handleJccChoice = function(choice) {
     if (appState.isSpeaking) return; 
-// --- NOUVEAU : REDIRECTION VERS LE MOTEUR DE PUISSANCE ---
+
+    // --- NOUVEAU : REDIRECTION VERS LE MOTEUR DE PUISSANCE ---
     if (appState.examPhase === "CylinderPowerCheck" || appState.examPhase === "CylinderPowerVerification") {
         window.processCylinderPowerDecision(choice);
         return;
     }
-    // ---------------------------------------------------------
-    // --- 1. NETTOYAGE IMMÉDIAT ---
+
+    // 1. NETTOYAGE IMMÉDIAT
     document.getElementById('axisDecisions').classList.add('hidden');
     document.getElementById('btnReplayAxis').classList.add('hidden');
     
@@ -5342,152 +5337,108 @@ window.processCylinderPowerDecision = function(choice) {
     var axeDisplay = document.getElementById('disp_subj' + appState.activeEye + '_axe');
     var currentAxisNum = parseInt(axeDisplay.innerText);
 
+    // --- LOGIQUE DE DÉCISION ---
     if (choice === 'same') {
         isFinished = true;
         var direction = 'same';
     } else {
         var direction = (choice === 'pos1') ? 'cw' : 'ccw';
-        
-        // 1. On identifie le clic précédent
         var lastDirection = appState.axisDirectionHistory.length > 0 ? 
             appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
 
-        // 2. On enregistre le nouveau clic
         appState.axisDirectionHistory.push(direction);
-
         let newAxe = currentAxisNum;
 
-        // --- LOGIQUE CYLINDRE FORT (CONSERVÉE) ---
         if (appState.cylHigh) {
             if (appState.highCylDirection === null) {
                 if (choice === 'pos2') { appState.highCylDirection = "plus"; newAxe = currentAxisNum + 5; }
                 else { appState.highCylDirection = "minus"; newAxe = currentAxisNum; }
-            } 
-            else if (appState.highCylDirection === "plus") {
+            } else if (appState.highCylDirection === "plus") {
                 if (choice === 'pos2') { newAxe = currentAxisNum + 5; }
                 else { newAxe = currentAxisNum; isFinished = true; }
-            } 
-            else if (appState.highCylDirection === "minus") {
+            } else if (appState.highCylDirection === "minus") {
                 if (choice === 'pos1') { newAxe = currentAxisNum - 5; }
                 else { newAxe = currentAxisNum; isFinished = true; }
             }
-        } 
-        // --- LOGIQUE ENTONNOIR STANDARD CORRIGÉE ---
-        else {
-            // RÈGLE : Si on a déjà eu un changement de sens, on finit au prochain coup (pas de 5°)
+        } else {
             if (appState.isFinalStep) {
                 newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
                 isFinished = true;
-            } 
-            else {
-                // Détection du PREMIER changement de sens
+            } else {
                 if (lastDirection && direction !== lastDirection) {
-                    appState.isFinalStep = true; // On arme le verrouillage pour le coup suivant
+                    appState.isFinalStep = true;
                     var cylValue = Math.abs(target.cyl);
-                    
                     if (cylValue >= 2.50) {
-                        // Cylindres moyens : 5° et fin immédiate
                         newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
                         isFinished = true;
                     } else {
-                        // Cylindres faibles : On passe à 10° et on attend le clic de clôture
                         newAxe = target.axe + (direction === 'ccw' ? 10 : -10);
                     }
                 } else {
-                    // Recherche initiale (avant tout rebond)
                     newAxe = target.axe + (direction === 'ccw' ? appState.axisStep : -appState.axisStep);
                 }
             }
         }
         target.axe = normalizeAxis(newAxe);
     }
-  // =========================================================
-    // VERROU DE SÉCURITÉ : DÉTECTION RÉPÉTITION (VOIX HAUTE)
-    // =========================================================
-    var lastDir = appState.axisDirectionHistory.length > 1 ? appState.axisDirectionHistory[appState.axisDirectionHistory.length - 2] : null;
 
+    // --- SÉCURITÉ RÉPÉTITION ---
+    var lastDir = appState.axisDirectionHistory.length > 1 ? appState.axisDirectionHistory[appState.axisDirectionHistory.length - 2] : null;
     if (direction !== 'same' && direction === lastDir && !appState.axisHelpMode) {
         appState.axisRepeatCount = (appState.axisRepeatCount || 0) + 1;
-        
-        // Si 2 clics consécutifs dans le même sens (total de 3 positions identiques)
         if (appState.axisRepeatCount >= 2) {
-            appState.axisHelpMode = true; // Active le mode voix haute pour ce tour
+            appState.axisHelpMode = true;
             appState.axisRepeatCount = 0;
-            
-            // RESET : Retour à l'axe RA initial
             target.axe = appState.axisInitialRA;
             appState.axisDirectionHistory = [];
             appState.highCylDirection = null;
             appState.isFinalStep = false;
             appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
             if (appState.cylHigh) appState.axisStep = 5;
-
             updateDisplay("Sécurité répétition : retour RA.");
-
-            say("Vérifions cela. Pour vous aider dans vos réponses, vous allez maintenant me lire les lettres à voix haute.", function() {
+            say("Vérifions cela. Pour vous aider, lisez les lettres à voix haute.", function() {
                 setTimeout(function() { runJccSequence(); }, 1000);
             });
-            return; // On arrête la fonction ici
+            return; // STOP ICI
         }
-    } else if (direction !== lastDir) {
-        appState.axisRepeatCount = 0; // Reset si le patient change de sens
     }
-    // =========================================================
-    // 4. SORTIE OU RELANCE (LOGIQUE DE PHRASES SPÉCIFIQUES)
-    // =========================================================
-    
-    // --- CAS A : COURT-CIRCUIT IMMÉDIAT (Si "Pareil" cliqué en premier) ---
-    if (isFinished && appState.axisDirectionHistory.length === 0) {
-        document.getElementById('jccVisuals').classList.add('hidden');
-        document.getElementById('axisControls').classList.add('hidden');
-        document.getElementById('standardButtons').classList.remove('hidden');
-        
+
+    // --- SORTIE OU RELANCE ---
+
+    // CAS A : COURT-CIRCUIT (RÉPONSE PAREIL D'EMBLÉE)
+    if (isFinished && appState.axisDirectionHistory.length <= 1) {
         updateDisplay("Axe RA conservé : " + target.axe + "°");
         say("Parfait.", function() {
            window.initCylinderPowerCheck(true); 
         });
-        return;
+        return; // STOP ICI
     }
 
-    // --- CAS B : FIN D'ENTONNOIR OU "PAREIL" TARDIF ---
-if (isFinished) {
-    appState.isFinalStep = false;
-    appState.examPhase = "AxisVerification"; // Active la surveillance des erreurs dans handleResponse
-
-    // 1. Nettoyage de l'interface (on cache les outils JCC)
-    document.getElementById('jccVisuals').classList.add('hidden');
-    document.getElementById('axisControls').classList.add('hidden');
-    document.getElementById('standardButtons').classList.remove('hidden');
-
-    // 2. Mise à jour de l'axe sur la carte subjective
-    if (axeDisplay) axeDisplay.innerText = target.axe + "°";
-
-    // 3. Préparation de la ligne de test (ex: 12.5/10)
-    var vaInitiale = appState.initialSb10VA; 
-    setVaToIndexClosest(vaInitiale); 
-
-    // 4. Changement des lettres IMMÉDIAT (le patient voit du neuf tout de suite)
-    nextLetters(); 
-
-    // 5. Mise à jour globale de l'affichage (important pour rafraîchir le tableau de lettres)
-    updateDisplay("Validation de l'axe : " + target.axe + "° sur ligne " + vaInitiale);
-
-    // 6. Lancement de la voix (le patient lit pendant que l'écran est déjà prêt)
-    say("Parfait. Bien. Vérifions tout cela. Lisez-moi cette ligne s'il vous plaît.");
-  return; // <--- AJOUTEZ CETTE LIGNE ICI POUR STOPPER LA DÉRIVE
-}
-    // --- CAS C : LE TEST CONTINUE (RELANCE) ---
-    else {
-        var feedbackAxe = appState.isFinalStep ? "Excellent." : "Bien.";
-
-        if (axeDisplay) axeDisplay.innerText = target.axe + "°";
-        updateDisplay("Nouvel Axe : " + target.axe + "°");
+    // CAS B : FIN DU TEST (VALIDATION FINALE)
+    if (isFinished) {
+        appState.isFinalStep = false;
+        appState.examPhase = "AxisVerification";
         
-        say(feedbackAxe, function() {
-            setTimeout(function() { runJccSequence(); }, 800);
+        // --- CORRECTIF VISUEL : RÉAFFICHER LES BOUTONS ---
+        document.getElementById('axisControls').classList.add('hidden'); // Cache Mieux 1/2
+        document.getElementById('standardButtons').classList.remove('hidden'); // Affiche 0-5 lettres
+        // -----------------------------------------------
+
+        updateDisplay("Validation de l'axe : " + target.axe + "°");
+        
+        say("Parfait. Bien. Vérifions tout cela. Lisez-moi cette ligne s'il vous plaît.", function() {
+            // On s'assure que les lettres changent bien pour la vérification
+            nextLetters();
+            window.updateDisplay("Vérification de l'axe l'axe en cours...");
         });
+        return; // STOP ICI
     }
-  
+    // CAS C : LE TEST CONTINUE (RELANCE)
+    var feedbackAxe = appState.isFinalStep ? "Excellent." : "Bien.";
+    updateDisplay("Nouvel Axe : " + target.axe + "°");
+    say(feedbackAxe, function() {
+        setTimeout(function() { runJccSequence(); }, 800);
+    });
 };
 // --- NOUVELLES FONCTIONS DE GESTION DE FLUX (STOP/RESTART) ---
 window.restartExam = function() {
