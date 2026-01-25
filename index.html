@@ -1475,14 +1475,14 @@ input[id^="fronto"] {
 /* Position GAUCHE (Position 1) */
 .cyl-style.bubble-target { 
     right: 50% !important; 
-    margin-right: 120px !important; 
+    margin-right: 70px !important; 
     left: auto !important; /* Crucial pour annuler l'héritage */
 }
 
 /* Position DROITE (Position 2) */
 .cyl-style.bubble-target-minus { 
     left: 50% !important; 
-    margin-left: 120px !important; 
+    margin-left: 70px !important; 
     right: auto !important;
 }
 
@@ -5176,15 +5176,22 @@ window.runJccSequence = function() {
 
                                 // Affichage des contrôles de décision
                                 var axisCtrl = document.getElementById('axisControls');
-                                if (axisCtrl) axisCtrl.classList.remove('hidden');
+                                if (axisCtrl) {
+                                    axisCtrl.classList.remove('hidden');
+                                    axisCtrl.style.display = "block";
+                                }
                                 
                                 var axisDec = document.getElementById('axisDecisions');
-                                if (axisDec) axisDec.classList.remove('hidden');
+                                if (axisDec) {
+                                    axisDec.classList.remove('hidden');
+                                    axisDec.style.display = "flex";
+                                }
                                 
                                 var btnReplay = document.getElementById('btnReplayAxis');
                                 if (btnReplay) btnReplay.classList.remove('hidden');
+
                             }, 400);
-                        }, 2500);
+                         }, 2500);
                     });
                 });
             }, 1200); 
@@ -5193,10 +5200,8 @@ window.runJccSequence = function() {
 };
                   
 window.processCylinderPowerDecision = function(choice) {
-    // 1. NETTOYAGE VISUEL IMMÉDIAT
     document.getElementById('axisDecisions').classList.add('hidden');
     document.getElementById('btnReplayAxis').classList.add('hidden');
-    
     var bPlus = document.getElementById('animCylPlus');
     var bMinus = document.getElementById('animCylMinus');
     if(bPlus) bPlus.classList.add('hidden');
@@ -5204,124 +5209,99 @@ window.processCylinderPowerDecision = function(choice) {
     document.getElementById('animArrowLineMinus').classList.remove('active');
 
     var target = getTargetEye();
-    var raCyl = (appState.activeEye === 'OD') ? getVal('raOD_cyl') : getVal('raOG_cyl');
 
-    // --- RÈGLE N°1 : LE RA (Uniquement au 1er clic) ---
     if (appState.cylPowerStep === 1) {
-        if (choice === 'pos2') { // Le patient demande "Mieux -" (augmentation)
+        if (choice === 'pos2') {
             var currentVA = ACUITY_TABLE[appState.vaIndex].va;
             var lettersRead = appState.lastResponseCount;
             var cadence = appState.lastCadenceUsed;
-
-            // Condition de refus d'emblée : 1.0 (5 lettres) fluide ou mieux
             if (currentVA >= 1.0 && lettersRead >= 5 && cadence === 'rabbit') {
                 say("C'est parfait, on reste comme ça.");
                 appState.examPhase = "CylinderPowerVerification";
-                window.finishCylinderPower(); 
+                window.finishCylinderPower();
                 return;
             } else {
-                // Sinon : Sphère test !
-                appState.cylPowerStep = 2; // On passe à l'étape "Sphère Test"
+                appState.cylPowerStep = 2;
                 appState.isCylSphereTest = true;
                 say("Ok, vérifions cela.", function() {
-                    target.sphere -= 0.25; // On ajoute la sphère test
+                    target.sphere -= 0.25;
                     updateDisplay("Sphère test -0.25 ajoutée");
                     setTimeout(window.runCylinderPowerSequence, 1000);
                 });
                 return;
             }
         }
-        // Si le patient dit "Mieux +" ou "Pareil" au 1er clic, on sort de la règle RA
-        appState.cylPowerStep = 3; 
+        appState.cylPowerStep = 3;
     }
 
-    // --- RÈGLE N°1 (SUITE) : RÉSULTAT DE LA SPHÈRE TEST ---
-    // Ce bloc est maintenant BIEN à l'extérieur du bloc précédent
     if (appState.isCylSphereTest) {
-        target.sphere += 0.25; // On retire TOUJOURS la sphère test immédiatement
-        appState.isCylSphereTest = false; // On sort du mode test
-        
-        if (choice === 'pos2') { 
-            // SUCCÈS : Il confirme "Mieux -" avec la sphère test
-            target.cyl -= 0.25; // On lui donne enfin son augmentation de cylindre
+        target.sphere += 0.25;
+        appState.isCylSphereTest = false;
+        if (choice === 'pos2') {
+            target.cyl -= 0.25;
             appState.cylTotalModifs++;
             appState.cylBalanceCounter -= 0.25;
             appState.cylPowerChangeSum -= 0.25;
-            appState.cylPowerStep = 3; // On passe aux règles générales
+            appState.cylPowerStep = 3;
             updateDisplay("RA Dépassé : Cylindre augmenté");
-            say("Bien.", function() {
-                setTimeout(window.runCylinderPowerSequence, 1000);
-            });
+            say("Bien.", function() { setTimeout(window.runCylinderPowerSequence, 1000); });
         } else {
-            // ÉCHEC : Il dit "Pareil" ou "Mieux +"
             updateDisplay("RA Respecté : Retour puissance initiale");
             say("Parfait.", function() {
                 appState.examPhase = "CylinderPowerVerification";
-                window.finishCylinderPower(); 
+                window.finishCylinderPower();
             });
         }
         return;
     }
 
-    // --- RÈGLES CŒUR DU TEST (Dès la 2ème réponse) ---
-    
-    // 1. CAS : RÉPONSE "PAREIL" -> FIN DU TEST
     if (choice === 'same') {
         window.finishCylinderPower();
         return;
     }
 
-    // 2. CAS : RÉPONSE "MIEUX +" OU "MIEUX -"
     var change = (choice === 'pos1') ? 0.25 : -0.25;
     var decisionType = (choice === 'pos1') ? 'plus' : 'minus';
 
-    // A. RÈGLE DU CHOIX HÉSITANT (Anti-boucle)
     if (appState.lastCylDecision === 'plus' && decisionType === 'minus') {
-        // Le patient revient en arrière : on bloque et on finit sur la valeur la plus convexe
         updateDisplay("Choix hésitant : arrêt sur la valeur la plus convexe");
-        window.finishCylinderPower(); 
+        window.finishCylinderPower();
         return;
     }
 
-    // B. APPLICATION DE LA MODIFICATION DU CYLINDRE
     target.cyl += change;
     appState.cylTotalModifs++;
     appState.cylBalanceCounter += change;
     appState.cylPowerChangeSum += change;
     appState.lastCylDecision = decisionType;
 
-    // C. RÈGLE DES 3/4 DE DIOPTRIE (Seuil 0.75)
+    updateDisplay("Modification Cylindre : " + target.cyl.toFixed(2));
+
     if (Math.abs(appState.cylPowerChangeSum) >= 0.75) {
-        appState.cylPowerChangeSum = 0; // Reset du cumul
-        say("Ok, vérifions cela.", function() {
-            initAxisCheck(); // Bascule temporaire vers l'Axe
-        });
+        appState.cylPowerChangeSum = 0;
+        say("Ok, vérifions cela.", function() { initAxisCheck(); });
         return;
     }
 
-    // D. RÈGLE DE L'ÉQUILIBRE (Palier 0.50)
     if (Math.abs(appState.cylBalanceCounter) >= 0.50) {
-        appState.cylBalanceCounter = 0; // Reset pour le prochain palier
-        
+        appState.cylBalanceCounter = 0;
         if (target.sphere > 0) {
-            // Hyperope : Modification automatique
             target.sphere -= 0.25;
-            updateDisplay("Équilibre (Hyperope) : Sphère -0.25");
-       } else {
-            // Myope : On déclenche la lecture de contrôle immédiatement
+            updateDisplay("Équilibre : Sphère -0.25");
+        } else {
             appState.examPhase = "CylinderPowerBalance_Myope";
-            nextLetters(); // Change les lettres
-            updateDisplay("Équilibre Myope : Contrôle lecture");
+            nextLetters();
+            updateDisplay("Équilibre Myope : Contrôle");
             say("D'accord. Relisez-moi ces lettres s'il vous plaît.");
-            return; // On s'arrête ici pour attendre la réponse avant de relancer les bulles
+            return;
         }
     }
 
-    // RELANCE DE LA SÉQUENCE APRÈS MODIFICATION
     say("Bien.", function() {
+        document.getElementById('axisControls').classList.add('hidden');
         setTimeout(window.runCylinderPowerSequence, 1000);
     });
-};  
+};
 window.handleJccChoice = function(choice) {
     if (appState.isSpeaking) return; 
 // --- NOUVEAU : REDIRECTION VERS LE MOTEUR DE PUISSANCE ---
