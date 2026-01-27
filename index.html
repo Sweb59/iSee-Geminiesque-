@@ -5593,11 +5593,18 @@ if (appState.examPhase) {
         case "AxisCheck":         
             affichagePhase = "Mise au point de l'axe"; 
             break;
+        
             
         case "AxisVerification":  
             affichagePhase = "Validation de l'axe"; 
             break;
 
+// --- PUISSANCE CYLINDRE ---
+        case "CylinderPowerCheck":
+        case "CylinderPowerVerification":
+            affichagePhase = "Mise au point de la puissance"; 
+            break;
+        
         // --- FINAL ---
         case "Balance Binoculaire": 
             affichagePhase = "Équilibre et Confort Binoculaire"; 
