@@ -4342,8 +4342,9 @@ if (gainTotal >= 3) {
         }
     }
 } else {
-    // ÉCHEC DU GAIN : On rejette le -0.25, on revient à la base et on FINIT LA SPHÈRE
-    revertMinusLens(); 
+    // ÉCHEC DU GAIN CUMULÉ : Le patient ne confirme pas l'amélioration même sur la ligne N
+    updateDisplay("Gain cumulé nul : Rejet définitif du -0.25");
+    revertMinusLens(); // Cette fonction va maintenant forcer la sortie vers l'axe
 }
     return;
 }
@@ -4764,21 +4765,25 @@ function handleSb10Safety(currentSphere, score) {
 // Fonction de secours pour annuler le verre de test en cas d'échec de gain
 function revertMinusLens() {
     var target = getTargetEye();
-    if (target.sphere < 0) appState.subj[appState.activeEye].swebDone = true;
+    var eye = appState.activeEye;
+
+    // 1. On marque Swéb comme fait pour cet oeil pour éviter d'y revenir
+    if (target.sphere < 0) appState.subj[eye].swebDone = true;
     
-    // 1. Rétablissement de la sphère initiale
+    // 2. Rétablissement de la sphère initiale (on rejette le -0.25)
     target.sphere = appState.baseSphereValue; 
     
     appState.isCheckingGain = false;
-    appState.examPhase = "Sb1.0"; // On remet une phase neutre par sécurité
+    // On change la phase pour sortir du moteur de recherche de sphère
+    appState.examPhase = "Validation_Finale_Sphere"; 
     
-    // 2. Message de feedback
-    updateDisplay("Gain insuffisant : retour à la base.");
+    // 3. Message de feedback
+    updateDisplay("Gain nul : retour à la sphère précédente.");
     
-    // 3. SORTIE DÉFINITIVE VERS L'ASTIGMATISME
-    say("Ok. On continue.", function() {
-        // Cette ligne est cruciale : elle ferme la recherche de sphère
-        finishSb10ForEye(); 
+    // 4. SORTIE DÉFINITIVE vers l'astigmatisme (ou oeil suivant)
+    say("D'accord. On reste comme ça.", function() {
+        // Force la clôture de la sphère et le passage à l'axe
+        window.finishSb10ForEye(); 
     });
 }
 function changeSphereAndRetest(delta) { var target = getTargetEye(); target.sphere += delta; nextLetters(); }
@@ -5269,44 +5274,57 @@ window.processCylinderPowerDecision = function(choice) {
         return;
     }
 
-    // Modification physique et visuelle
+    // --- 1. APPLICATION DU CHANGEMENT PHYSIQUE ---
     target.cyl += change;
     appState.cylTotalModifs++;
     appState.cylBalanceCounter += change;
     appState.cylPowerChangeSum += change;
     appState.lastCylDecision = decisionType;
-    appState.cylPowerStep = 3; // On sort définitivement du mode "RA"
+    appState.cylPowerStep = 3; 
 
     updateDisplay("Modification Cylindre : " + target.cyl.toFixed(2));
 
-    // --- ÉTAPE E : VÉRIFICATION DES SEUILS ---
-    // Check retour Axe (0.75)
+    // --- 2. RÈGLE DE L'ÉQUILIBRE (PRIORITAIRE) ---
+    // On vérifie si on a atteint 0.50 de cumul de modification de cylindre
+    if (Math.abs(appState.cylBalanceCounter) >= 0.50) {
+        appState.cylBalanceCounter = 0;
+        if (target.sphere > 0) {
+            // Hypermétrope : compensation directe
+            target.sphere -= 0.25;
+            updateDisplay("Équilibre : Sphère -0.25");
+        } else {
+            // Myope : compensation + contrôle de lecture
+            target.sphere -= 0.25;
+            appState.examPhase = "CylinderPowerBalance_Myope";
+            nextLetters();
+            updateDisplay("Équilibre Myope : Compensation et contrôle");
+            say("D'accord. Relisez-moi ces lettres s'il vous plaît.");
+            return; // On arrête tout pour attendre la réponse du myope
+        }
+    }
+
+    // --- 3. RÈGLE DE L'ARRÊT SI CYLINDRE À 0 ---
+    if (Math.abs(target.cyl) < 0.01) {
+        target.cyl = 0;
+        updateDisplay("Cylindre à 0.00 : Arrêt de la puissance.");
+        // Appel de la fin (qui gérera la règle du déséquilibre si modifs impaires)
+        window.finishCylinderPower(); 
+        return;
+    }
+
+    // --- 4. VÉRIFICATION DU SEUIL DE RETOUR AXE (0.75) ---
     if (Math.abs(appState.cylPowerChangeSum) >= 0.75) {
         appState.cylPowerChangeSum = 0;
         say("Ok, vérifions à nouveau l'axe.", function() { initAxisCheck(); });
         return;
     }
 
-    // Check Équilibre Sphère (0.50)
-    if (Math.abs(appState.cylBalanceCounter) >= 0.50) {
-        appState.cylBalanceCounter = 0;
-        if (target.sphere > 0) {
-            target.sphere -= 0.25;
-            updateDisplay("Équilibre : Sphère -0.25");
-        } else {
-            appState.examPhase = "CylinderPowerBalance_Myope";
-            nextLetters();
-            say("D'accord. Relisez-moi ces lettres s'il vous plaît.");
-            return; 
-        }
-    }
-
-    // RELANCE DE LA SÉQUENCE POUR AFFINER
+    // --- 5. RELANCE STANDARD (Si aucune règle ci-dessus n'a arrêté le flux) ---
     say("Bien.", function() {
         document.getElementById('axisControls').classList.add('hidden');
         setTimeout(window.runCylinderPowerSequence, 1000);
     });
-};
+  };
   window.handleJccChoice = function(choice) {
     if (appState.isSpeaking) return; 
 
