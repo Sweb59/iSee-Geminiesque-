@@ -5360,7 +5360,8 @@ window.processCylinderPowerDecision = function(choice) {
         isFinished = true;
         var direction = 'same';
     } else {
-        var direction = (choice === 'pos1') ? 'cw' : 'ccw';
+        // MODIFICATION ICI : pos1 devient ccw (augmentation) et pos2 devient cw (diminution)
+        var direction = (choice === 'pos1') ? 'ccw' : 'cw'; 
         var lastDirection = appState.axisDirectionHistory.length > 0 ? 
             appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
 
@@ -5369,13 +5370,16 @@ window.processCylinderPowerDecision = function(choice) {
 
         if (appState.cylHigh) {
             if (appState.highCylDirection === null) {
-                if (choice === 'pos2') { appState.highCylDirection = "plus"; newAxe = currentAxisNum + 5; }
-                else { appState.highCylDirection = "minus"; newAxe = currentAxisNum; }
+                // MODIFICATION ICI : pos1 (Augmente) devient le départ vers le "plus"
+                if (choice === 'pos1') { appState.highCylDirection = "plus"; newAxe = currentAxisNum + 5; }
+                else { appState.highCylDirection = "minus"; newAxe = currentAxisNum - 5; } // Correction : pos2 diminue
             } else if (appState.highCylDirection === "plus") {
-                if (choice === 'pos2') { newAxe = currentAxisNum + 5; }
+                // MODIFICATION ICI : Si on est dans le sens +, pos1 continue d'augmenter
+                if (choice === 'pos1') { newAxe = currentAxisNum + 5; }
                 else { newAxe = currentAxisNum; isFinished = true; }
             } else if (appState.highCylDirection === "minus") {
-                if (choice === 'pos1') { newAxe = currentAxisNum - 5; }
+                // MODIFICATION ICI : Si on est dans le sens -, pos2 continue de diminuer
+                if (choice === 'pos2') { newAxe = currentAxisNum - 5; }
                 else { newAxe = currentAxisNum; isFinished = true; }
             }
         } else {
@@ -5400,7 +5404,7 @@ window.processCylinderPowerDecision = function(choice) {
         target.axe = normalizeAxis(newAxe);
     }
 
-    // --- SÉCURITÉ RÉPÉTITION ---
+    // --- SÉCURITÉ RÉPÉTITION (Inchangée, basée sur direction) ---
     var lastDir = appState.axisDirectionHistory.length > 1 ? appState.axisDirectionHistory[appState.axisDirectionHistory.length - 2] : null;
     if (direction !== 'same' && direction === lastDir && !appState.axisHelpMode) {
         appState.axisRepeatCount = (appState.axisRepeatCount || 0) + 1;
@@ -5417,41 +5421,32 @@ window.processCylinderPowerDecision = function(choice) {
             say("Vérifions cela. Pour vous aider, lisez les lettres à voix haute.", function() {
                 setTimeout(function() { runJccSequence(); }, 1000);
             });
-            return; // STOP ICI
+            return; 
         }
     }
 
-    // --- SORTIE OU RELANCE ---
-
-    // CAS A : COURT-CIRCUIT (RÉPONSE PAREIL D'EMBLÉE)
+    // --- SORTIE OU RELANCE (Inchangée) ---
     if (isFinished && appState.axisDirectionHistory.length <= 1) {
         updateDisplay("Axe RA conservé : " + target.axe + "°");
         say("Parfait.", function() {
-           window.initCylinderPowerCheck(true); 
+            window.initCylinderPowerCheck(true); 
         });
-        return; // STOP ICI
+        return; 
     }
 
-    // CAS B : FIN DU TEST (VALIDATION FINALE)
     if (isFinished) {
         appState.isFinalStep = false;
         appState.examPhase = "AxisVerification";
-        
-        // --- CORRECTIF VISUEL : RÉAFFICHER LES BOUTONS ---
-        document.getElementById('axisControls').classList.add('hidden'); // Cache Mieux 1/2
-        document.getElementById('standardButtons').classList.remove('hidden'); // Affiche 0-5 lettres
-        // -----------------------------------------------
-
+        document.getElementById('axisControls').classList.add('hidden'); 
+        document.getElementById('standardButtons').classList.remove('hidden'); 
         updateDisplay("Validation de l'axe : " + target.axe + "°");
-        
         say("Parfait. Bien. Vérifions tout cela. Lisez-moi cette ligne s'il vous plaît.", function() {
-            // On s'assure que les lettres changent bien pour la vérification
             nextLetters();
             window.updateDisplay("Vérification de l'axe l'axe en cours...");
         });
-        return; // STOP ICI
+        return; 
     }
-    // CAS C : LE TEST CONTINUE (RELANCE)
+
     var feedbackAxe = appState.isFinalStep ? "Excellent." : "Bien.";
     updateDisplay("Nouvel Axe : " + target.axe + "°");
     say(feedbackAxe, function() {
