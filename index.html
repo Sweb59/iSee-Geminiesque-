@@ -5014,26 +5014,22 @@ window.updateAxisBubbles = function() {
     }
     
     // 5. MISE À JOUR DES BOUTONS RÉPONSES
-    // .btn-orange = Gauche (via CSS row-reverse)
-    // .btn-blue   = Droite (via CSS row-reverse)
     var btnRedLeft = document.querySelector('#axisDecisions .btn-orange'); 
     var btnGreenRight = document.querySelector('#axisDecisions .btn-blue'); 
 
-    if (appState.cylHigh) {
-        // --- MODE CYLINDRE TRÈS FORT (>= 4.50) ---
-        // On affiche les valeurs numériques sur les boutons
+    // --- CONDITION CORRIGÉE : Cylindre fort ET Phase d'Axe ---
+    if (appState.cylHigh && (appState.examPhase === "AxisCheck" || appState.examPhase === "AxisVerification")) {
+        // --- MODE CYLINDRE TRÈS FORT (>= 4.50) EN PHASE AXE ---
         if (appState.highCylDirection === "minus") {
-            // SENS MOINS : Rouge(Gauche)=Base, Vert(Droite)=Test-5
             btnRedLeft.innerHTML = "AXE<br>" + currentAxisNum + "°";
             btnGreenRight.innerHTML = "AXE<br>" + testAxis + "°";
         } else {
-            // SENS PLUS (ou initial) : Rouge(Gauche)=Test+5, Vert(Droite)=Base
             btnRedLeft.innerHTML = "AXE<br>" + testAxis + "°";
             btnGreenRight.innerHTML = "AXE<br>" + currentAxisNum + "°";
         }
     } else {
-        // --- MODE STANDARD (0.25 à 4.25) ---
-        // On restaure les labels textuels classiques
+        // --- MODE STANDARD OU PHASE PUISSANCE ---
+        // On force le retour au texte standard pour la puissance, même si cylHigh est vrai
         btnRedLeft.innerHTML = "Mieux 1";
         btnGreenRight.innerHTML = "Mieux 2";
     }
@@ -5137,6 +5133,14 @@ window.runJccSequence = function() {
   window.runCylinderPowerSequence = function() {
     if (appState.isSpeaking) return;
     
+    // --- RÉINITIALISATION FORCÉE DES BOUTONS ---
+    // On s'assure que "Mieux 1" et "Mieux 2" écrasent les degrés d'axe
+    var btnRedLeft = document.querySelector('#axisDecisions .btn-orange'); 
+    var btnGreenRight = document.querySelector('#axisDecisions .btn-blue'); 
+    if (btnRedLeft) btnRedLeft.innerHTML = "Mieux 1";
+    if (btnGreenRight) btnGreenRight.innerHTML = "Mieux 2";
+    // -------------------------------------------
+
     // 1. NETTOYAGE ET PRÉPARATION (Veille)
     window.hideBaseCircle(); 
     document.getElementById('jccVisuals').classList.add('hidden');
@@ -5146,7 +5150,6 @@ window.runJccSequence = function() {
     var bPlus = document.getElementById('animCylPlus');
     var bMinus = document.getElementById('animCylMinus');
 
-    // On affiche les deux bulles immédiatement en mode veille (gris/transparent)
     if(bPlus) { 
         bPlus.style.display = "flex"; 
         bPlus.classList.remove('hidden', 'active'); 
@@ -5158,28 +5161,22 @@ window.runJccSequence = function() {
 
     // 2. SÉQUENCE VOCALE AVEC ILLUMINATION SYNCHRONISÉE
     say("Vous préférez lire les lettres dans la position", function() {
-        // --- ALLUMAGE POSITION 1 ---
         if (bPlus) bPlus.classList.add('active');
         
         say("une ?", function() {
-            // Temps d'observation position 1
             setTimeout(function() {
                 say("Ou dans la position", function() {
-                    // --- BASCULE : EXTINCTION 1 / ALLUMAGE 2 ---
                     if (bPlus) bPlus.classList.remove('active');
                     if (bMinus) bMinus.classList.add('active');
 
                     say("deux, ou c'est pareil ?", function() {
-                         // --- FIN DE SÉQUENCE : RETOUR EN VEILLE PUIS DISPARITION ---
                          setTimeout(function() {
                             if (bMinus) bMinus.classList.remove('active');
                             
-                            // On attend la fin de l'animation d'extinction (0.4s) pour cacher
                             setTimeout(function() {
                                 if (bPlus) bPlus.style.display = "none";
                                 if (bMinus) bMinus.style.display = "none";
 
-                                // Affichage des contrôles de décision
                                 var axisCtrl = document.getElementById('axisControls');
                                 if (axisCtrl) {
                                     axisCtrl.classList.remove('hidden');
@@ -5360,7 +5357,7 @@ window.processCylinderPowerDecision = function(choice) {
         isFinished = true;
         var direction = 'same';
     } else {
-        // MODIFICATION ICI : pos1 devient ccw (augmentation) et pos2 devient cw (diminution)
+        // pos1 (Mieux 1) = ccw (augmente), pos2 (Mieux 2) = cw (diminue)
         var direction = (choice === 'pos1') ? 'ccw' : 'cw'; 
         var lastDirection = appState.axisDirectionHistory.length > 0 ? 
             appState.axisDirectionHistory[appState.axisDirectionHistory.length - 1] : null;
@@ -5370,19 +5367,33 @@ window.processCylinderPowerDecision = function(choice) {
 
         if (appState.cylHigh) {
             if (appState.highCylDirection === null) {
-                // MODIFICATION ICI : pos1 (Augmente) devient le départ vers le "plus"
-                if (choice === 'pos1') { appState.highCylDirection = "plus"; newAxe = currentAxisNum + 5; }
-                else { appState.highCylDirection = "minus"; newAxe = currentAxisNum - 5; } // Correction : pos2 diminue
+                if (choice === 'pos1') { 
+                    appState.highCylDirection = "plus"; 
+                    newAxe = currentAxisNum + 5; 
+                } else { 
+                    // On choisit le sens "Moins", mais on reste sur Base pour comparer avec -5
+                    appState.highCylDirection = "minus"; 
+                    newAxe = currentAxisNum; 
+                }
             } else if (appState.highCylDirection === "plus") {
-                // MODIFICATION ICI : Si on est dans le sens +, pos1 continue d'augmenter
-                if (choice === 'pos1') { newAxe = currentAxisNum + 5; }
-                else { newAxe = currentAxisNum; isFinished = true; }
+                if (choice === 'pos1') { 
+                    newAxe = currentAxisNum + 5; 
+                } else { 
+                    // Clic sur l'axe de base affiché sur le bouton -> On valide l'axe actuel
+                    newAxe = currentAxisNum; 
+                    isFinished = true; 
+                }
             } else if (appState.highCylDirection === "minus") {
-                // MODIFICATION ICI : Si on est dans le sens -, pos2 continue de diminuer
-                if (choice === 'pos2') { newAxe = currentAxisNum - 5; }
-                else { newAxe = currentAxisNum; isFinished = true; }
+                if (choice === 'pos2') { 
+                    newAxe = currentAxisNum - 5; 
+                } else { 
+                    // Clic sur l'axe de base (ex: 45°) -> On garde 45° et on finit
+                    newAxe = currentAxisNum; 
+                    isFinished = true; 
+                }
             }
         } else {
+            // Logique standard
             if (appState.isFinalStep) {
                 newAxe = target.axe + (direction === 'ccw' ? 5 : -5);
                 isFinished = true;
@@ -5404,7 +5415,7 @@ window.processCylinderPowerDecision = function(choice) {
         target.axe = normalizeAxis(newAxe);
     }
 
-    // --- SÉCURITÉ RÉPÉTITION (Inchangée, basée sur direction) ---
+    // --- SÉCURITÉ RÉPÉTITION (Inchangée) ---
     var lastDir = appState.axisDirectionHistory.length > 1 ? appState.axisDirectionHistory[appState.axisDirectionHistory.length - 2] : null;
     if (direction !== 'same' && direction === lastDir && !appState.axisHelpMode) {
         appState.axisRepeatCount = (appState.axisRepeatCount || 0) + 1;
@@ -5425,7 +5436,7 @@ window.processCylinderPowerDecision = function(choice) {
         }
     }
 
-    // --- SORTIE OU RELANCE (Inchangée) ---
+    // --- SORTIE OU RELANCE ---
     if (isFinished && appState.axisDirectionHistory.length <= 1) {
         updateDisplay("Axe RA conservé : " + target.axe + "°");
         say("Parfait.", function() {
