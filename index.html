@@ -2698,6 +2698,7 @@ var appState = {
 
   // --- AJOUTEZ LA LIGNE ICI ---
     axisIntroDone: false,
+  isCylValidationLoop: false, // <-- AJOUTEZ CETTE LIGNE ICI
 
   // --- AJOUTEZ CES DEUX LIGNES ICI ---
     lettersBeforeAxis: 0, // Score de référence avant le test de l'axe
@@ -3932,6 +3933,36 @@ window.relaunchFullCheck = function() {
 
 window.decideMinus = function(choice) {
     if (appState.isSpeaking) return;
+
+    // --- EXCEPTION : VALIDATION FINALE CYLINDRE ---
+    if (appState.isCylValidationLoop) {
+        appState.isCylValidationLoop = false; // On reset le flag immédiatement
+        var target = getTargetEye();
+
+        if (choice === 'better') {
+            target.sphere -= 0.25; // On donne le -0.25
+            updateDisplay("Validation Cyl : -0.25 accepté. Fin de l'oeil.");
+        } else {
+            target.sphere = appState.baseSphereValue; // On garde la base
+            updateDisplay("Validation Cyl : -0.25 refusé ou identique.");
+        }
+
+        // On ferme le test visuel et on termine l'oeil directement
+        document.getElementById('checkPlusZone').classList.add('hidden');
+        say("Continuons.", function() {
+          appState.examPhase = "CylinderPowerFinished";
+            var currentEye = appState.activeEye;
+            var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
+            var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
+
+            if (!appState.isMonocularExam && !isOtherEyeDone) {
+                window.proceedToNextStepAfterEye(currentEye);
+            } else {
+                setTimeout(window.restoreBinocularBalance, 1000);
+            }
+        });
+        return; // ON S'ARRÊTE ICI : Pas de Swéb, pas de boucle.
+    }
 
     if (choice === 'better') {
         const eye = appState.activeEye;
@@ -6042,6 +6073,7 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
             } else {
                 // HYPEROPE : Passage direct aux verres vérificateurs
                 updateDisplay("Déséquilibre : Test verres vérificateurs");
+              appState.isCylValidationLoop = true; // ON ACTIVE LE FLAG ICI
                 initSphereCheckPlus(true); // On réutilise votre fonction existante
             }
         });
