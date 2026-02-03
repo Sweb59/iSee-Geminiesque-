@@ -3995,10 +3995,9 @@ if (appState.examPhase === "AxisVerification") {
     updateLockUI(true);
 
     var refLetters = appState.initialLettersCount; 
-    var refVA = appState.initialSb10VA;
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
-    // --- CAS D'ÉCHEC : DÉGRADATION DÉTECTÉE (LE REBOND) ---
+    // --- CAS D'ÉCHEC : SCORE INFÉRIEUR À LA RÉFÉRENCE ---
     if (lettersRead < refLetters) {
         appState.examPhase = "AxisCheck"; 
         var target = getTargetEye();
@@ -4009,10 +4008,10 @@ if (appState.examPhase === "AxisVerification") {
         document.getElementById('standardButtons').classList.add('hidden');
         document.getElementById('axisControls').classList.remove('hidden');
         
-        // CONFORT : On force le retour à 10/10 pour le test à voix haute
+        // CONFORT : Retour à 10/10 pour le retest JCC
         setVaToIndexClosest(1.00); 
         
-        // RESET des paramètres de recherche JCC
+        // RESET des paramètres de recherche JCC (Identique à ton code initial)
         appState.axisDirectionHistory = [];
         appState.isFinalStep = false;
         appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
@@ -4037,32 +4036,32 @@ if (appState.examPhase === "AxisVerification") {
         return; 
     }
 
-    // --- CAS DE RÉUSSITE OU PROGRESSION ---
-    if (refVA < 1.0 && lettersRead >= 3) {
-        appState.subj[appState.activeEye].va = currentVA;
-        if (currentVA < 1.0) {
-            goNextLine();
-            updateDisplay("Gain d'acuité : test de la ligne " + ACUITY_TABLE[appState.vaIndex].va);
-            say("Très bien. Essayons la ligne suivante.", function() {
-                appState.isSpeaking = false; updateLockUI(false); nextLetters(); 
+    // --- CAS DE RÉUSSITE (Score >= Référence) ---
+    // On met à jour la VA de l'œil avec la ligne actuelle validée
+    appState.subj[appState.activeEye].va = currentVA;
+    updateDisplay("Validé " + currentVA + " (" + lettersRead + " lues)");
+
+    // RÈGLE DE PROGRESSION : Si on est en dessous de 1.0, on tente de monter
+    if (currentVA < 1.0) {
+        if (goNextLine()) {
+            // La nouvelle ligne validée devient la référence : on demande 3 lettres pour la suite
+            appState.initialLettersCount = 3; 
+            
+            updateDisplay("Progression : test de la ligne " + ACUITY_TABLE[appState.vaIndex].va);
+            say("Très bien. Et cette ligne, pouvez-vous la lire ?", function() {
+                appState.isSpeaking = false; 
+                updateLockUI(false);
+                nextLetters(); 
             });
             return;
         }
-    } 
-    else if (currentVA < refVA) {
-        setVaToIndexClosest(refVA); 
-        updateDisplay("Contrôle sur ligne de référence : " + refVA);
-        say("Vérifions cela.", function() {
-            appState.isSpeaking = false; updateLockUI(false); nextLetters(); 
-        });
-        return;
     }
 
-    // VALIDATION FINALE : On passe à la puissance
-    updateDisplay("Mise au point de l'axe validée.");
+    // VALIDATION FINALE : Terminé (soit VA >= 1.0, soit échec de progression)
+    updateDisplay("Mise au point de l'axe validée à " + currentVA);
     appState.isSpeaking = false; 
     updateLockUI(false);
-   window.initCylinderPowerCheck(true); 
+    window.initCylinderPowerCheck(true); 
     return;
 }
    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (FIN CYLINDRE) ---
@@ -4792,6 +4791,16 @@ function goNextLine() {
     appState.sb10_line_defog = 0; 
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
+    // --- AJOUT SÉCURITÉ AXE : On saute directement à la logique standard ---
+    if (appState.examPhase === "AxisVerification") {
+        if (appState.vaIndex < ACUITY_TABLE.length - 1) { 
+            appState.vaIndex++; 
+            appState.letterIndex = 0; 
+            return true; 
+        }
+        return false;
+    }
+    // ------------------------------------------------------------------------
     // --- LOGIQUE SPÉCIFIQUE PHASE Sb0.2 (2/10 vs 2.5/10) ---
     if (appState.examPhase === "Sb0.2") {
         if (currentVA === 0.20) {
@@ -5451,8 +5460,9 @@ window.processCylinderPowerDecision = function(choice) {
         document.getElementById('axisControls').classList.add('hidden'); 
         document.getElementById('standardButtons').classList.remove('hidden'); 
         updateDisplay("Validation de l'axe : " + target.axe + "°");
+      // Force le retour à la meilleure ligne validée lors de la Sb1.0 pour la validation
+setVaToIndexClosest(appState.initialSb10VA);
         say("Parfait. Bien. Vérifions tout cela. Lisez-moi cette ligne s'il vous plaît.", function() {
-            nextLetters();
             window.updateDisplay("Vérification de l'axe l'axe en cours...");
         });
         return; 
