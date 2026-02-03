@@ -4004,12 +4004,16 @@ if (appState.examPhase === "AxisVerification") {
         
         // REBOND : Retour à l'axe initial de l'Auto-Réfractomètre
         target.axe = appState.axisInitialRA; 
-        
+        setVaToIndexClosest(1.00); // On remet la ligne 10/10 en mémoire
+        nextLetters();
+
+// 2. MISE À JOUR VISUELLE (Avant la voix)
+        // On affiche tout de suite la nouvelle ligne et le changement de phase
+        updateDisplay("Échec validation (" + lettersRead + "/" + refLetters + "). Retour Axe RA.");
+      
         document.getElementById('standardButtons').classList.add('hidden');
         document.getElementById('axisControls').classList.remove('hidden');
         
-        // CONFORT : Retour à 10/10 pour le retest JCC
-        setVaToIndexClosest(1.00); 
         
         // RESET des paramètres de recherche JCC (Identique à ton code initial)
         appState.axisDirectionHistory = [];
@@ -4024,7 +4028,7 @@ if (appState.examPhase === "AxisVerification") {
             document.getElementById('jccVisuals').classList.remove('hidden');
         }
 
-        updateDisplay("Échec validation (" + lettersRead + "/" + refLetters + "). Retour Axe RA.");
+      
 
         // ANNONCE DE RUPTURE : On impose la lecture à voix haute
         say("D'accord. On va vérifier cela ensemble. Pour vous aider dans vos réponses, vous allez cette fois-ci lire les lettres à voix haute.", function() {
@@ -4047,11 +4051,15 @@ if (appState.examPhase === "AxisVerification") {
             // La nouvelle ligne validée devient la référence : on demande 3 lettres pour la suite
             appState.initialLettersCount = 3; 
             
+            // --- ÉTAPE A : MISE À JOUR VISUELLE IMMÉDIATE ---
+            nextLetters(); 
             updateDisplay("Progression : test de la ligne " + ACUITY_TABLE[appState.vaIndex].va);
+            
+            // --- ÉTAPE B : LA VOIX ---
             say("Très bien. Et cette ligne, pouvez-vous la lire ?", function() {
+                // On ne déverrouille QUE quand la voix a fini
                 appState.isSpeaking = false; 
                 updateLockUI(false);
-                nextLetters(); 
             });
             return;
         }
@@ -5426,7 +5434,7 @@ window.processCylinderPowerDecision = function(choice) {
 
     // --- SÉCURITÉ RÉPÉTITION (Inchangée) ---
     var lastDir = appState.axisDirectionHistory.length > 1 ? appState.axisDirectionHistory[appState.axisDirectionHistory.length - 2] : null;
-    if (direction !== 'same' && direction === lastDir && !appState.axisHelpMode) {
+    if (choice !== 'same' && direction === lastDir && !appState.axisHelpMode) {
         appState.axisRepeatCount = (appState.axisRepeatCount || 0) + 1;
         if (appState.axisRepeatCount >= 2) {
             appState.axisHelpMode = true;
@@ -5446,7 +5454,9 @@ window.processCylinderPowerDecision = function(choice) {
     }
 
     // --- SORTIE OU RELANCE ---
-    if (isFinished && appState.axisDirectionHistory.length <= 1) {
+    
+    // CAS A : "Pareil" d'emblée (L'historique est vide) -> Direct Puissance
+    if (choice === 'same' && appState.axisDirectionHistory.length === 0) {
         updateDisplay("Axe RA conservé : " + target.axe + "°");
         say("Parfait.", function() {
             window.initCylinderPowerCheck(true); 
@@ -5454,16 +5464,24 @@ window.processCylinderPowerDecision = function(choice) {
         return; 
     }
 
-    if (isFinished) {
+   if (isFinished) {
         appState.isFinalStep = false;
         appState.examPhase = "AxisVerification";
+        
+        // 1. MISE À JOUR VISUELLE IMMÉDIATE (Ligne + Carte + Boutons)
         document.getElementById('axisControls').classList.add('hidden'); 
         document.getElementById('standardButtons').classList.remove('hidden'); 
-        updateDisplay("Validation de l'axe : " + target.axe + "°");
-      // Force le retour à la meilleure ligne validée lors de la Sb1.0 pour la validation
-setVaToIndexClosest(appState.initialSb10VA);
-        say("Parfait. Bien. Vérifions tout cela. Lisez-moi cette ligne s'il vous plaît.", function() {
-            window.updateDisplay("Vérification de l'axe l'axe en cours...");
+        
+        // On règle la ligne AVANT d'afficher
+        setVaToIndexClosest(appState.initialSb10VA);
+        // On force le rendu de la nouvelle ligne à l'écran
+        window.updateDisplay("Validation de l'axe : " + target.axe + "°");
+
+        // 2. LANCEMENT DE LA VOIX (Après le changement visuel)
+        say("Vérifions tout cela. Lisez-moi cette ligne s'il vous plaît.", function() {
+             // On libère le verrouillage une fois que l'assistant a fini de parler
+             appState.isSpeaking = false;
+             updateLockUI(false);
         });
         return; 
     }
