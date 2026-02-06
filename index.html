@@ -3843,6 +3843,20 @@ window.decidePlus = function(choice) {
     const raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
 
     if (choice === 'better' || choice === 'same') {
+      // --- INTERVENTION CHIRURGICALE : SORTIE DÉSÉQUILIBRE ---
+        if (appState.isCylValidationLoop) {
+            appState.isCylValidationLoop = false; 
+            if (choice === 'better') {
+                target.sphere = appState.baseSphereValue + 0.25;
+            }
+            document.getElementById('checkPlusZone').classList.add('hidden');
+            say("Continuons.", function() {
+                appState.cylTotalModifs = 0; 
+                window.finishCylinderPower();
+            });
+            return; 
+        }
+        // --- FIN DE L'INSERTION ---
         document.getElementById('decisionsPlus').classList.add('hidden');
         appState.isCheckingGain = false;
         
