@@ -3838,39 +3838,6 @@ await wait(1000);
 window.decidePlus = function(choice) {
     if (appState.isSpeaking) return;
 
-  // --- AJOUT CHIRURGICAL : GESTION VALIDATION CYLINDRE (+0.25) ---
-if (appState.isCylValidationLoop) {
-    appState.isCylValidationLoop = false; // On reset le flag
-    var target = getTargetEye();
-
-    if (choice === 'better' || choice === 'same') {
-        // Si 'better', on donne le +0.25. Si 'same', la base est déjà dans appState.baseSphereValue
-        target.sphere = (choice === 'better') ? appState.baseSphereValue + 0.25 : appState.baseSphereValue;
-        updateDisplay("Validation Cyl : +0.25 " + (choice === 'better' ? "accepté" : "identique") + ". Fin de l'oeil.");
-    } else {
-        // Rejet du +0.25 (Préfère la sphère testée/base)
-        target.sphere = appState.baseSphereValue;
-        updateDisplay("Validation Cyl : +0.25 refusé.");
-    }
-
-    document.getElementById('checkPlusZone').classList.add('hidden');
-    
-    say("Continuons.", function() {
-        appState.examPhase = "CylinderPowerFinished";
-        var currentEye = appState.activeEye;
-        var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
-        var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
-
-        if (!appState.isMonocularExam && !isOtherEyeDone) {
-            window.proceedToNextStepAfterEye(currentEye);
-        } else {
-            setTimeout(window.restoreBinocularBalance, 1000);
-        }
-    });
-    return; // Stop le reste de la fonction decidePlus
-}
-// --------------------------------------------------------------
-
     const target = getTargetEye();
     const currentSph = target.sphere;
     const raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
@@ -6113,25 +6080,23 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
         return; // On s'arrête ici pour attendre le test
     }
 
-    // --- SI ON ARRIVE ICI, C'EST QUE LE NOMBRE DE MODIFS EST PAIR ---
-    // (Puisque le bloc 'isImpair' a déjà fait son 'return')
+    // Si nombre pair ou fin de vérification : Sortie définitive de l'œil
+    appState.examPhase = "CylinderPowerFinished";
+    updateDisplay("Mise au point cylindre terminée");
 
-    appState.examPhase = "CylinderPowerVerification";
-    updateDisplay("Validation de la puissance cylindrique");
+    say("C'est parfait.", function() {
+        var currentEye = appState.activeEye;
+        var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
+        var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
-    // On mémorise le score actuel comme référence avant de vérifier
-    appState.initialLettersCount = appState.lastResponseCount; 
-
-    say("Vérifions maintenant si ce nouveau réglage est efficace. Lisez-moi cette ligne s'il vous plaît.", function() {
-        // Nettoyage UI pour la lecture
-        if(document.getElementById('axisControls')) document.getElementById('axisControls').classList.add('hidden');
-        if(document.getElementById('standardButtons')) document.getElementById('standardButtons').classList.remove('hidden');
-        
-        // On s'assure que les bulles JCC sont bien masquées
-        var bPlus = document.getElementById('animCylPlus');
-        var bMinus = document.getElementById('animCylMinus');
-        if(bPlus) bPlus.style.display = "none";
-        if(bMinus) bMinus.style.display = "none";
+        if (!appState.isMonocularExam && !isOtherEyeDone) {
+            // Passer au second œil
+            setTimeout(function() { window.proceedToNextStepAfterEye(currentEye); }, 1000);
+        } else {
+            // Fin globale de l'astigmatisme -> Vers la balance binoculaire
+            updateDisplay("Fin de l'astigmatisme.");
+            setTimeout(window.restoreBinocularBalance, 1500);
+        }
     });
 };
 </script>
