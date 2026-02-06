@@ -2701,7 +2701,8 @@ var appState = {
   isCylValidationLoop: false, // <-- AJOUTEZ CETTE LIGNE ICI
 
   // --- AJOUTEZ CES DEUX LIGNES ICI ---
-    lettersBeforeAxis: 0, // Score de référence avant le test de l'axe
+    lettersBeforeAxis: 0,
+  lettersAfterAxis: 0,// Score de référence avant le test de l'axe
     axisInitialRA: 0,     // Valeur de l'axe au départ (RA) pour reset si besoin
     // ----------------------------------
   initialSb10VA: 0,        
@@ -4031,8 +4032,43 @@ window.decideMinus = function(choice) {
  window.handleResponse = function(lettersRead) {
     if (appState.isSpeaking) return; 
     appState.lastResponseCount = lettersRead;
-    window.cleanAndSyncVA(lettersRead); 
+    window.cleanAndSyncVA(lettersRead);
+   // --- MOTEUR DE VALIDATION DE LA PUISSANCE ---
+    if (appState.examPhase === "CylinderPowerVerification") {
+        if (appState.isSpeaking) return;
+        appState.isSpeaking = true;
+        updateLockUI(true);
 
+        // COMPARAISON : Score actuel vs Score après validation de l'axe
+        if (lettersRead < appState.lettersAfterAxis) {
+            // CAS ÉCHEC : La vision a baissé
+            var target = getTargetEye();
+            target.cyl = appState.cylInitialRA; // Remise puissance initiale du RA
+            
+            updateDisplay("Échec validation : retour puissance RA et nouvelle tentative.");
+            
+            // On repasse en phase de recherche pour une seconde chance
+            appState.examPhase = "CylinderPowerCheck"; 
+            
+            // Consigne renforcée : Lecture à voix haute
+            say("D'accord. On va vérifier cela ensemble. Pour vous aider, vous allez cette fois-ci me lire toutes les lettres à voix haute.", function() {
+                appState.isSpeaking = false;
+                updateLockUI(false);
+                // Relance de la séquence visuelle JCC de puissance
+                setTimeout(window.runCylinderPowerSequence, 1000);
+            });
+        } else {
+            // CAS SUCCÈS : Vision maintenue ou meilleure
+            updateDisplay("Puissance validée.");
+            appState.examPhase = "CylinderPowerFinished";
+            
+            // On rappelle finishCylinderPower qui va maintenant fermer l'oeil (grâce au flag Finished)
+            window.finishCylinderPower();
+        }
+        return; // Important : on stoppe l'exécution ici
+    }
+
+ 
     // --- 1. GESTION SPÉCIFIQUE PHASE AXE ---
     // --- 1. GESTION SPÉCIFIQUE PHASE AXE (VALIDATION) ---
 if (appState.examPhase === "AxisVerification") {
@@ -4088,6 +4124,7 @@ if (appState.examPhase === "AxisVerification") {
     // --- CAS DE RÉUSSITE (Score >= Référence) ---
     // On met à jour la VA de l'œil avec la ligne actuelle validée
     appState.subj[appState.activeEye].va = currentVA;
+  appState.lettersAfterAxis = lettersRead;
     updateDisplay("Validé " + currentVA + " (" + lettersRead + " lues)");
 
     // RÈGLE DE PROGRESSION : Si on est en dessous de 1.0, on tente de monter
@@ -6095,23 +6132,36 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
     }
 
     // Si nombre pair ou fin de vérification : Sortie définitive de l'œil
-    appState.examPhase = "CylinderPowerFinished";
-    updateDisplay("Mise au point cylindre terminée");
+    // À AJOUTER :
+// A. PORTE DE SORTIE : Si la validation est déjà réussie, on ferme l'œil
+    if (appState.examPhase === "CylinderPowerFinished") {
+        updateDisplay("Mise au point cylindre terminée");
 
-    say("C'est parfait.", function() {
-        var currentEye = appState.activeEye;
-        var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
-        var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
+        say("C'est parfait.", function() {
+            var currentEye = appState.activeEye;
+            var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
+            var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
-        if (!appState.isMonocularExam && !isOtherEyeDone) {
-            // Passer au second œil
-            setTimeout(function() { window.proceedToNextStepAfterEye(currentEye); }, 1000);
-        } else {
-            // Fin globale de l'astigmatisme -> Vers la balance binoculaire
-            updateDisplay("Fin de l'astigmatisme.");
-            setTimeout(window.restoreBinocularBalance, 1500);
-        }
-    });
+            if (!appState.isMonocularExam && !isOtherEyeDone) {
+                setTimeout(function() { window.proceedToNextStepAfterEye(currentEye); }, 1000);
+            } else {
+                updateDisplay("Fin de l'astigmatisme.");
+                setTimeout(window.restoreBinocularBalance, 1500);
+            }
+        });
+        return; 
+    }
+
+    // B. DÉCLENCHEUR : Sinon (cas clics pairs), on lance la validation
+    appState.examPhase = "CylinderPowerVerification";
+    setVaToIndexClosest(appState.subj[appState.activeEye].va);
+    nextLetters();
+
+    document.getElementById('axisControls').classList.add('hidden');
+    document.getElementById('standardButtons').classList.remove('hidden');
+
+    updateDisplay("Validation de la puissance...");
+    say("Vérifions une dernière fois. Relisez-moi cette ligne s'il vous plaît.");
 };
 </script>
 
