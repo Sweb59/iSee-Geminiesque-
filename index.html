@@ -2210,11 +2210,9 @@ window.initClock = function() {
         // Date format: "Dimanche 14 Décembre"
         var options = { weekday: 'long', day: 'numeric', month: 'long' };
         var dateStr = now.toLocaleDateString('fr-FR', options);
-        document.getElementById('displayDate').innerText = dateStr;
 
         // Time format: "14:30"
         var timeStr = now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-        document.getElementById('displayTime').innerText = timeStr;
     }, 1000);
 };
 
@@ -4043,6 +4041,7 @@ window.decideMinus = function(choice) {
         if (lettersRead < appState.lettersAfterAxis) {
             // CAS ÉCHEC : La vision a baissé
             var target = getTargetEye();
+          console.log("DEBUG - Echec validation. Valeur RA stockée : " + appState.cylInitialRA);
             target.cyl = appState.cylInitialRA; // Remise puissance initiale du RA
             
             updateDisplay("Échec validation : retour puissance RA et nouvelle tentative.");
@@ -5334,8 +5333,17 @@ window.processCylinderPowerDecision = function(choice) {
     }
 
     // --- ÉTAPE B : TRAITEMENT DES RÉPONSES STANDARDS ---
+   // --- TRAITEMENT DU CHOIX "PAREIL" ---
     if (choice === 'same') {
-        window.finishCylinderPower();
+        // Si aucune modification n'a été faite sur cet oeil (compteur à 0)
+        if (appState.cylTotalModifs === 0) {
+            updateDisplay("Puissance RA conservée (Pareil d'emblée).");
+            appState.examPhase = "CylinderPowerFinished"; // On saute la validation
+            window.finishCylinderPower();
+        } else {
+            // Si des modifs ont eu lieu, on suit la procédure normale (validation ou clôture)
+            window.finishCylinderPower();
+        }
         return;
     }
 
@@ -6086,7 +6094,7 @@ setTimeout(window.checkVocalEngine, 1500);
 
 window.initCylinderPowerCheck = function(isReturnFromAxis) {
     // ON NE REMET À ZÉRO QUE SI CE N'EST PAS UN RETOUR D'AXE
-    if (!isReturnFromAxis) {
+    if (isReturnFromAxis) {
         appState.cylPowerStep = 1;
         appState.cylPowerChangeSum = 0;
         appState.cylBalanceCounter = 0;
