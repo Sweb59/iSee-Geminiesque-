@@ -6105,6 +6105,12 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
     }
 
     appState.examPhase = "CylinderPowerCheck";
+  // Sauvegarde de la meilleure VA actuelle pour la validation finale
+    appState.bestVaIndex = appState.vaIndex; 
+    
+    // Positionnement sur la ligne 1.0 (10/10) pour le test de confort
+    setVaToIndexClosest(1.00);
+    nextLetters();
     updateDisplay("Mise au point de la puissance");
 
     // Annonce vocale de transition
@@ -6123,6 +6129,7 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
     // Si le nombre de modifs est impair, on doit vérifier le déséquilibre
     if (isImpair) {
         say("Ok, vérifions tout cela.", function() {
+          appState.vaIndex = appState.bestVaIndex;
             if (target.sphere < 0) {
                 // MYOPE : Test de lecture de contrôle
                 appState.examPhase = "CylinderPowerVerification_Myope";
@@ -6162,7 +6169,7 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
 
     // B. DÉCLENCHEUR : Sinon (cas clics pairs), on lance la validation
     appState.examPhase = "CylinderPowerVerification";
-    setVaToIndexClosest(appState.subj[appState.activeEye].va);
+    appState.vaIndex = appState.bestVaIndex;
     nextLetters();
 
     document.getElementById('axisControls').classList.add('hidden');
