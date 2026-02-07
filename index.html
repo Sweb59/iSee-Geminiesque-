@@ -3305,7 +3305,7 @@ window.validateSb02 = function() {
     if (eye === 'OD') appState.sb02_OD_ok = true; 
     else appState.sb02_OG_ok = true;
 
-    say("On passe sur l'autre oel.", function() {
+    say("On passe sur l'autre oeil.", function() {
         if (appState.sb02_OD_ok && appState.sb02_OG_ok) { 
             initSb05(); 
         } 
@@ -3383,7 +3383,7 @@ function validateSb05() {
     if(eye === 'OD') appState.saved_sb05.OD = appState.subj.OD.sphere; 
     else appState.saved_sb05.OG = appState.subj.OG.sphere;
 
-    say("Bien, on va de l'autre côté.", function() {
+    say("Bien, passons sur l'autre oeil.", function() {
         if (appState.sb05_OD_ok && appState.sb05_OG_ok) { 
             initSb10(); 
         } 
@@ -3483,7 +3483,7 @@ window.validateSb10 = function() {
                 updateDisplay("Vérification Myope à 1.0");
 
                 // 4. On lance la voix
-                say("Ce n'est pas moche. Voyons si on peut encore faire mieux. Lisez-moi cette nouvelle ligne.");
+                say("Ce n'est pas moche. Voyons si on peut faire mieux. Lisez-moi cette nouvelle ligne.");
                 
                 return true; 
             }
@@ -3584,7 +3584,7 @@ window.finishSb10ForEye = function() {
     var puissanceCyl = Math.abs(target.cyl);
 
     if (puissanceCyl === 0) {
-        say("C'est parfait, cet oeil est terminé.", function() {
+        say("C'est parfait, on continue.", function() {
             window.proceedToNextStepAfterEye(eye); 
         });
     } else {
@@ -3632,7 +3632,7 @@ window.proceedToNextStepAfterEye = function(completedEye) {
         
         applySb10Logic(); 
         updateDisplay("Bascule vers " + otherEye + " (Oeil " + completedEye + " brouillé à RA+0.75)");
-        say("Bien, nous passons à l'examen de l'autre œil. Lisez moi ces lettres s'il vous plaît.");
+        say("Nous passons donc à l'examen de l'autre œil. Lisez moi ces lettres s'il vous plaît.");
     } else {
         say("Bien. Passons à la suite.");
         updateDisplay("Phase Monoculaire Terminée");
@@ -4335,9 +4335,9 @@ if (appState.examPhase === "Vérification de Swéb") {
     updateDisplay("Vérification de Swéb (Test avec -0.25)");
 
     if (target.sphere < 0) {
-        say("Bien. Et maintenant, est-ce que c'est mieux avec ce verre ? Relisez la ligne.");
+        say("Bien. Et maintenant, est-ce que c'est mieux avec comme ceci ? Relisez la ligne.");
     } else {
-        say("Bien. Et maintenant avec ce nouveau verre, relisez cette ligne s'il vous plaît.");
+        say("Bien. Et maintenant si je fais ça, pouvez-vous lire cette ligne s'il vous plaît.");
     }
     return; 
 }
@@ -4390,7 +4390,7 @@ if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
         appState.examPhase = "Vérification de Swéb_CUMUL_FINAL";
         nextLetters();
         updateDisplay("Vérification de Swéb (Gain cumulé sur ligne N)");
-        say("D'accord. C'est un peu difficle; lisez moi ces lettres là s'il vous plaît.");
+        say("D'accord. Cela semble un peu difficile. Alors, lisez moi ces lettres là s'il vous plaît.");
     } else {
         // ÉCHEC TOTAL : On rend le verre et on finit la sphère
         revertMinusLens();
@@ -4872,7 +4872,7 @@ function revertMinusLens() {
     updateDisplay("Gain nul : retour à la sphère précédente.");
     
     // 4. SORTIE DÉFINITIVE vers l'astigmatisme (ou oeil suivant)
-    say("D'accord. On reste comme ça.", function() {
+    say("D'accord. On continue.", function() {
         // Force la clôture de la sphère et le passage à l'axe
         window.finishSb10ForEye(); 
     });
@@ -5539,7 +5539,7 @@ window.processCylinderPowerDecision = function(choice) {
             appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
             if (appState.cylHigh) appState.axisStep = 5;
             updateDisplay("Sécurité répétition : retour RA.");
-            say("Vérifions cela. Pour vous aider, lisez les lettres à voix haute.", function() {
+            say("D'accord. On va vérifier cela ensemble. Pour vous aider dans vos réponses, vous allez cette fois-ci me lire toutes les lettres à voix haute.", function() {
                 setTimeout(function() { runJccSequence(); }, 1000);
             });
             return; 
