@@ -5725,9 +5725,12 @@ if (appState.examPhase) {
 
 // --- PUISSANCE CYLINDRE ---
         case "CylinderPowerCheck":
-        case "CylinderPowerVerification":
-            affichagePhase = "Mise au point de la puissance"; 
+                   affichagePhase = "Mise au point de la puissance"; 
             break;
+        case "CylinderPowerVerification":
+    case "CylinderPowerVerification_Myope":
+        affichagePhase = "Validation de la puissance";
+        break;
         
         // --- FINAL ---
         case "Balance Binoculaire": 
