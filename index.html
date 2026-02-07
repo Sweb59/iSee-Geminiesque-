@@ -1822,7 +1822,6 @@ input[id^="fronto"] {
             </div>
         </div>
     </div>
-    </div> 
   
   <div class="app-container"> <div id="zonePatient" class="grid-item">
       
@@ -4042,12 +4041,16 @@ window.decideMinus = function(choice) {
             // CAS ÉCHEC : La vision a baissé
             var target = getTargetEye();
           console.log("DEBUG - Echec validation. Valeur RA stockée : " + appState.cylInitialRA);
-            target.cyl = appState.cylInitialRA; // Remise puissance initiale du RA
-            
-            updateDisplay("Échec validation : retour puissance RA et nouvelle tentative.");
+            target.cyl = appState.cylInitialRA;
+          target.sphere = appState.sphInitialPower;
             
             // On repasse en phase de recherche pour une seconde chance
             appState.examPhase = "CylinderPowerCheck"; 
+          appState.cylPowerChangeSum = 0; // Reset du cumul pour la règle des 0.75
+    appState.cylTotalModifs = 0;    // Reset du compteur pour la validation finale
+          appState.cylBalanceCounter = 0; // Sécurité supplémentaire pour la sphère
+
+          updateDisplay("Échec validation : retour puissance RA et nouvelle tentative.");
             
             // Consigne renforcée : Lecture à voix haute
             say("D'accord. On va vérifier cela ensemble. Pour vous aider, vous allez cette fois-ci me lire toutes les lettres à voix haute.", function() {
@@ -5655,8 +5658,10 @@ window.updateDisplay = function(message) {
         appState.examPhase === "Sb1.0" || 
         (appState.examPhase && appState.examPhase.includes("Check")) || 
         (appState.examPhase && appState.examPhase.includes("Swéb")) ||
-        appState.examPhase === "QuartConcaveMyope"||
-    appState.examPhase === "AxisVerification" // <--- AJOUTEZ CETTE LIGNE
+        appState.examPhase === "QuartConcaveMyope" ||
+    appState.examPhase === "AxisVerification" ||
+      appState.examPhase.includes("CylinderPower") ||
+        appState.examPhase.includes("CylinderPowerVerification")
     );
 
     if(boxOD && boxOG) {
@@ -6100,11 +6105,11 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
     if (isReturnFromAxis) {
         appState.cylPowerStep = 1;
         appState.cylPowerChangeSum = 0;
-        appState.cylBalanceCounter = 0;
-        appState.cylTotalModifs = 0;
         appState.isCylSphereTest = false;
         appState.lastCylDecision = null;
-        appState.cylInitialRA = getTargetEye().cyl; 
+        if (appState.cylTotalModifs === 0) {
+          appState.cylInitialRA = getTargetEye().cyl;
+          appState.sphInitialPower = getTargetEye().sphere; }
     }
 
     appState.examPhase = "CylinderPowerCheck";
