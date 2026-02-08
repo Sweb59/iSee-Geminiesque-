@@ -3849,6 +3849,7 @@ window.decidePlus = function(choice) {
             }
             document.getElementById('checkPlusZone').classList.add('hidden');
             say("Continuons.", function() {
+              appState.saved_sb10[appState.activeEye] = target.sphere;
                 appState.cylTotalModifs = 0; 
                 window.finishCylinderPower();
             });
@@ -3962,6 +3963,7 @@ window.decideMinus = function(choice) {
         // On ferme le test visuel et on termine l'oeil directement
         document.getElementById('checkPlusZone').classList.add('hidden');
         say("Continuons.", function() {
+          appState.saved_sb10[appState.activeEye] = target.sphere;
           appState.examPhase = "CylinderPowerFinished";
             var currentEye = appState.activeEye;
             var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
@@ -4062,6 +4064,7 @@ window.decideMinus = function(choice) {
         } else {
             // CAS SUCCÈS : Vision maintenue ou meilleure
             updateDisplay("Puissance validée.");
+          appState.saved_sb10[appState.activeEye] = getTargetEye().sphere;
             appState.examPhase = "CylinderPowerFinished";
             
             // On rappelle finishCylinderPower qui va maintenant fermer l'oeil (grâce au flag Finished)
@@ -4162,7 +4165,8 @@ if (appState.examPhase === "AxisVerification") {
             getTargetEye().sphere -= 0.25;
             updateDisplay("Lecture < 5 : Compensation Sphère -0.25");
         }
-        appState.cylTotalModifs = 0; 
+        appState.cylTotalModifs = 0;
+      appState.saved_sb10[appState.activeEye] = getTargetEye().sphere;
         window.finishCylinderPower();
         return;
     }
