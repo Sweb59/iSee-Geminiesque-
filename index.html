@@ -5445,7 +5445,7 @@ window.processCylinderPowerDecision = function(choice) {
     // --- 4. VÉRIFICATION DU SEUIL DE RETOUR AXE (0.75) ---
     if (Math.abs(appState.cylPowerChangeSum) >= 0.75) {
         appState.cylPowerChangeSum = 0;
-        say("Ok, vérifions à nouveau l'axe.", function() { initAxisCheck(); });
+        say("Ok, vérifions une petit chose.", function() { initAxisCheck(); });
         return;
     }
 
