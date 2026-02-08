@@ -3253,15 +3253,25 @@ window.launchExamSequence = function() {
             appState.subj.OG = { sphere: raOG.s + fogOG, cyl: raOG.c, axe: raOG.a, va: "--" };
             appState.examPhase = "Sb0.5"; appState.targetVa = 0.32;
         } else {
-            var startEye = appState.firstEye; 
-            var otherEye = (startEye === 'OD') ? 'OG' : 'OD';
-            appState.subj[startEye] = { sphere: (startEye === 'OD' ? raOD.s : raOG.s), cyl: (startEye === 'OD' ? raOD.c : raOG.c), axe: (startEye === 'OD' ? raOD.a : raOG.a), va: "--" };
-            appState.subj[otherEye] = { sphere: (otherEye === 'OD' ? raOD.s : raOG.s) + 0.75, cyl: (otherEye === 'OD' ? raOD.c : raOG.c), axe: (otherEye === 'OD' ? raOD.a : raOG.a), va: "--" };
-            appState.examPhase = "Sb1.0"; appState.targetVa = 0.50;
-        }
+    var startEye = appState.firstEye; 
+    var otherEye = (startEye === 'OD') ? 'OG' : 'OD';
+    appState.subj[startEye] = { 
+        sphere: getVal('ra' + startEye + '_sph'), 
+        cyl: (startEye === 'OD' ? raOD.c : raOG.c), 
+        axe: (startEye === 'OD' ? raOD.a : raOG.a), 
+        va: "--" 
+    };
+    appState.subj[otherEye] = { 
+        sphere: getVal('ra' + otherEye + '_sph') + 0.75, 
+        cyl: (otherEye === 'OD' ? raOD.c : raOG.c), 
+        axe: (otherEye === 'OD' ? raOD.a : raOG.a), 
+        va: "--" 
+    };
+    appState.examPhase = "Sb1.0"; appState.targetVa = 0.50;
+}
 
-        // Commande magique pour le signe + :
-        window.updateDisplay("Initialisation...");
+// Commande magique pour le signe + :
+window.updateDisplay("Initialisation...");
         // Init Exam
         appState.isRunning = true;
 
@@ -3287,7 +3297,7 @@ window.launchExamSequence = function() {
         document.getElementById('examContent').classList.remove('hidden');
       // AFFICHER LA BARRE DE DONNÉES MAINTENANT (Début Examen)
         document.getElementById('examDataStrip').classList.remove('hidden');
-        updateDisplay("Profil " + appState.profile + ". Phase " + appState.examPhase + " (OD)");
+        updateDisplay("Profil " + appState.profile + ". Phase " + appState.examPhase + " (" + appState.activeEye + ")");
 
         say("Lisez moi s'il vous plait les lettres que vous voyez sur l'écran devant vous.");
     } catch(e) { alert("Erreur Lancement: " + e); }
@@ -3380,8 +3390,7 @@ function validateSb05() {
     var eye = appState.activeEye;
     if (eye === 'OD') appState.sb05_OD_ok = true; else appState.sb05_OG_ok = true;
 
-    if(eye === 'OD') appState.saved_sb05.OD = appState.subj.OD.sphere; 
-    else appState.saved_sb05.OG = appState.subj.OG.sphere;
+    appState.saved_sb05[eye] = getTargetEye().sphere;
 
     say("Bien, passons sur l'autre oeil.", function() {
         if (appState.sb05_OD_ok && appState.sb05_OG_ok) { 
@@ -3420,23 +3429,32 @@ function initSb10() {
 }
 
 function applySb10Logic() {
-    var eye = appState.activeEye; 
-    var target = getTargetEye(); 
-    
-    setVaToIndexClosest(0.50);
+    var eye = appState.activeEye;
+    var otherEye = (eye === 'OD') ? 'OG' : 'OD';
+    var target = getTargetEye();
+    var otherTarget = appState.subj[otherEye];
 
-    var currentSphere = parseFloat(target.sphere);
+    // --- LOGIQUE PROFIL 2 & 3 : OEIL PASSIF AU VERROU Sb0.5 ---
+    if (appState.profile === "2" || appState.profile === "3" || appState.profile === "3+") {
+        // 1. L'oeil passif est calé sur sa Sb0.5 réelle mémorisée
+        otherTarget.sphere = appState.saved_sb05[otherEye];
 
-    if (currentSphere < 0) {
-        // MYOPE : Débrouille de -0.50 sur base Sb0.5
-        var newSphere = currentSphere - 0.50;
-        target.sphere = newSphere;
-        updateDisplay("Sb1.0 Myope: Débrouille -0.50 (Base: " + currentSphere.toFixed(2) + " -> " + newSphere.toFixed(2) + ")");
-    } else { 
-        // HYPERMÉTROPE : On conserve STRICTEMENT la Sb0.5
-        updateDisplay("Sb1.0 Hypermétrope: Conservation base Sb0.5 (" + currentSphere.toFixed(2) + ")"); 
+        // 2. L'oeil actif part de sa Sb0.5 mémorisée
+        var baseSph = appState.saved_sb05[eye];
+        
+        if (baseSph < 0) {
+            // MYOPE : On débrouille de -0.50 par rapport à sa Sb0.5
+            target.sphere = baseSph - 0.50;
+            updateDisplay("Bio-Mono : " + otherEye + " à Sb0.5 | " + eye + " part à Sb0.5 - 0.50");
+        } else {
+            // HYPEROPE : On reste exactement sur la Sb0.5
+            target.sphere = baseSph;
+            updateDisplay("Bio-Mono : " + otherEye + " à Sb0.5 | " + eye + " part à Sb0.5");
+        }
+        
+        setVaToIndexClosest(0.50); // On commence la recherche au 5/10
     }
-}
+  }
 window.validateSb10 = function() {
     var target = getTargetEye();
     var lettersRead = appState.lastResponseCount; 
@@ -3610,27 +3628,28 @@ window.proceedToNextStepAfterEye = function(completedEye) {
         appState.fogTotalAdded = 0;               // <--- LIGNE À AJOUTER
         appState.retestCount = 0;                 // <--- LIGNE À AJOUTER
 
-       // 2. BROUILLAGE DE L'OEIL PASSIF (O1)
-        // On récupère la Sb0.5 enregistrée (Profil 2/3)
-        var sb05_mesuree = (completedEye === 'OD') ? appState.saved_sb05.OD : appState.saved_sb05.OG;
-        
-        // Si on a une vraie mesure (Profil 2, 3), on l'utilise. 
-        // Sinon (Profil 1), on calcule le théorique.
-        if (sb05_mesuree && sb05_mesuree !== 0) {
-            appState.subj[completedEye].sphere = sb05_mesuree;
-        } else {
-            var raSphO1 = getVal('ra' + completedEye + '_sph');
-            appState.subj[completedEye].sphere = raSphO1 + 0.75;
+       if (appState.initProfile === "1") {
+            // L'oeil qui vient de finir (O1) est brouillé à RA + 0.75
+            appState.subj[completedEye].sphere = getVal('ra' + completedEye + '_sph') + 0.75;
+            
+            // L'oeil qui commence (O2) reçoit sa valeur RA brute
+            appState.activeEye = otherEye;
+            appState.subj[otherEye].sphere = getVal('ra' + otherEye + '_sph');
+            
+            appState.examPhase = "Sb1.0";
+            updateDisplay("Bascule vers " + otherEye + " (Profil 1 : RA pur)");
+       } else {
+            // 1. Changement de l'œil actif
+            appState.activeEye = otherEye;
+            
+            // 2. Appel de la logique de chassé-croisé
+            // (O1 repasse à sa Sb0.5, O2 s'installe à sa Sb0.5 ou Sb0.5-0.50)
+            applySb10Logic();
+            
+            appState.examPhase = "Sb1.0";
+            updateDisplay("Bascule vers " + otherEye + " (Profil " + appState.profile + ")");
         }
-
-        // 3. PRÉPARATION DE L'OEIL ACTIF (O2)
-        // On ne touche PAS à appState.subj[otherEye].sphere ! 
-        // Il contient déjà la valeur Sb0.5 trouvée précédemment.
-
-        appState.activeEye = otherEye;
-        appState.examPhase = "Sb1.0";
         
-        applySb10Logic(); 
         updateDisplay("Bascule vers " + otherEye + " (Oeil " + completedEye + " brouillé à RA+0.75)");
         say("Nous passons donc à l'examen de l'autre œil. Lisez moi ces lettres s'il vous plaît.");
     } else {
