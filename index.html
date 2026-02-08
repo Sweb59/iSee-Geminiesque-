@@ -3291,6 +3291,7 @@ window.updateDisplay("Initialisation...");
              appState.sb02_OD_ok = true; appState.sb02_OG_ok = true; 
         }
         else if (appState.profile === "1") { appState.sb02_OD_ok = true; appState.sb02_OG_ok = true; appState.sb05_OD_ok = true; appState.sb05_OG_ok = true; }
+      else if (appState.profile === "3" || appState.profile === "3+") { appState.isOpportunisticO1 = false; }
 
         // Affichage Zone
         document.getElementById('waitingMsg').classList.add('hidden');
@@ -3308,8 +3309,27 @@ function getTargetEye() { return (appState.activeEye === 'OD') ? appState.subj.O
 
 window.validateSb02 = function() {
     var eye = appState.activeEye;
-    
-    // 1. Verrouillage immédiat : on change de phase fictivement pour stopper les relances
+    var target = getTargetEye();
+
+    // --- DÉBROUILLAGE PRÉPARATOIRE Sb0.5 (Seulement P3/P3+) ---
+    if (appState.profile === "3" || appState.profile === "3+") {
+        // On débrouille (ajout de négatif) pour préparer le palier 0.5
+        if (target.sphere < 0) {
+            target.sphere -= 0.75; // Myope
+        } else {
+            target.sphere -= 0.50; // Hyperope
+        }
+        updateDisplay("Sb0.2 validée -> Débrouillage préparatoire Sb0.5 effectué.");
+    }
+    // --------------------------------------------------------
+
+  // --- RÉTABLISSEMENT PROFIL 2 (Saut d'acuité) ---
+    if (appState.profile === "2") {
+        setVaToIndexClosest(0.32); 
+        updateDisplay("Sb0.2 validée -> Préparation T.Q.S. (0.3)");
+    }
+    // -----------------------------------------------
+
     appState.examPhase = "TRANSITION"; 
 
     if (eye === 'OD') appState.sb02_OD_ok = true; 
@@ -3339,51 +3359,34 @@ window.validateSb02 = function() {
     });
 };
 function initSb05() {
-    // ALERT REMOVED FOR FLUID TRANSITION
-    // alert("Début Recherche Sb0.5 (T.Q.S).\nRetour au premier œil (" + appState.firstEye + ").");
     appState.examPhase = "Sb0.5"; 
     appState.activeEye = appState.firstEye; // Retour premier oeil
     appState.defoggedInZone = false; 
     appState.tqs_attempted_06 = false; 
     appState.count06_validations = 0; 
-    appState.tqsFogCount = 0; 
 
-    // APPLICATION DU DEBROUILLAGE GLOBAL (OD + OG)
-    applySb05GlobalDefog();
+    // --- CAS SPÉCIFIQUE PROFIL 2 : Brouillage initial ---
+    if (appState.profile === "2" && appState.tqsFogCount === 0) {
+        // OD
+        if (appState.subj.OD.sphere < 0) appState.subj.OD.sphere -= 0.75; // Myope
+        else appState.subj.OD.sphere += 1.00; // Hyperope
+        
+        // OG
+        if (appState.subj.OG.sphere < 0) appState.subj.OG.sphere -= 0.75; // Myope
+        else appState.subj.OG.sphere += 1.00; // Hyperope
 
-    // AJOUT : Annonce de relance après l'initialisation de la phase
+        appState.tqsFogCount = 1; // Marqueur pour ne pas le refaire
+        setVaToIndexClosest(0.32);
+        updateDisplay("Profil 2 : Brouillage initial (TQS) appliqué.");
+    } else {
+        // Pour les autres profils (P3), on s'assure aussi de démarrer sur la bonne ligne
+        setVaToIndexClosest(0.32);
+        appState.tqsFogCount = 0; 
+    }
+    // ----------------------------------------------------
+
+    updateDisplay("Recherche Sb0.5 (" + appState.activeEye + ")");
     say(window.getRandomPrompt());
-}
-
-function applySb05GlobalDefog() {
-    if(appState.profile === "2") { 
-        setVaToIndexClosest(0.32); 
-        updateDisplay("Profil 2: Démarrage T.Q.S."); 
-        return; 
-    }
-
-    // Calcul pour OD (Basé sur la sphère actuelle de fin de Sb0.2)
-    if (appState.seen025_OD) {
-        // A vu 0.25 -> Pas de débrouillage
-    } else {
-        // N'a pas vu 0.25 -> Débrouillage
-        var currentSphOD = appState.subj.OD.sphere;
-        var deltaOD = (currentSphOD < 0) ? -0.75 : -0.50; // Basé sur sphère actuelle
-        appState.subj.OD.sphere += deltaOD;
-    }
-
-    // Calcul pour OG (Basé sur la sphère actuelle de fin de Sb0.2)
-    if (appState.seen025_OG) {
-        // A vu 0.25 -> Pas de débrouillage
-    } else {
-        // N'a pas vu 0.25 -> Débrouillage
-        var currentSphOG = appState.subj.OG.sphere;
-        var deltaOG = (currentSphOG < 0) ? -0.75 : -0.50; // Basé sur sphère actuelle
-        appState.subj.OG.sphere += deltaOG;
-    }
-
-    setVaToIndexClosest(0.32); 
-    updateDisplay("Sb0.5: Débrouillage Bilatéral effectué -> Départ 0.3");
 }
 
 function validateSb05() {
@@ -3391,6 +3394,25 @@ function validateSb05() {
     if (eye === 'OD') appState.sb05_OD_ok = true; else appState.sb05_OG_ok = true;
 
     appState.saved_sb05[eye] = getTargetEye().sphere;
+  // --- LOGIQUE DE FLUX PROFIL 3 (Opportuniste vs Rattrapage) ---
+    if (appState.profile === "3" || appState.profile === "3+") {
+        // CAS : On vient de finir l'Oeil 1 en mode opportuniste (O2 n'est pas encore fait)
+        var otherEye = (eye === 'OD') ? 'OG' : 'OD';
+        var isOtherDone = (otherEye === 'OD') ? appState.sb05_OD_ok : appState.sb05_OG_ok;
+
+        if (appState.isOpportunisticO1 && eye === appState.firstEye && !isOtherDone) {
+            say("Bien. On passe maintenant au second œil.", function() {
+                appState.activeEye = otherEye;
+                appState.examPhase = "Sb0.2"; // Rattrapage de l'Oeil 2
+                setVaToIndexClosest(0.06); 
+                appState.startVaIndex = appState.vaIndex;
+                updateDisplay("Rattrapage " + otherEye + " : Recherche Sb0.2");
+                setTimeout(function() { say(window.getRandomPrompt()); }, 600);
+            });
+            return; // INTERRUPTION : On ne va pas vers le bloc standard ci-dessous
+        }
+    }
+    // ------------------------------------------------------------
 
     say("Bien, passons sur l'autre oeil.", function() {
         if (appState.sb05_OD_ok && appState.sb05_OG_ok) { 
@@ -4492,8 +4514,21 @@ if (gainTotal >= 3) {
         if (isPassed) {
             // On enregistre le succès de la ligne actuelle (ex: 0.20)
             appState.subj[appState.activeEye].va = currentVA;
-            
-            var status = goNextLine(); 
+
+            // --- NOUVELLE LOGIQUE OPPORTUNISTE P3 ---
+            if ((appState.profile === "3" || appState.profile === "3+") && currentVA === 0.25) {
+                if (appState.activeEye === appState.firstEye) {
+                    appState.isOpportunisticO1 = true;
+                    updateDisplay("Performance O1 détectée -> Passage direct Sb0.5");
+                    appState.examPhase = "Sb0.5";
+                    setVaToIndexClosest(0.50);
+                    say("Excellent. On continue sur cet oeil. Lisez-moi cette ligne.");
+                    return; 
+                }
+            }
+            // ----------------------------------------
+
+            var status = goNextLine();
 
             if (status === false) {
                 // IMPORTANT : On rafraîchit l'interface pour afficher le 0.20
