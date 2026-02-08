@@ -3618,6 +3618,15 @@ window.proceedToNextStepAfterEye = function(completedEye) {
     var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
     if (!appState.isMonocularExam && !isOtherEyeDone) {
+        
+        // --- CORRECTIF SÉCURITÉ : NETTOYAGE DE L'INTERFACE O1 ---
+        // On cache tous les blocs de tests spéciaux pour faire réapparaître les chiffres 0-5
+        if(document.getElementById('axisControls')) document.getElementById('axisControls').classList.add('hidden');
+        if(document.getElementById('checkPlusZone')) document.getElementById('checkPlusZone').classList.add('hidden');
+        if(document.getElementById('cadenceButtons')) document.getElementById('cadenceButtons').classList.add('hidden');
+        if(document.getElementById('standardButtons')) document.getElementById('standardButtons').classList.remove('hidden');
+        // -------------------------------------------------------
+
         // 1. Reset des drapeaux de sécurité pour le nouvel oeil
         appState.isCheckingGain = false; 
         appState.safety_mode = false;    
@@ -3625,10 +3634,13 @@ window.proceedToNextStepAfterEye = function(completedEye) {
         appState.hasRestartedSb10 = false;
         appState.tqsFogCount = 0;
         appState.subj[otherEye].swebDone = false; // Permet Swéb sur le second œil
-        appState.fogTotalAdded = 0;               // <--- LIGNE À AJOUTER
-        appState.retestCount = 0;                 // <--- LIGNE À AJOUTER
+        appState.fogTotalAdded = 0;
+        appState.retestCount = 0;
+      appState.cylTotalModifs = 0;
+appState.cylPowerChangeSum = 0;
+appState.axisDirectionHistory = [];
 
-       if (appState.initProfile === "1") {
+        if (appState.initProfile === "1") {
             // L'oeil qui vient de finir (O1) est brouillé à RA + 0.75
             appState.subj[completedEye].sphere = getVal('ra' + completedEye + '_sph') + 0.75;
             
@@ -3638,7 +3650,7 @@ window.proceedToNextStepAfterEye = function(completedEye) {
             
             appState.examPhase = "Sb1.0";
             updateDisplay("Bascule vers " + otherEye + " (Profil 1 : RA pur)");
-       } else {
+        } else {
             // 1. Changement de l'œil actif
             appState.activeEye = otherEye;
             
@@ -3650,8 +3662,9 @@ window.proceedToNextStepAfterEye = function(completedEye) {
             updateDisplay("Bascule vers " + otherEye + " (Profil " + appState.profile + ")");
         }
         
-        updateDisplay("Bascule vers " + otherEye + " (Oeil " + completedEye + " brouillé à RA+0.75)");
+        // Note : updateDisplay va maintenant trouver isSpecialMode = false et affichera les boutons
         say("Nous passons donc à l'examen de l'autre œil. Lisez moi ces lettres s'il vous plaît.");
+        
     } else {
         say("Bien. Passons à la suite.");
         updateDisplay("Phase Monoculaire Terminée");
@@ -4083,6 +4096,7 @@ window.decideMinus = function(choice) {
         } else {
             // CAS SUCCÈS : Vision maintenue ou meilleure
             updateDisplay("Puissance validée.");
+          appState.examPhase = "CylinderPowerFinished";
           appState.saved_sb10[appState.activeEye] = getTargetEye().sphere;
             appState.examPhase = "CylinderPowerFinished";
             
@@ -4185,6 +4199,7 @@ if (appState.examPhase === "AxisVerification") {
             updateDisplay("Lecture < 5 : Compensation Sphère -0.25");
         }
         appState.cylTotalModifs = 0;
+      appState.examPhase = "CylinderPowerFinished";
       appState.saved_sb10[appState.activeEye] = getTargetEye().sphere;
         window.finishCylinderPower();
         return;
@@ -5378,13 +5393,26 @@ window.processCylinderPowerDecision = function(choice) {
     var decisionType = (choice === 'pos1') ? 'plus' : 'minus';
 
     // --- ÉTAPE C : RÈGLE DU RA (Uniquement au 1er clic sur Mieux 2) ---
+    // --- MODIFICATION ÉTAPE C : RÈGLE DU RA ---
     if (appState.cylPowerStep === 1 && choice === 'pos2') {
         var currentVA = ACUITY_TABLE[appState.vaIndex].va;
-        if (currentVA >= 1.0 && appState.lastResponseCount >= 5 && appState.lastCadenceUsed === 'rabbit') {
-            say("C'est parfait, on reste comme ça.");
-            window.finishCylinderPower(); 
+        var lettersRead = appState.lastResponseCount;
+        var isFluide = (appState.lastCadenceUsed === 'rabbit');
+
+        // Condition de succès automatique :
+        // Soit VA strictement supérieure à 1.0
+        // Soit VA égale à 1.0 AVEC 5 lettres ET lecture fluide
+        var isTopPerformance = (currentVA > 1.0) || (currentVA === 1.0 && lettersRead >= 5 && isFluide);
+
+        if (isTopPerformance) {
+            appState.examPhase = "CylinderPowerFinished"; 
+            updateDisplay("Puissance RA validée d'emblée (Performance optimale).");
+            say("C'est parfait.", function() {
+                window.finishCylinderPower(); 
+            });
             return;
         } else {
+            // Dans tous les autres cas -> Déclenchement de la Sphère Test
             appState.cylPowerStep = 2; 
             appState.isCylSphereTest = true;
             say("Ok, vérifions cela.", function() {
@@ -5395,7 +5423,6 @@ window.processCylinderPowerDecision = function(choice) {
             return;
         }
     }
-
     // --- ÉTAPE D : APPLICATION DU CHANGEMENT (Mieux 1 ou Mieux 2 suite) ---
     // Règle Anti-boucle
     if (appState.lastCylDecision === 'plus' && decisionType === 'minus') {
@@ -6154,7 +6181,25 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
     });
 };
   window.finishCylinderPower = function() {
-    var target = getTargetEye();
+   var target = getTargetEye();
+
+    // --- PORTE DE SORTIE PRIORITAIRE : Cas du RA validé d'emblée ---
+    if (appState.cylTotalModifs === 0 || appState.examPhase === "CylinderPowerFinished") {
+        appState.examPhase = "CylinderPowerFinished"; 
+        var currentEye = appState.activeEye;
+        var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
+        var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
+
+        if (!appState.isMonocularExam && !isOtherEyeDone) {
+            // Bascule sur le second oeil
+            setTimeout(function() { window.proceedToNextStepAfterEye(currentEye); }, 1000);
+        } else {
+            // Fin de l'examen monoculaire, passage au binoculaire
+            updateDisplay("Fin de l'astigmatisme. Passage en binoculaire.");
+            setTimeout(window.restoreBinocularBalance, 1500);
+        }
+        return; // ARRÊT CRITIQUE : Empêche la suite de la fonction (validation par lettres)
+    }
     var isImpair = (appState.cylTotalModifs % 2 !== 0);
 
     // Si le nombre de modifs est impair, on doit vérifier le déséquilibre
@@ -6177,26 +6222,6 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
         return; // On s'arrête ici pour attendre le test
     }
 
-    // Si nombre pair ou fin de vérification : Sortie définitive de l'œil
-    // À AJOUTER :
-// A. PORTE DE SORTIE : Si la validation est déjà réussie, on ferme l'œil
-    if (appState.examPhase === "CylinderPowerFinished") {
-        updateDisplay("Mise au point cylindre terminée");
-
-        say("C'est parfait.", function() {
-            var currentEye = appState.activeEye;
-            var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
-            var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
-
-            if (!appState.isMonocularExam && !isOtherEyeDone) {
-                setTimeout(function() { window.proceedToNextStepAfterEye(currentEye); }, 1000);
-            } else {
-                updateDisplay("Fin de l'astigmatisme.");
-                setTimeout(window.restoreBinocularBalance, 1500);
-            }
-        });
-        return; 
-    }
 
     // B. DÉCLENCHEUR : Sinon (cas clics pairs), on lance la validation
     appState.examPhase = "CylinderPowerVerification";
