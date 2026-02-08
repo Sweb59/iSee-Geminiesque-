@@ -4086,6 +4086,12 @@ window.decideMinus = function(choice) {
     if (appState.isSpeaking) return; 
     appState.lastResponseCount = lettersRead;
     window.cleanAndSyncVA(lettersRead);
+
+   // --- AIGUILLAGE Sb0.2 (PRIORITÉ ABSOLUE) ---
+    if (appState.examPhase === "Sb0.2") {
+        processLogic(lettersRead, 'rabbit');
+        return; // ON SORT IMMÉDIATEMENT
+      
    // --- MOTEUR DE VALIDATION DE LA PUISSANCE ---
     if (appState.examPhase === "CylinderPowerVerification") {
         if (appState.isSpeaking) return;
@@ -4499,7 +4505,7 @@ if (gainTotal >= 3) {
 }
     return;
 }
-   // --- RÈGLE SPÉCIFIQUE SB0.2 (VALIDATION FINALE FIXÉE) ---
+  // --- BLOC Sb0.2 RÉVISÉ (P3 OPPORTUNISTE) ---
     if (appState.examPhase === "Sb0.2") {
         if (cadence === 'rabbit') {
             if (isSmallLine) {
@@ -4512,43 +4518,32 @@ if (gainTotal >= 3) {
         }
 
         if (isPassed) {
-            // On enregistre le succès de la ligne actuelle (ex: 0.20)
             appState.subj[appState.activeEye].va = currentVA;
 
-            // --- NOUVELLE LOGIQUE OPPORTUNISTE P3 ---
+            // --- 1. CAS OPPORTUNISTE (O1 -> Sb0.5 direct) ---
             if ((appState.profile === "3" || appState.profile === "3+") && currentVA === 0.25) {
                 if (appState.activeEye === appState.firstEye) {
                     appState.isOpportunisticO1 = true;
-                    updateDisplay("Performance O1 détectée -> Passage direct Sb0.5");
                     appState.examPhase = "Sb0.5";
                     setVaToIndexClosest(0.50);
-                    say("Excellent. On continue sur cet oeil. Lisez-moi cette ligne.");
-                    return; 
+                    updateDisplay("Performance O1 -> Passage direct Sb0.5");
+                    say("Excellent. On continue sur cet œil. Lisez-moi cette ligne.");
+                    return; // ON ARRÊTE TOUT ICI : Pas de goNextLine, pas de boucle
                 }
             }
-            // ----------------------------------------
 
-            var status = goNextLine();
+            // --- 2. CAS STANDARD (Changement de ligne ou changement d'oeil) ---
+            var status = goNextLine(); 
+            return; 
 
-            if (status === false) {
-                // IMPORTANT : On rafraîchit l'interface pour afficher le 0.20
-                // AVANT que validateSb02 ne lance la transition vocale.
-                updateDisplay("2/10 Validé. Passage à l'autre œil...");
-                return; 
-            }
-
-            updateDisplay("Validé " + currentVA + " -> Suivant");
-            return;
-          
         } else {
-            // GESTION ÉCHEC AU 0.25 SANS DÉBROUILLAGE PRÉALABLE
+            // --- 3. CAS ÉCHEC ---
             if (currentVA === 0.25 && !appState.defoggedInZone) {
                 updateDisplay("Échec 2.5/10 -> Validation du palier 2/10.");
                 setTimeout(function() { validateSb02(); }, 600);
                 return;
             }
 
-            // Débrouillage classique
             var currentSph = getTargetEye().sphere;
             var raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
             
@@ -4558,10 +4553,8 @@ if (gainTotal >= 3) {
             }
 
             if (currentVA <= 0.20) appState.defoggedInZone = true;
-
             getTargetEye().sphere -= 0.25;
             if (lettersRead >= 3 || (isSmallLine && lettersRead > 0)) nextLetters();
-
             updateDisplay("Débrouillage -0.25");
             return;
         }
@@ -4982,6 +4975,13 @@ function goNextLine() {
         }
 
         if (currentVA === 0.25) {
+          // --- NOUVEAU : SÉCURITÉ P3 OPPORTUNISTE ---
+            // Si on est en P3 sur l'Oeil 1, on ne lance PAS validateSb02() ici
+            // car processLogic va s'en occuper pour basculer en Sb0.5
+            if ((appState.profile === "3" || appState.profile === "3+") && appState.activeEye === appState.firstEye) {
+                return false; 
+            }
+            // ------------------------------------------
             if (appState.activeEye === 'OD') appState.seen025_OD = true; 
             else appState.seen025_OG = true;
             validateSb02();
