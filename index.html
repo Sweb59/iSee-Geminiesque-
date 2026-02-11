@@ -5577,6 +5577,8 @@ window.processCylinderPowerDecision = function(choice) {
                 appState.scoreBeforeBalance = appState.lastResponseCount; 
                 appState.isCompensationTest = false;
                 appState.examPhase = "CylinderPowerBalance_Myope";
+              document.getElementById('axisControls').classList.add('hidden');
+document.getElementById('standardButtons').classList.remove('hidden');
                 nextLetters();
                 updateDisplay("Équilibre Myope : Contrôle de performance");
                 say("D'accord. Relisez-moi ces lettres s'il vous plaît.");
@@ -6017,11 +6019,17 @@ if(visOD && visOG) {
         // -------------------------------------------------------------------------
 
         // Gestion de la visibilité des blocs de boutons
-        var isSpecialMode = (
-            !document.getElementById('cadenceButtons').classList.contains('hidden') || 
-            !document.getElementById('checkPlusZone').classList.contains('hidden') || 
-            !document.getElementById('axisControls').classList.contains('hidden')
-        );
+   // 1. On identifie si on est en phase de lecture forcée (Validation ou Équilibre Myope)
+var isReadingPhase = appState.examPhase.includes("Verification") || appState.examPhase.includes("Balance_Myope");
+
+// 2. On définit le mode spécial : on cache les boutons de score UNIQUEMENT 
+// si un menu spécial est ouvert ET qu'on n'est pas censé lire une ligne.
+var isSpecialMode = (
+    (!document.getElementById('cadenceButtons').classList.contains('hidden') || 
+     !document.getElementById('checkPlusZone').classList.contains('hidden') || 
+     !document.getElementById('axisControls').classList.contains('hidden'))
+    && !isReadingPhase 
+);
 
         var stdBtns = document.getElementById('standardButtons');
         if (stdBtns) {
