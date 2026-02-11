@@ -3656,8 +3656,15 @@ window.proceedToNextStepAfterEye = function(completedEye) {
         appState.fogTotalAdded = 0;
         appState.retestCount = 0;
       appState.cylTotalModifs = 0;
-appState.cylPowerChangeSum = 0;
-appState.axisDirectionHistory = [];
+    appState.cylPowerChangeSum = 0;
+    appState.cylPowerStep = 1;
+    appState.isCylSphereTest = false;
+    appState.lastCylDecision = null;
+    appState.isCylValidationLoop = false;
+    appState.scoreBeforeBalance = 0;
+    appState.lettersAfterAxis = 0;
+    appState.axisIntroDone = false;
+    appState.axisDirectionHistory = [];
 
         if (appState.initProfile === "1") {
             // L'oeil qui vient de finir (O1) est brouillé à RA + 0.75
@@ -4229,24 +4236,27 @@ if (appState.examPhase === "AxisVerification") {
     window.initCylinderPowerCheck(true); 
     return;
 }
-   // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (FIN CYLINDRE) ---
-    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (FIN CYLINDRE) ---
-    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (FIN CYLINDRE / CAS IMPAIR) ---
+   // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (VÉRIFICATION FINALE) ---
     if (appState.examPhase === "CylinderPowerVerification_Myope") {
+        appState.isSpeaking = true;
+        updateLockUI(true);
+
         if (lettersRead < appState.scoreBeforeBalance) {
-            // Le dernier clic a dégradé la vision par rapport au record mémorisé
-            getTargetEye().sphere -= 0.25;
-            updateDisplay("Déséquilibre final : Compensation -0.25 appliquée.");
+            var target = getTargetEye();
+            target.cyl += 0.25;    // On annule le cylindre en trop
+            target.sphere -= 0.25; // On compense en sphère
+            updateDisplay("Déséquilibre : Compensation Sphère -0.25 appliquée.");
         } else {
-            // Le score est maintenu ou meilleur : on garde la sphère telle quelle
-            updateDisplay("Déséquilibre final : Performance stable, pas de compensation.");
+            updateDisplay("Déséquilibre : Performance validée.");
         }
-        
-        // Clôture définitive de l'astigmatisme pour cet oeil
-        appState.cylTotalModifs = 0;
-        appState.examPhase = "CylinderPowerFinished";
-        appState.saved_sb10[appState.activeEye] = getTargetEye().sphere;
-        window.finishCylinderPower();
+
+        say("Bien.", function() {
+            appState.isSpeaking = false;
+            updateLockUI(false);
+            appState.examPhase = "CylinderPowerFinished";
+            appState.saved_sb10[appState.activeEye] = getTargetEye().sphere;
+            window.finishCylinderPower(); 
+        });
         return;
     }
 
@@ -5596,13 +5606,18 @@ document.getElementById('standardButtons').classList.remove('hidden');
     }
 
     // --- 4. VÉRIFICATION DU SEUIL DE RETOUR AXE (0.75) ---
-    if (Math.abs(appState.cylPowerChangeSum) >= 0.75) {
-        appState.cylPowerChangeSum = 0;
-        say("Ok, vérifions une petit chose.", function() { initAxisCheck(); });
-        return;
-    }
+    // --- RÈGLE DES 3/4 (Priorité absolue à 0.75D de cumul) ---
+if (Math.abs(appState.cylPowerChangeSum) >= 0.75) {
+    appState.examPhase = "CylinderPower_TQS_Check"; // Affichera "Règle des 3/4"
+    appState.cylPowerChangeSum = 0; 
+    updateDisplay("Cumul de 0.75D atteint : retour à l'axe.");
+    say("Ok, vérifions une petite chose.", function() { 
+        initAxisCheck(); 
+    });
+    return;
+}
 
-    // --- 5. RELANCE STANDARD (Si aucune règle ci-dessus n'a arrêté le flux) ---
+    // --- 5. RELANCE STANDARD (Si aucune règle ci-dessus n' arrêté le flux) ---
     say("Bien.", function() {
         document.getElementById('axisControls').classList.add('hidden');
         setTimeout(window.runCylinderPowerSequence, 1000);
@@ -5904,15 +5919,26 @@ if (appState.examPhase) {
             affichagePhase = "Validation de l'axe"; 
             break;
 
-// --- PUISSANCE CYLINDRE ---
+// --- PUISSANCE CYLINDRE (DÉTAILLÉ) ---
         case "CylinderPowerCheck":
-                   affichagePhase = "Mise au point de la puissance"; 
+            affichagePhase = "Mise au point de la puissance"; 
             break;
-        case "CylinderPowerVerification":
-    case "CylinderPowerVerification_Myope":
+
+        case "CylinderPowerVerification_Myope":
+            affichagePhase = "Règle du Déséquilibre (Test final)";
+            break;
+
         case "CylinderPowerBalance_Myope":
-        affichagePhase = "Validation de la puissance";
-        break;
+            affichagePhase = "Règle de l'Équilibre (Compensation)";
+            break;
+
+        case "CylinderPower_TQS_Check":
+            affichagePhase = "Règle des 3/4 (Contrôle Axe)";
+            break;
+
+        case "CylinderPowerVerification":
+            affichagePhase = "Validation de la puissance";
+            break;
         
         // --- FINAL ---
         case "Balance Binoculaire": 
@@ -6315,67 +6341,61 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
 };
   window.finishCylinderPower = function() {
     var target = getTargetEye();
-
-    // --- PORTE DE SORTIE PRIORITAIRE : Cas du RA validé d'emblée ---
-    if (appState.cylTotalModifs === 0 || appState.examPhase === "CylinderPowerFinished") {
-        appState.examPhase = "CylinderPowerFinished"; 
-        var currentEye = appState.activeEye;
-        var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
-        var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
-
-        if (!appState.isMonocularExam && !isOtherEyeDone) {
-            setTimeout(function() { window.proceedToNextStepAfterEye(currentEye); }, 1000);
-        } else {
-            updateDisplay("Fin de l'astigmatisme. Passage en binoculaire.");
-            setTimeout(window.restoreBinocularBalance, 1500);
-        }
-        return; 
-    }
-
     var isImpair = (appState.cylTotalModifs % 2 !== 0);
 
-    // --- CAS A : NOMBRE DE CLICS IMPAIR (Arbitrage déséquilibre) ---
-    if (isImpair) {
+    // --- 1. PRIORITÉ HAUTE : SI IMPAIR ---
+    if (appState.cylTotalModifs > 0 && isImpair && appState.examPhase !== "CylinderPowerVerification_Myope" && !appState.isCylValidationLoop) {
+        appState.scoreBeforeBalance = appState.lastResponseCount;
         say("Ok, vérifions tout cela.", function() {
             appState.vaIndex = appState.bestVaIndex;
             
             if (target.sphere < 0) {
-                // MYOPE : Test de lecture de contrôle
                 appState.examPhase = "CylinderPowerVerification_Myope";
+                document.getElementById('axisControls').classList.add('hidden');
+                document.getElementById('standardButtons').classList.remove('hidden');
                 nextLetters(); 
-                updateDisplay("Déséquilibre : Contrôle lecture Myope");
+                appState.examPhase = "CylinderPowerVerification_Myope"; // Phase pour le switch
+updateDisplay("Vérification finale"); // Ce message sera remplacé par le titre du switch
             } else {
-                // --- SÉCURITÉ LOI DE LA RÉFRACTION (FIN DE TEST) ---
                 var raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
-
+                appState.isCylValidationLoop = true;
                 if (target.sphere === 0 && raSph >= 0) {
-                    // Cas spécifique : 0.00 et RA >= 0. On ne teste QUE le +0.25.
-                    updateDisplay("Déséquilibre final : Test +0.25 uniquement (Sécurité RA)");
-                    appState.isCylValidationLoop = true;
                     appState.onlyTestPlus = true; 
                     initSphereCheckPlus(true);
                 } else {
-                    // Cas standard (Sphère > 0)
                     appState.onlyTestPlus = false;
-                    updateDisplay("Déséquilibre : Test verres vérificateurs");
-                    appState.isCylValidationLoop = true;
                     initSphereCheckPlus(true);
                 }
             }
-        }); // Fermeture correcte du say
-        return;
+        });
+        return; // ON S'ARRÊTE ICI
     }
 
-    // --- CAS B : NOMBRE DE CLICS PAIR (Validation puissance standard) ---
-    appState.examPhase = "CylinderPowerVerification";
-    appState.vaIndex = appState.bestVaIndex;
-    nextLetters();
+    // --- 2. PRIORITÉ MOYENNE : SI PAIR (Validation standard) ---
+    if (appState.cylTotalModifs > 0 && !isImpair && appState.examPhase === "CylinderPowerCheck") {
+      appState.lettersAfterAxis = appState.lastResponseCount;
+        appState.examPhase = "CylinderPowerVerification";
+        appState.vaIndex = appState.bestVaIndex;
+        document.getElementById('axisControls').classList.add('hidden');
+        document.getElementById('standardButtons').classList.remove('hidden');
+        nextLetters();
+        updateDisplay("Validation de la puissance...");
+        say("Vérifions une dernière fois. Relisez-moi cette ligne s'il vous plaît.");
+        return; // ON S'ARRÊTE ICI
+    }
 
-    document.getElementById('axisControls').classList.add('hidden');
-    document.getElementById('standardButtons').classList.remove('hidden');
+    // --- 3. DERNIER RECOURS : PORTE DE SORTIE (Fin d'examen) ---
+    appState.examPhase = "CylinderPowerFinished"; 
+    var currentEye = appState.activeEye;
+    var otherEye = (currentEye === 'OD') ? 'OG' : 'OD';
+    var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
-    updateDisplay("Validation de la puissance...");
-    say("Vérifions une dernière fois. Relisez-moi cette ligne s'il vous plaît.");
+    if (!appState.isMonocularExam && !isOtherEyeDone) {
+        setTimeout(function() { window.proceedToNextStepAfterEye(currentEye); }, 1000);
+    } else {
+        updateDisplay("Fin de l'astigmatisme. Passage en binoculaire.");
+        setTimeout(window.restoreBinocularBalance, 1500);
+    }
 };
 </script>
 
