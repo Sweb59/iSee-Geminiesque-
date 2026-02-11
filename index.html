@@ -3466,14 +3466,24 @@ function applySb10Logic() {
   }
 window.validateSb10 = function() {
     var target = getTargetEye();
-    var lettersRead = appState.lastResponseCount; 
+    var eye = appState.activeEye;
+    var lettersRead = appState.lastResponseCount;
     var cadence = appState.lastCadenceUsed;
- // GARDE-FOU : Empêche de relancer Swéb uniquement pour le MYOPE
-    if (appState.subj[appState.activeEye].swebDone && target.sphere < 0) {
-        if (lettersRead >= 3) finishSb10ForEye();
-        return true; 
+
+    // 1. SI LE TEST EST DÉJÀ FINI (Succès ou Échec précédent)
+    if (appState.subj[eye].swebDone) {
+        if (lettersRead >= 3) {
+            window.finishSb10ForEye(); 
+            return true; // On valide et on sort proprement
+        }
+        return false;
     }
-    const currentVA = ACUITY_TABLE[appState.vaIndex].va;
+
+    // 2. SI LE TEST EST EN COURS (On laisse processLogic calculer les gains)
+    if (appState.examPhase.includes("Swéb")) {
+        return false; 
+    }
+  const currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
     // --- CONDITION COMMUNE : SEULEMENT AU 10/10 ---
     if (currentVA === 1.0) {
@@ -3946,6 +3956,24 @@ window.decidePlus = function(choice) {
         });
     } else {
         // --- CAS : REJET DU +0.25 ---
+      // >>> DEBUT DE L'INSERTION SÉCURITÉ <<<
+        if (appState.onlyTestPlus) {
+            updateDisplay("Refus du +0.25 : Maintien à 0.00 (Sécurité RA)");
+            appState.onlyTestPlus = false; // On remet le flag à zéro
+            appState.isCylValidationLoop = false; // Sortie de la boucle de validation
+            
+            // On masque l'interface des boutons ronds
+            if(document.getElementById('checkPlusZone')) 
+                document.getElementById('checkPlusZone').classList.add('hidden');
+            
+            say("D'accord, on reste comme ça.", function() {
+                // On force la fin définitive de l'astigmatisme pour cet oeil
+                appState.examPhase = "CylinderPowerFinished";
+                window.finishCylinderPower(); 
+            });
+            return; // ON ARRÊTE TOUT ICI : le code en dessous ne sera pas exécuté
+        }
+        // >>> FIN DE L'INSERTION SÉCURITÉ <<<
         const isRaPositiveAtZero = (raSph >= 0 && currentSph <= 0);
 
         if (isRaPositiveAtZero) {
@@ -4496,9 +4524,10 @@ if (appState.examPhase === "Vérification de Swéb_AVEC_VERRE") {
     } else {
         // ÉCHEC TOTAL : On rend le verre et on finit la sphère
         revertMinusLens();
+      return;
     }
     return;
-}
+  }
 // ÉTAPE 3 : Gain cumulé (si nécessaire)
 if (appState.examPhase === "Vérification de Swéb_CUMUL_FINAL") {
     var gainTotal = (lettersRead - appState.scoreN_SansVerre) + (appState.scoreNPlus1_AvecVerre - appState.scoreNPlus1_SansVerre);
@@ -4537,7 +4566,9 @@ if (gainTotal >= 3) {
 } else {
     // ÉCHEC DU GAIN CUMULÉ : Le patient ne confirme pas l'amélioration même sur la ligne N
     updateDisplay("Gain cumulé nul : Rejet définitif du -0.25");
-    revertMinusLens(); // Cette fonction va maintenant forcer la sortie vers l'axe
+  appState.examPhase = "Validation_Finale_Sphere";
+    revertMinusLens();
+  return;
 }
     return;
 }
@@ -4925,14 +4956,26 @@ if (gainTotal >= 3) {
         return;
     }
     else {
-        // CAS 3 : ÉCHEC (SCORE < 3) -> Débrouille SANS changer les lettres
+        // CAS 3 : ÉCHEC (SCORE < 3)
         var target = getTargetEye();
-        target.sphere -= 0.25;
-        updateDisplay("Échec " + currentVA + " -> Débrouille -0.25");
-        // On ne fait PAS nextLetters() ici !
+        var eye = appState.activeEye;
+
+        // --- SÉCURITÉ CRITIQUE ---
+        // On n'autorise le retrait de -0.25 QUE si le test Swéb n'a pas encore été fait ou s'il a réussi.
+        // Si swebDone est TRUE, cela veut dire qu'on a déjà trouvé la limite de l'œil.
+        if (!appState.subj[eye].swebDone) {
+            target.sphere -= 0.25;
+            updateDisplay("Échec " + currentVA + " -> Débrouille -0.25");
+            // On ne fait PAS nextLetters() ici !
+        } else {
+            // Si le test Swéb a déjà échoué (swebDone = true), on refuse de donner plus de moins.
+            // On force la validation de la sphère actuelle et on passe à la suite.
+            updateDisplay("Limite atteinte (Swéb) : Maintien de la sphère.");
+            window.finishSb10ForEye(); 
+        }
         return;
     }
-  }
+    }
     // Fonction utilitaire pour la sécurité Sb1.0
 function handleSb10Safety(currentSphere, score) {
     if (currentSphere >= 0) {
@@ -5509,23 +5552,38 @@ window.processCylinderPowerDecision = function(choice) {
     // On vérifie si on a atteint 0.50 de cumul de modification de cylindre
    if (Math.abs(appState.cylBalanceCounter) >= 0.50) {
         appState.cylBalanceCounter = 0;
-        if (target.sphere >= 0) { // Inclus 0 dans le cas systématique
-            // CAS POSITIF : Compensation automatique (inchangé)
-            target.sphere -= 0.25;
-            updateDisplay("Équilibre : Sphère -0.25");
+        
+        // Sécurité Loi de la Réfraction : on récupère la sphère initiale du RA
+        var raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
+
+        if (target.sphere > 0) { 
+            // CAS SPHÈRE POSITIVE : On compense SEULEMENT si on ne tombe pas dans le négatif par erreur
+            if (raSph >= 0 && target.sphere < 0.25) {
+                // Le patient est hyperope/emmétrope au RA et est déjà à +0.25 ou 0.00
+                // On bloque la compensation pour ne pas créer de myopie artificielle
+                updateDisplay("Équilibre : Maintien à 0.00 (Sécurité RA)");
+            } else {
+                // Cas standard : on peut compenser sans risque
+                target.sphere -= 0.25;
+                updateDisplay("Équilibre : Sphère -0.25");
+            }
         } else {
-            // CAS NÉGATIF (Myope) : Pas de compensation d'emblée
-            // On mémorise le score actuel avant de changer les lettres pour la comparaison
-            appState.scoreBeforeBalance = appState.lastResponseCount;
-          appState.isCompensationTest = false;
-            appState.examPhase = "CylinderPowerBalance_Myope";
-            nextLetters();
-            updateDisplay("Équilibre Myope : Contrôle de performance");
-            say("D'accord. Relisez-moi ces lettres s'il vous plaît.");
-            return; 
+            // CAS SPHÈRE NULLE OU NÉGATIVE : On utilise votre protocole de contrôle (Zéro Sur-correction)
+            // Sauf si le RA est positif/nul, auquel cas on ne compense jamais dans le négatif
+            if (raSph >= 0) {
+                updateDisplay("Équilibre : Maintien à 0.00 (Limite RA)");
+            } else {
+                // Vrai Myope (RA < 0) : On lance le test de lecture
+                appState.scoreBeforeBalance = appState.lastResponseCount; 
+                appState.isCompensationTest = false;
+                appState.examPhase = "CylinderPowerBalance_Myope";
+                nextLetters();
+                updateDisplay("Équilibre Myope : Contrôle de performance");
+                say("D'accord. Relisez-moi ces lettres s'il vous plaît.");
+                return; 
+            }
         }
     }
-
     // --- 3. RÈGLE DE L'ARRÊT SI CYLINDRE À 0 ---
     if (Math.abs(target.cyl) < 0.01) {
         target.cyl = 0;
@@ -6248,7 +6306,7 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
     });
 };
   window.finishCylinderPower = function() {
-   var target = getTargetEye();
+    var target = getTargetEye();
 
     // --- PORTE DE SORTIE PRIORITAIRE : Cas du RA validé d'emblée ---
     if (appState.cylTotalModifs === 0 || appState.examPhase === "CylinderPowerFinished") {
@@ -6258,39 +6316,49 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
         var isOtherEyeDone = (otherEye === 'OD') ? appState.sb10_OD_ok : appState.sb10_OG_ok;
 
         if (!appState.isMonocularExam && !isOtherEyeDone) {
-            // Bascule sur le second oeil
             setTimeout(function() { window.proceedToNextStepAfterEye(currentEye); }, 1000);
         } else {
-            // Fin de l'examen monoculaire, passage au binoculaire
             updateDisplay("Fin de l'astigmatisme. Passage en binoculaire.");
             setTimeout(window.restoreBinocularBalance, 1500);
         }
-        return; // ARRÊT CRITIQUE : Empêche la suite de la fonction (validation par lettres)
+        return; 
     }
+
     var isImpair = (appState.cylTotalModifs % 2 !== 0);
 
-    // Si le nombre de modifs est impair, on doit vérifier le déséquilibre
+    // --- CAS A : NOMBRE DE CLICS IMPAIR (Arbitrage déséquilibre) ---
     if (isImpair) {
         say("Ok, vérifions tout cela.", function() {
-          appState.vaIndex = appState.bestVaIndex;
+            appState.vaIndex = appState.bestVaIndex;
+            
             if (target.sphere < 0) {
                 // MYOPE : Test de lecture de contrôle
                 appState.examPhase = "CylinderPowerVerification_Myope";
-                nextLetters(); // On change les lettres
+                nextLetters(); 
                 updateDisplay("Déséquilibre : Contrôle lecture Myope");
-                // On attend la réponse via handleResponse
             } else {
-                // HYPEROPE : Passage direct aux verres vérificateurs
-                updateDisplay("Déséquilibre : Test verres vérificateurs");
-              appState.isCylValidationLoop = true; // ON ACTIVE LE FLAG ICI
-                initSphereCheckPlus(true); // On réutilise votre fonction existante
+                // --- SÉCURITÉ LOI DE LA RÉFRACTION (FIN DE TEST) ---
+                var raSph = (appState.activeEye === 'OD') ? getVal('raOD_sph') : getVal('raOG_sph');
+
+                if (target.sphere === 0 && raSph >= 0) {
+                    // Cas spécifique : 0.00 et RA >= 0. On ne teste QUE le +0.25.
+                    updateDisplay("Déséquilibre final : Test +0.25 uniquement (Sécurité RA)");
+                    appState.isCylValidationLoop = true;
+                    appState.onlyTestPlus = true; 
+                    initSphereCheckPlus(true);
+                } else {
+                    // Cas standard (Sphère > 0)
+                    appState.onlyTestPlus = false;
+                    updateDisplay("Déséquilibre : Test verres vérificateurs");
+                    appState.isCylValidationLoop = true;
+                    initSphereCheckPlus(true);
+                }
             }
-        });
-        return; // On s'arrête ici pour attendre le test
+        }); // Fermeture correcte du say
+        return;
     }
 
-
-    // B. DÉCLENCHEUR : Sinon (cas clics pairs), on lance la validation
+    // --- CAS B : NOMBRE DE CLICS PAIR (Validation puissance standard) ---
     appState.examPhase = "CylinderPowerVerification";
     appState.vaIndex = appState.bestVaIndex;
     nextLetters();
