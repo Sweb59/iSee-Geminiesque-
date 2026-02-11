@@ -2174,6 +2174,15 @@ input[id^="fronto"] {
 </div>
 
 <script>
+
+  // --- CONFIGURATION DES PLAGES DE VALEURS ---
+const OPTO_SETTINGS = {
+    SPHERE_MIN: -29.00,
+    SPHERE_MAX: 26.75,
+    CYL_MIN: -8.75,
+    CYL_MAX: 0.00,   
+    STEP: 0.25
+};
 // --- STARTUP LOGIC ---
 window.startAppSequence = function() {
     window.initVoices();
@@ -2361,15 +2370,15 @@ window.checkSphere = function(el) {
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
 
-    // CHECK LIMITES AVANT CORRECTION
-    if (val < -29.00 || val > 26.75) {
+    // Utilisation des constantes OPTO_SETTINGS
+    if (val < OPTO_SETTINGS.SPHERE_MIN || val > OPTO_SETTINGS.SPHERE_MAX) {
         appState.lastInvalidInputId = el.id;
         document.getElementById('modalWarning').classList.remove('hidden');
         return;
     }
 
-    val = Math.round(val * 4) / 4; // Step 0.25
-    el.value = val.toFixed(2);
+    val = Math.round(val / OPTO_SETTINGS.STEP) * OPTO_SETTINGS.STEP;
+    el.value = (val > 0 ? "+" : "") + val.toFixed(2);
 };
 // --- DEBUT LOGIQUE TRANSPOSITION (CORRIGÉ) ---
 var tempCylInputId = null; 
@@ -2379,7 +2388,7 @@ window.checkCylInput = function(el) {
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
 
-    // DETECTION CYLINDRE POSITIF
+    // Détection cylindre positif pour transposition
     if(val > 0) {
         tempCylInputId = el.id; 
         document.getElementById('txtPosCylVal').innerText = "+" + val.toFixed(2);
@@ -2388,14 +2397,15 @@ window.checkCylInput = function(el) {
         return;
     }
 
-    if (val < -10.00) {
+    // Limite basse du cylindre (-8.00)
+    if (val < OPTO_SETTINGS.CYL_MIN) {
         appState.lastInvalidInputId = el.id;
         document.getElementById('modalWarning').classList.remove('hidden');
         return;
     }
 
-    val = Math.round(val * 4) / 4; 
-    el.value = (val > 0 ? "+" : "") + val.toFixed(2);
+    val = Math.round(val / OPTO_SETTINGS.STEP) * OPTO_SETTINGS.STEP;
+    el.value = val.toFixed(2); 
 };
 // --- LOGIQUE TRANSPOSITION & AXE ---
 
@@ -2513,18 +2523,16 @@ window.forceNegativeCyl = function(el) {
     var val = parseFloat(el.value.replace(',', '.'));
     if(isNaN(val)) return;
 
-    // Auto-conversion positif -> négatif (Logique Opto Standard)
     if(val > 0) val = -val;
 
-    // CHECK LIMITES (-10.00 à 0)
-    if (val < -10.00 || val > 0) {
+    // Double sécurité avec OPTO_SETTINGS
+    if (val < OPTO_SETTINGS.CYL_MIN || val > OPTO_SETTINGS.CYL_MAX) {
         appState.lastInvalidInputId = el.id;
         document.getElementById('modalWarning').classList.remove('hidden');
         return;
     }
 
-    val = Math.round(val * 4) / 4; // Step 0.25
-    // Ajoute le "+" si positif, sinon laisse tel quel
+    val = Math.round(val / OPTO_SETTINGS.STEP) * OPTO_SETTINGS.STEP;
     el.value = (val > 0 ? "+" : "") + val.toFixed(2);
 };
 
@@ -5750,7 +5758,7 @@ if (appState.examPhase) {
         case "Vérification de Swéb":
         case "Vérification de Swéb_AVEC_VERRE":
         case "Vérification de Swéb_CUMUL_FINAL":
-            affichagePhase = "Vérification de Swéb"; 
+            affichagePhase = "S.V.V.E.B. -0.25"; 
             break;
 
         // --- SPHÈRE (VÉRIFICATEURS) ---
