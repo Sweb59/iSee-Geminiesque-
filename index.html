@@ -2700,6 +2700,7 @@ var appState = {
     isRunning: false, activeEye: 'OD', firstEye: 'OD', profile: null, initProfile: null, 
     baseProfile: null, 
     isSpeaking: false, // Variable de lock
+  isCompensationTest: false,
 
   // --- AJOUTEZ LA LIGNE ICI ---
     axisIntroDone: false,
@@ -4201,29 +4202,84 @@ if (appState.examPhase === "AxisVerification") {
     return;
 }
    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (FIN CYLINDRE) ---
+    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (FIN CYLINDRE) ---
+    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (FIN CYLINDRE / CAS IMPAIR) ---
     if (appState.examPhase === "CylinderPowerVerification_Myope") {
-        if (lettersRead < 5) {
+        if (lettersRead < appState.scoreBeforeBalance) {
+            // Le dernier clic a dégradé la vision par rapport au record mémorisé
             getTargetEye().sphere -= 0.25;
-            updateDisplay("Lecture < 5 : Compensation Sphère -0.25");
+            updateDisplay("Déséquilibre final : Compensation -0.25 appliquée.");
+        } else {
+            // Le score est maintenu ou meilleur : on garde la sphère telle quelle
+            updateDisplay("Déséquilibre final : Performance stable, pas de compensation.");
         }
+        
+        // Clôture définitive de l'astigmatisme pour cet oeil
         appState.cylTotalModifs = 0;
-      appState.examPhase = "CylinderPowerFinished";
-      appState.saved_sb10[appState.activeEye] = getTargetEye().sphere;
+        appState.examPhase = "CylinderPowerFinished";
+        appState.saved_sb10[appState.activeEye] = getTargetEye().sphere;
         window.finishCylinderPower();
         return;
     }
 
     // --- CONTRÔLE ÉQUILIBRE MYOPE (EN COURS DE TEST - PALIER 0.50) ---
+    // --- CONTRÔLE ÉQUILIBRE MYOPE (EN COURS DE TEST - PALIER 0.50) ---
+    // --- CONTRÔLE ÉQUILIBRE MYOPE (EN COURS DE TEST - PALIER 0.50) ---
     if (appState.examPhase === "CylinderPowerBalance_Myope") {
-        if (lettersRead < 5) {
-            getTargetEye().sphere -= 0.25;
-            updateDisplay("Lecture < 5 : Compensation Sphère -0.25 appliquée");
+        var target = getTargetEye();
+
+        if (lettersRead < appState.scoreBeforeBalance) {
+            // --- CAS : MOINS BON ---
+            if (!appState.isCompensationTest) {
+                // A. PREMIER ÉCHEC : On tente la compensation de -0.25 sphère
+                target.sphere -= 0.25;
+                appState.isCompensationTest = true; // On verrouille pour le prochain passage
+                updateDisplay("Baisse d'acuité : Test de compensation -0.25 sphère");
+                
+                nextLetters(); // Changement de lettres pour la relecture
+                say("D'accord. Et avec ceci, pouvez-vous relire la ligne ?");
+                // On NE change PAS la phase, donc le prochain clic reviendra ici
+                return; 
+            } else {
+                // B. DEUXIÈME ÉCHEC (après compensation) : La modification du cylindre est mauvaise
+                updateDisplay("Échec compensation : Annulation et retour cylindre.");
+                
+                // On annule la sphère qui n'a pas aidé
+                target.sphere += 0.25; 
+                
+                // On revient en arrière sur le cylindre (annulation du pas de 0.50)
+                // ET on rebrouille de 0.25 pour repartir sur une base solide
+                if (appState.cylBalanceCounter > 0) target.cyl -= 0.25;
+                else target.cyl += 0.25;
+
+                // Reset des variables de contrôle
+                appState.cylBalanceCounter = 0;
+                appState.isCompensationTest = false;
+                appState.examPhase = "CylinderPowerCheck"; // Retour à la recherche normale
+
+                nextLetters();
+                say("Je vois. On va vérifier cela ensemble. Relisez-moi ces lettres à voix haute s'il vous plaît.", function() {
+                    setTimeout(window.runCylinderPowerSequence, 1000);
+                });
+                return;
+            }
+        } else {
+            // --- CAS : IDENTIQUE OU AMÉLIORÉ ---
+            if (lettersRead > appState.scoreBeforeBalance) {
+                appState.scoreBeforeBalance = lettersRead; // On mémorise le nouveau record
+                updateDisplay("Performance améliorée : Nouveau record mémorisé.");
+            } else {
+                updateDisplay("Équilibre validé (Score stable).");
+            }
+            
+            appState.isCompensationTest = false; // Reset du témoin
+            appState.examPhase = "CylinderPowerCheck"; // Sortie de la balance
+
+            say("Bien.", function() {
+                setTimeout(window.runCylinderPowerSequence, 1000);
+            });
+            return;
         }
-        appState.examPhase = "CylinderPowerCheck";
-        say("Bien.", function() {
-            setTimeout(window.runCylinderPowerSequence, 1000);
-        });
-        return;
     }
     // --- 2. DÉTECTION PRÉVENTIVE DES ALERTES (SENTINELLES) ---
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
@@ -5451,20 +5507,22 @@ window.processCylinderPowerDecision = function(choice) {
 
     // --- 2. RÈGLE DE L'ÉQUILIBRE (PRIORITAIRE) ---
     // On vérifie si on a atteint 0.50 de cumul de modification de cylindre
-    if (Math.abs(appState.cylBalanceCounter) >= 0.50) {
+   if (Math.abs(appState.cylBalanceCounter) >= 0.50) {
         appState.cylBalanceCounter = 0;
-        if (target.sphere > 0) {
-            // Hypermétrope : compensation directe
+        if (target.sphere >= 0) { // Inclus 0 dans le cas systématique
+            // CAS POSITIF : Compensation automatique (inchangé)
             target.sphere -= 0.25;
             updateDisplay("Équilibre : Sphère -0.25");
         } else {
-            // Myope : compensation + contrôle de lecture
-            target.sphere -= 0.25;
+            // CAS NÉGATIF (Myope) : Pas de compensation d'emblée
+            // On mémorise le score actuel avant de changer les lettres pour la comparaison
+            appState.scoreBeforeBalance = appState.lastResponseCount;
+          appState.isCompensationTest = false;
             appState.examPhase = "CylinderPowerBalance_Myope";
             nextLetters();
-            updateDisplay("Équilibre Myope : Compensation et contrôle");
+            updateDisplay("Équilibre Myope : Contrôle de performance");
             say("D'accord. Relisez-moi ces lettres s'il vous plaît.");
-            return; // On arrête tout pour attendre la réponse du myope
+            return; 
         }
     }
 
@@ -5792,6 +5850,7 @@ if (appState.examPhase) {
             break;
         case "CylinderPowerVerification":
     case "CylinderPowerVerification_Myope":
+        case "CylinderPowerBalance_Myope":
         affichagePhase = "Validation de la puissance";
         break;
         
