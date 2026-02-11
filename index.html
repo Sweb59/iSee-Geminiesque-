@@ -4253,6 +4253,7 @@ if (appState.examPhase === "AxisVerification") {
         say("Bien.", function() {
             appState.isSpeaking = false;
             updateLockUI(false);
+          appState.cylTotalModifs = 0;
             appState.examPhase = "CylinderPowerFinished";
             appState.saved_sb10[appState.activeEye] = getTargetEye().sphere;
             window.finishCylinderPower(); 
@@ -5387,6 +5388,9 @@ window.runJccSequence = function() {
 };
 
   window.runCylinderPowerSequence = function() {
+    // FORCE LE RETOUR DU TITRE STANDARD
+    appState.examPhase = "CylinderPowerCheck"; 
+    updateDisplay("Mise au point de la puissance");
     if (appState.isSpeaking) return;
     
     // --- RÉINITIALISATION FORCÉE DES BOUTONS ---
