@@ -4192,12 +4192,15 @@ if (appState.examPhase === "AxisVerification") {
     }
 
     // Si déjà à 1.0 ou score insuffisant pour monter : Fin validation
-    updateDisplay("Axe validé à " + currentVA);
-    appState.isSpeaking = false; 
-    updateLockUI(false);
-    window.initCylinderPowerCheck(true); 
+    else {
+        // Ce bloc ne s'exécute QUE si on n'est pas monté à la ligne supérieure
+        updateDisplay("Axe validé à " + currentVA);
+        appState.isSpeaking = false; 
+        updateLockUI(false);
+        window.initCylinderPowerCheck(true); 
     return;
-  } // <--- 1. Ferme le bloc "AxisVerification"
+  }
+   } // <--- 1. Ferme le bloc "AxisVerification"
    
    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (VÉRIFICATION FINALE) ---
     if (appState.examPhase === "CylinderPowerVerification_Myope") {
