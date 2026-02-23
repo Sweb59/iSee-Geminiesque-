@@ -4179,28 +4179,28 @@ if (appState.examPhase === "AxisVerification") {
         return; 
     }
 
-    // CAS SUCCÈS : On mémorise la VA et on tente de monter tant que < 10/10
+    // --- CAS RÉUSSITE ---
+    // On valide la ligne actuelle
     appState.subj[appState.activeEye].va = currentVA;
-    appState.bestVaIndex = appState.vaIndex; // Sauvegarde la position de cette ligne
+    appState.bestVaIndex = appState.vaIndex; // On mémorise cette réussite
 
+    // CONDITION DE MONTÉE : Si score >= 3 et VA < 1.0, on demande la cadence
     if (lettersRead >= 3 && currentVA < 1.0) {
         // Au lieu de finir, on demande la cadence pour monter à la ligne suivante
         appState.isSpeaking = false;
         updateLockUI(false);
         askCadence(lettersRead); 
         return;
-    }
-
-    // Si déjà à 1.0 ou score insuffisant pour monter : Fin validation
+    } 
     else {
-        // Ce bloc ne s'exécute QUE si on n'est pas monté à la ligne supérieure
+        // Si déjà à 1.0 ou score insuffisant pour monter : Fin validation
         updateDisplay("Axe validé à " + currentVA);
         appState.isSpeaking = false; 
         updateLockUI(false);
         window.initCylinderPowerCheck(true); 
-    return;
-  }
-   } // <--- 1. Ferme le bloc "AxisVerification"
+        return;
+    }
+} // <--- FIN du bloc if (appState.examPhase === "AxisVerification")// <--- 1. Ferme le bloc "AxisVerification"
    
    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (VÉRIFICATION FINALE) ---
     if (appState.examPhase === "CylinderPowerVerification_Myope") {
@@ -4411,21 +4411,21 @@ if (appState.examPhase === "AxisVerification") {
    // --- GESTION SPÉCIFIQUE VALIDATION AXE (MONTÉE PROGRESSIVE) ---
     if (appState.examPhase === "AxisVerification") {
         if (isPassed && cadence === 'rabbit') {
+            // Le patient est fluide : on tente la ligne d'après (ex: 0.6 -> 0.8)
             if (goNextLine()) {
                 let nextVA = ACUITY_TABLE[appState.vaIndex].va;
-                updateDisplay("Progression Axe : Test ligne " + nextVA);
-                // On met à jour la VA de référence pour la prochaine ligne
+                updateDisplay("Axe : Tentative ligne " + nextVA);
                 appState.initialLettersCount = 3; 
                 say("Très bien. Pouvez-vous me lire celle-ci ?");
             } else {
                 window.initCylinderPowerCheck(true);
             }
         } else {
-            // Si échec ou tortue sur une ligne supérieure, on s'arrête à la dernière ligne validée
+            // Échec ou Tortue : on s'arrête sur la meilleure ligne mémorisée
             updateDisplay("Plafond atteint. Passage à la puissance.");
             window.initCylinderPowerCheck(true);
         }
-        return;
+        return; // TRÈS IMPORTANT : empêche de lire la suite de la fonction
     }
 
   // =========================================================
