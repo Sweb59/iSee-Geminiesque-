@@ -4160,82 +4160,45 @@ if (appState.examPhase === "AxisVerification") {
     var refLetters = appState.initialLettersCount; 
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
 
-    // --- CAS D'ÉCHEC : SCORE INFÉRIEUR À LA RÉFÉRENCE ---
+    // CAS ÉCHEC : Score inférieur à la référence (Retour au RA)
     if (lettersRead < refLetters) {
         appState.examPhase = "AxisCheck"; 
         var target = getTargetEye();
-        
-        // REBOND : Retour à l'axe initial de l'Auto-Réfractomètre
         target.axe = appState.axisInitialRA; 
-        setVaToIndexClosest(1.00); // On remet la ligne 10/10 en mémoire
+        setVaToIndexClosest(appState.initialSb10VA); 
         nextLetters();
-
-// 2. MISE À JOUR VISUELLE (Avant la voix)
-        // On affiche tout de suite la nouvelle ligne et le changement de phase
-        updateDisplay("Échec validation (" + lettersRead + "/" + refLetters + "). Retour Axe RA.");
-      
+        updateDisplay("Échec validation. Retour Axe RA.");
         document.getElementById('standardButtons').classList.add('hidden');
         document.getElementById('axisControls').classList.remove('hidden');
-        
-        
-        // RESET des paramètres de recherche JCC (Identique à ton code initial)
-        appState.axisDirectionHistory = [];
-        appState.isFinalStep = false;
-        appState.axisStep = (Math.abs(target.cyl) < 2.50) ? 20 : 10;
-        
-        if (appState.cylHigh) {
-            appState.axisStep = 5;
-            appState.highCylDirection = null;
-            document.getElementById('jccVisuals').classList.add('hidden');
-        } else {
-            document.getElementById('jccVisuals').classList.remove('hidden');
-        }
 
-      
-
-        // ANNONCE DE RUPTURE : On impose la lecture à voix haute
-        say("D'accord. On va vérifier cela ensemble. Pour vous aider dans vos réponses, vous allez cette fois-ci lire les lettres à voix haute.", function() {
+        say("D'accord. On va vérifier cela ensemble. Relisez-moi ces lettres à voix haute.", function() {
             appState.isSpeaking = false; 
             updateLockUI(false);
-            // Relance de la séquence JCC après 1s
             setTimeout(function() { runJccSequence(); }, 1000);
         });
         return; 
     }
 
-    // --- CAS DE RÉUSSITE (Score >= Référence) ---
-    // On met à jour la VA de l'œil avec la ligne actuelle validée
+    // CAS SUCCÈS : On mémorise la VA et on tente de monter tant que < 10/10
     appState.subj[appState.activeEye].va = currentVA;
-  appState.lettersAfterAxis = lettersRead;
-    updateDisplay("Validé " + currentVA + " (" + lettersRead + " lues)");
+    appState.bestVaIndex = appState.vaIndex; // Sauvegarde la position de cette ligne
 
-    // RÈGLE DE PROGRESSION : Si on est en dessous de 1.0, on tente de monter
-    if (currentVA < 1.0) {
-        if (goNextLine()) {
-            // La nouvelle ligne validée devient la référence : on demande 3 lettres pour la suite
-            appState.initialLettersCount = 3; 
-            
-            // --- ÉTAPE A : MISE À JOUR VISUELLE IMMÉDIATE ---
-            nextLetters(); 
-            updateDisplay("Progression : test de la ligne " + ACUITY_TABLE[appState.vaIndex].va);
-            
-            // --- ÉTAPE B : LA VOIX ---
-            say("Très bien. Et cette ligne, pouvez-vous la lire ?", function() {
-                // On ne déverrouille QUE quand la voix a fini
-                appState.isSpeaking = false; 
-                updateLockUI(false);
-            });
-            return;
-        }
+    if (lettersRead >= 3 && currentVA < 1.0) {
+        // Au lieu de finir, on demande la cadence pour monter à la ligne suivante
+        appState.isSpeaking = false;
+        updateLockUI(false);
+        askCadence(lettersRead); 
+        return;
     }
 
-    // VALIDATION FINALE : Terminé (soit VA >= 1.0, soit échec de progression)
-    updateDisplay("Mise au point de l'axe validée à " + currentVA);
+    // Si déjà à 1.0 ou score insuffisant pour monter : Fin validation
+    updateDisplay("Axe validé à " + currentVA);
     appState.isSpeaking = false; 
     updateLockUI(false);
     window.initCylinderPowerCheck(true); 
     return;
-}
+  } // <--- 1. Ferme le bloc "AxisVerification"
+   
    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (VÉRIFICATION FINALE) ---
     if (appState.examPhase === "CylinderPowerVerification_Myope") {
         appState.isSpeaking = true;
@@ -4442,6 +4405,25 @@ if (appState.examPhase === "AxisVerification") {
     var currentTxt = ACUITY_TABLE[appState.vaIndex].lines[appState.letterIndex % 8]; if(!currentTxt) currentTxt = ACUITY_TABLE[appState.vaIndex].lines[0];
     var totalLetters = currentTxt.split(' ').length; var isSmallLine = totalLetters < 5;
     var isPassed = false;
+   // --- GESTION SPÉCIFIQUE VALIDATION AXE (MONTÉE PROGRESSIVE) ---
+    if (appState.examPhase === "AxisVerification") {
+        if (isPassed && cadence === 'rabbit') {
+            if (goNextLine()) {
+                let nextVA = ACUITY_TABLE[appState.vaIndex].va;
+                updateDisplay("Progression Axe : Test ligne " + nextVA);
+                // On met à jour la VA de référence pour la prochaine ligne
+                appState.initialLettersCount = 3; 
+                say("Très bien. Pouvez-vous me lire celle-ci ?");
+            } else {
+                window.initCylinderPowerCheck(true);
+            }
+        } else {
+            // Si échec ou tortue sur une ligne supérieure, on s'arrête à la dernière ligne validée
+            updateDisplay("Plafond atteint. Passage à la puissance.");
+            window.initCylinderPowerCheck(true);
+        }
+        return;
+    }
 
   // =========================================================
 // =========================================================
@@ -6050,20 +6032,17 @@ if(visOD && visOG) {
 
         // Gestion de la visibilité des blocs de boutons
    // 1. On identifie si on est en phase de lecture forcée (Validation ou Équilibre Myope)
-var isReadingPhase = appState.examPhase.includes("Verification") || appState.examPhase.includes("Balance_Myope");
+var isCadenceOpen = !document.getElementById('cadenceButtons').classList.contains('hidden');
+var isSpecialMenuOpen = !document.getElementById('checkPlusZone').classList.contains('hidden') || 
+                        !document.getElementById('axisControls').classList.contains('hidden');
 
-// 2. On définit le mode spécial : on cache les boutons de score UNIQUEMENT 
-// si un menu spécial est ouvert ET qu'on n'est pas censé lire une ligne.
-var isSpecialMode = (
-    (!document.getElementById('cadenceButtons').classList.contains('hidden') || 
-     !document.getElementById('checkPlusZone').classList.contains('hidden') || 
-     !document.getElementById('axisControls').classList.contains('hidden'))
-    && !isReadingPhase 
-);
+var isReadingForced = appState.examPhase.includes("Verification") || appState.examPhase.includes("Balance_Myope");
+
+var shouldHideNumbers = isCadenceOpen || (isSpecialMenuOpen && !isReadingForced);
 
         var stdBtns = document.getElementById('standardButtons');
         if (stdBtns) {
-            stdBtns.classList.toggle('hidden', isSpecialMode);
+           stdBtns.classList.toggle('hidden', shouldHideNumbers);
         }
     }
 };
@@ -6330,7 +6309,15 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
     appState.bestVaIndex = appState.vaIndex; 
     
     // Positionnement sur la ligne 1.0 (10/10) pour le test de confort
-    setVaToIndexClosest(1.00);
+   // CHOIX DE LA LIGNE DE TRAVAIL (CONCOURS D'ACUITÉ)
+    // On prend la meilleure ligne validée (bestVaIndex)
+    // MAIS on plafonne au 10/10 pour le confort du test JCC
+    var currentBestVA = ACUITY_TABLE[appState.bestVaIndex].va;
+    if (currentBestVA > 1.0) {
+        setVaToIndexClosest(1.00); 
+    } else {
+        appState.vaIndex = appState.bestVaIndex;
+    }
     nextLetters();
     updateDisplay("Mise au point de la puissance");
 
@@ -6341,9 +6328,10 @@ window.initCylinderPowerCheck = function(isReturnFromAxis) {
         setTimeout(function() { 
             window.runCylinderPowerSequence(); 
         }, 1000);
-    });
-};
-  window.finishCylinderPower = function() {
+});
+}; // Ferme le "say" et "initCylinderPowerCheck"
+
+window.finishCylinderPower = function() {
     var target = getTargetEye();
     var isImpair = (appState.cylTotalModifs % 2 !== 0);
 
