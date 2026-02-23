@@ -4180,27 +4180,23 @@ if (appState.examPhase === "AxisVerification") {
     }
 
     // --- CAS RÉUSSITE ---
-    // On valide la ligne actuelle
-    appState.subj[appState.activeEye].va = currentVA;
-    appState.bestVaIndex = appState.vaIndex; // On mémorise cette réussite
+appState.subj[appState.activeEye].va = currentVA;
+appState.bestVaIndex = appState.vaIndex;
 
-    // CONDITION DE MONTÉE : Si score >= 3 et VA < 1.0, on demande la cadence
-    if (lettersRead >= 3 && currentVA < 1.0) {
-        // Au lieu de finir, on demande la cadence pour monter à la ligne suivante
-        appState.isSpeaking = false;
-        updateLockUI(false);
-        askCadence(lettersRead); 
-        return;
-    } 
-    else {
-        // Si déjà à 1.0 ou score insuffisant pour monter : Fin validation
-        updateDisplay("Axe validé à " + currentVA);
-        appState.isSpeaking = false; 
-        updateLockUI(false);
-        window.initCylinderPowerCheck(true); 
-        return;
-    }
-} // <--- FIN du bloc if (appState.examPhase === "AxisVerification")// <--- 1. Ferme le bloc "AxisVerification"
+if (lettersRead >= 3 && currentVA < 1.0) {
+appState.isSpeaking = false;
+updateLockUI(false);
+askCadence(lettersRead);
+return;
+}
+else {
+updateDisplay("Axe validé à " + currentVA);
+appState.isSpeaking = false;
+updateLockUI(false);
+window.initCylinderPowerCheck(true);
+return;
+}
+}
    
    // --- CONTRÔLE DÉSÉQUILIBRE MYOPE (VÉRIFICATION FINALE) ---
     if (appState.examPhase === "CylinderPowerVerification_Myope") {
