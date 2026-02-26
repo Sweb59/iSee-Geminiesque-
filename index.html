@@ -3401,7 +3401,7 @@ function validateSb05() {
 
     appState.saved_sb05[eye] = getTargetEye().sphere;
 
-    say("Bien, passons sur l'autre oeil.", function() {
+    say("Passons sur l'autre oeil.", function() {
         if (appState.sb05_OD_ok && appState.sb05_OG_ok) { 
             initSb10(); 
         } 
@@ -3465,6 +3465,10 @@ function applySb10Logic() {
     }
   }
 window.validateSb10 = function() {
+  // AJOUT SÉCURITÉ : Ne pas interférer si on gère l'astigmatisme ou la puissance
+    if (appState.examPhase.includes("Axis") || appState.examPhase.includes("Cylinder")) {
+        return false; 
+    }
     var target = getTargetEye();
     var eye = appState.activeEye;
     var lettersRead = appState.lastResponseCount;
@@ -4180,14 +4184,20 @@ if (appState.examPhase === "AxisVerification") {
     }
 
     // --- CAS RÉUSSITE ---
+// --- CAS RÉUSSITE ---
 appState.subj[appState.activeEye].va = currentVA;
 appState.bestVaIndex = appState.vaIndex;
 
-if (lettersRead >= 3 && currentVA < 1.0) {
-appState.isSpeaking = false;
-updateLockUI(false);
-askCadence(lettersRead);
-return;
+// On demande la cadence pour TOUTES les lignes validées, y compris le 10/10
+// Si on valide une ligne (>=3 lettres)
+if (lettersRead >= 3) {
+    // Si on est en dessous ou égal à 1.0, on demande la cadence systématiquement
+    if (currentVA <= 1.0) {
+        appState.isSpeaking = false;
+        updateLockUI(false);
+        askCadence(lettersRead);
+        return;
+    }
 }
 else {
 updateDisplay("Axe validé à " + currentVA);
@@ -4343,8 +4353,8 @@ return;
             setTimeout(function() {
                 if (appState.isRunning && appState.examPhase === "Sb1.0" && !appState.isCheckingGain) {
                     var prompt = (lettersRead === 0) ? 
-                        "D'accord. Et si je vais ça, est-ce que c'est mieux ?" : 
-                        "Ok. Relisez-moi cette ligne s'il vous plaît.";
+                        "Et si je vais ça, est-ce que c'est mieux ?" : 
+                        "Relisez-moi cette ligne s'il vous plaît.";
                     
                     say(prompt, function() {
                         appState.isSpeaking = false;
@@ -4397,32 +4407,48 @@ return;
         console.log("Logique Swéb détectée pour score : " + lettersRead);
     }
     // ----------------------------------------------------------
-
-    var currentVA = ACUITY_TABLE[appState.vaIndex].va;  
-    var currentVA = ACUITY_TABLE[appState.vaIndex].va;
     var currentVA = ACUITY_TABLE[appState.vaIndex].va;
     var currentTxt = ACUITY_TABLE[appState.vaIndex].lines[appState.letterIndex % 8]; if(!currentTxt) currentTxt = ACUITY_TABLE[appState.vaIndex].lines[0];
     var totalLetters = currentTxt.split(' ').length; var isSmallLine = totalLetters < 5;
     var isPassed = false;
    // --- GESTION SPÉCIFIQUE VALIDATION AXE (MONTÉE PROGRESSIVE) ---
     if (appState.examPhase === "AxisVerification") {
-        if (isPassed && cadence === 'rabbit') {
-            // Le patient est fluide : on tente la ligne d'après (ex: 0.6 -> 0.8)
+    // On définit le succès (>= 3 lettres, peu importe la cadence car on la demande avant)
+    isPassed = (lettersRead >= 3);
+
+    if (isPassed) {
+        // SUCCÈS : On enregistre la VA actuelle comme meilleure performance
+        appState.subj[appState.activeEye].va = currentVA;
+        appState.bestVaIndex = appState.vaIndex;
+        appState.lettersAfterAxis = lettersRead; // On mémorise aussi le nombre de lettres pour la puissance
+
+        if (currentVA < 1.0) {
+            // Si on n'est pas encore au plafond, on tente la ligne suivante
             if (goNextLine()) {
-                let nextVA = ACUITY_TABLE[appState.vaIndex].va;
-                updateDisplay("Axe : Tentative ligne " + nextVA);
-                appState.initialLettersCount = 3; 
+                updateDisplay("Axe validé : Montée vers " + ACUITY_TABLE[appState.vaIndex].va);
                 say("Très bien. Pouvez-vous me lire celle-ci ?");
             } else {
+                // Si on est au bout du tableau, on passe à la puissance
                 window.initCylinderPowerCheck(true);
             }
         } else {
-            // Échec ou Tortue : on s'arrête sur la meilleure ligne mémorisée
-            updateDisplay("Plafond atteint. Passage à la puissance.");
+            // On est au 1.0 (ou plus) : On passe à la puissance
+            updateDisplay("Plafond 10/10 atteint. Passage à la puissance.");
             window.initCylinderPowerCheck(true);
         }
-        return; // TRÈS IMPORTANT : empêche de lire la suite de la fonction
+    } else {
+        // ÉCHEC (< 3 lettres) : INTERDICTION DE DÉBROUILLER
+        updateDisplay("Ligne non validée. Retour à " + appState.subj[appState.activeEye].va);
+        
+        // On ne touche pas à target.sphere ! 
+        // On remet juste la ligne sur la dernière VA validée pour le confort
+        appState.vaIndex = appState.bestVaIndex;
+        
+        // Bascule immédiate vers la puissance
+        window.initCylinderPowerCheck(true);
     }
+    return; // On sort pour éviter les calculs standards de sphère
+}
 
   // =========================================================
 // =========================================================
