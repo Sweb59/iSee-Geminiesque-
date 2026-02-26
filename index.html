@@ -2315,14 +2315,10 @@ function formatVA(val) {
 window.cleanAndSyncVA = function(lettersRead) {
     // On définit les phases où la VA ne doit pas être mise à jour
     const sensitivePhases = [
-        "Vérification de Swéb", 
-        "Vérification de Swéb_AVEC_VERRE", 
-        "Vérification de Swéb_CUMUL_FINAL",
-        "SphereCheckMinus",
-        "SphereCheckPlus",
-        "QuartConcaveMyope",
-        "AxisCheck"
-    ];
+    "Vérification de Swéb", "Vérification de Swéb_AVEC_VERRE", "Vérification de Swéb_CUMUL_FINAL",
+    "SphereCheckMinus", "SphereCheckPlus", "QuartConcaveMyope",
+    "AxisCheck", "AxisVerification", "CylinderPowerCheck", "CylinderPowerVerification"
+];
 
     // Sécurité : si on est dans un test spécial, on ne touche pas à la VA confirmée
     if (sensitivePhases.includes(appState.examPhase) || appState.isCheckingGain || appState.safety_mode) {
@@ -4412,43 +4408,56 @@ return;
     var totalLetters = currentTxt.split(' ').length; var isSmallLine = totalLetters < 5;
     var isPassed = false;
    // --- GESTION SPÉCIFIQUE VALIDATION AXE (MONTÉE PROGRESSIVE) ---
+   // --- GESTION SPÉCIFIQUE VALIDATION AXE (MONTÉE PROGRESSIVE) ---
     if (appState.examPhase === "AxisVerification") {
-    // On définit le succès (>= 3 lettres, peu importe la cadence car on la demande avant)
-    isPassed = (lettersRead >= 3);
+        // On définit le succès (>= 3 lettres)
+        isPassed = (lettersRead >= 3);
+          var target = getTargetEye();
 
-    if (isPassed) {
-        // SUCCÈS : On enregistre la VA actuelle comme meilleure performance
-        appState.subj[appState.activeEye].va = currentVA;
-        appState.bestVaIndex = appState.vaIndex;
-        appState.lettersAfterAxis = lettersRead; // On mémorise aussi le nombre de lettres pour la puissance
+        if (isPassed) {
+            // SUCCÈS : On enregistre les performances
+            appState.subj[appState.activeEye].va = currentVA;
+            appState.bestVaIndex = appState.vaIndex;
+            appState.lettersAfterAxis = lettersRead; 
+            appState.axisInitialRA = target.axe; // Verrouillage de la nouvelle bouée de sauvetage
 
-        if (currentVA < 1.0) {
-            // Si on n'est pas encore au plafond, on tente la ligne suivante
-            if (goNextLine()) {
-                updateDisplay("Axe validé : Montée vers " + ACUITY_TABLE[appState.vaIndex].va);
-                say("Très bien. Pouvez-vous me lire celle-ci ?");
+            if (currentVA < 1.0) {
+                // Tentative de montée
+                if (goNextLine()) {
+                    // --- MODIFICATION ICI : DÉVERROUILLAGE FORCE ---
+                    updateDisplay("Axe validé : Montée vers " + ACUITY_TABLE[appState.vaIndex].va);
+                    
+                    // On libère le verrouillage pour permettre à la voix de se lancer sans conflit
+                    appState.isSpeaking = false;
+                    updateLockUI(false);
+
+                    setTimeout(function() {
+                        say("Très bien. Pouvez-vous me lire celle-ci ?");
+                    }, 150);
+                } else {
+                    window.initCylinderPowerCheck(true);
+                }
             } else {
-                // Si on est au bout du tableau, on passe à la puissance
+                // Plafond 10/10 atteint
+                updateDisplay("Plafond 10/10 atteint. Passage à la puissance.");
                 window.initCylinderPowerCheck(true);
             }
         } else {
-            // On est au 1.0 (ou plus) : On passe à la puissance
-            updateDisplay("Plafond 10/10 atteint. Passage à la puissance.");
-            window.initCylinderPowerCheck(true);
+            // --- CAS ÉCHEC (< 3 lettres) ---
+            updateDisplay("Plafond atteint. Passage à la puissance.");
+            appState.lettersAfterAxis = lettersRead; 
+            appState.vaIndex = appState.bestVaIndex;
+            
+            // Ménage de sécurité pour la puissance
+            appState.cylPowerStep = 1;
+            appState.cylPowerChangeSum = 0;
+            appState.lastCylDecision = null;
+
+            window.initCylinderPowerCheck(false);
         }
-    } else {
-        // ÉCHEC (< 3 lettres) : INTERDICTION DE DÉBROUILLER
-        updateDisplay("Ligne non validée. Retour à " + appState.subj[appState.activeEye].va);
         
-        // On ne touche pas à target.sphere ! 
-        // On remet juste la ligne sur la dernière VA validée pour le confort
-        appState.vaIndex = appState.bestVaIndex;
-        
-        // Bascule immédiate vers la puissance
-        window.initCylinderPowerCheck(true);
+        return; // On sort proprement
     }
-    return; // On sort pour éviter les calculs standards de sphère
-}
 
   // =========================================================
 // =========================================================
@@ -4483,9 +4492,9 @@ if (appState.examPhase === "Vérification de Swéb") {
     updateDisplay("Vérification de Swéb (Test avec -0.25)");
 
     if (target.sphere < 0) {
-        say("Bien. Et maintenant, est-ce que c'est mieux comme ceci ? Relisez la ligne.");
+        say("Et maintenant, est-ce que c'est mieux comme ceci ? Relisez la ligne.");
     } else {
-        say("Bien. Et maintenant si je fais ça, pouvez-vous lire cette ligne s'il vous plaît.");
+        say("Et maintenant si je fais ça, pouvez-vous lire cette ligne s'il vous plaît.");
     }
     return; 
 }
@@ -5193,53 +5202,56 @@ setHTML('raOG_sph', (rOG > 0 ? "+" : "") + rOG.toFixed(2));
 // --- AXE ---
 // --- AXE (BLOC RÉPARÉ ET UNIFIÉ) ---
 window.initAxisCheck = function() {
-    appState.examPhase = "AxisCheck"; 
     var target = getTargetEye();
+    var currentAbsCyl = Math.abs(target.cyl);
     
-    // --- MÉMOIRE DE PERFORMANCE POUR VALIDATION ---
-    appState.axisInitialRA = target.axe; // Axe du RA pour le "Rebond"
-    appState.initialSb10VA = ACUITY_TABLE[appState.vaIndex].va; // VA de référence (ex: 0.6 ou 1.25)
-    appState.initialLettersCount = appState.lastResponseCount; // Score de lettres (ex: 4)
+    // 1. --- SÉCURITÉ MÉMOIRE & RÈGLE DES 3/4 ---
+    // On ne mémorise les références que si on ne vient PAS d'un retour puissance (TQS)
+    if (appState.examPhase !== "CylinderPower_TQS_Check") {
+        appState.axisInitialRA = target.axe; // Axe de secours (RA ou dernier validé)
+        appState.initialSb10VA = ACUITY_TABLE[appState.vaIndex].va; // VA de référence
+        appState.initialLettersCount = appState.lastResponseCount; // Score de référence
+    }
 
-    // --- CHOIX DE LA LIGNE DE TRAVAIL ---
-    // Si VA >= 1.0, on règle sur le 1.0 (confort). Sinon, on reste sur la ligne lue.
+    appState.examPhase = "AxisCheck"; 
+
+    // 2. --- CHOIX DE LA LIGNE DE TRAVAIL ---
+    // Plafond au 10/10 pour le confort du test JCC
     if (appState.initialSb10VA >= 1.0) {
         setVaToIndexClosest(1.00); 
     } else {
         setVaToIndexClosest(appState.initialSb10VA); 
     }
     
-    var cyl = Math.abs(target.cyl); 
-    appState.cylHigh = (cyl >= 4.50);
+    // 3. --- LOGIQUE DYNAMIQUE DU PAS (STEP) ---
+    appState.cylHigh = (currentAbsCyl >= 4.50);
 
-    // --- LOGIQUE D'INITIALISATION DU PAS (STEP) ---
     if (appState.cylHigh) {
-        // CYLINDRE TRÈS FORT : Pas fixe 5°, positions spécifiques
+        // MÉTHODE FORTE : Pas fixe 5°
         appState.axisStep = 5; 
         appState.highCylDirection = null; 
         appState.tempPos1 = target.axe;   
         appState.tempPos2 = normalizeAxis(target.axe + 5); 
     } else {
-        // CYLINDRE FAIBLE OU MOYEN : Règle 20° ou 10° au départ
-        appState.axisStep = (cyl < 2.50) ? 20 : 10;
+        // MÉTHODE STANDARD : Adaptation à la baisse de puissance
+        // Si Cyl >= 2.50 -> 10°, sinon (cyl plus faible) -> 20°
+        appState.axisStep = (currentAbsCyl >= 2.50) ? 10 : 20;
         
-        // Positions pour le test JCC (comparaison autour de l'axe actuel)
         appState.tempPos1 = normalizeAxis(target.axe + appState.axisStep);
         appState.tempPos2 = normalizeAxis(target.axe - appState.axisStep);
     }
     
-    // Reset des contrôleurs
+    // 4. --- RESET DES CONTRÔLEURS ---
     appState.axisDirectionHistory = [];
     appState.axisRepeatCount = 0; 
     appState.axisHelpMode = false;
     appState.isFinalStep = false; 
 
-    // Affichage des éléments UI
+    // 5. --- INTERFACE UI ---
     document.getElementById('axisZone').classList.remove('hidden');
     document.getElementById('axisControls').classList.remove('hidden');
     document.getElementById('standardButtons').classList.add('hidden');
     
-    // Gestion spécifique du visuel JCC (Caché pour fort cylindre selon votre code original)
     if (appState.cylHigh) {
         document.getElementById('jccVisuals').classList.add('hidden');
     } else {
