@@ -4579,16 +4579,23 @@ if (gainTotal >= 3) {
         });
     } else {
         // HYPERMÉTROPE : ON PROGRESSE !
-        // On valide officiellement la ligne supérieure (N+1)
-        if (goNextLine()) {
-            updateDisplay("Gain cumulé prouvé : passage à l'acuité " + ACUITY_TABLE[appState.vaIndex].va);
-            say("Très bien, votre vision s'améliore. Voyons si on peut faire encore mieux.", function() {
-                initSphereCheckPlus(true); // Relance les vérificateurs sur la nouvelle ligne
-            });
-        } else {
-            // Cas où on était déjà au max du tableau
-            finishSb10ForEye();
-        }
+        if (appState.scoreNPlus1_AvecVerre >= 3) {
+                    // S'il a lu au moins 3 lettres sur N+1, on monte sur N+1 pour le test
+                    if (goNextLine()) {
+                        updateDisplay("Gain cumulé prouvé : passage à l'acuité " + ACUITY_TABLE[appState.vaIndex].va);
+                        say("Très bien, votre vision s'améliore. Voyons si on peut faire encore mieux.", function() {
+                            initSphereCheckPlus(true);
+                        });
+                    } else {
+                        finishSb10ForEye();
+                    }
+                } else {
+                    // S'il a lu 1 ou 2 lettres sur N+1, on reste sur la ligne N pour le test
+                    updateDisplay("Gain cumulé prouvé : test sur la ligne actuelle");
+                    say("Très bien, votre vision s'améliore. Voyons si on peut faire encore mieux.", function() {
+                        initSphereCheckPlus(true);
+                    });
+                }
     }
 } else {
     // ÉCHEC DU GAIN CUMULÉ : Le patient ne confirme pas l'amélioration même sur la ligne N
@@ -5031,7 +5038,7 @@ function revertMinusLens() {
     var eye = appState.activeEye;
 
     // 1. On marque Swéb comme fait pour cet oeil pour éviter d'y revenir
-    if (target.sphere < 0) appState.subj[eye].swebDone = true;
+    appState.subj[eye].swebDone = true;
     
     // 2. Rétablissement de la sphère initiale (on rejette le -0.25)
     target.sphere = appState.baseSphereValue; 
